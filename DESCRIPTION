@@ -5,7 +5,16 @@ Version: 0.1.0
 Author: Andrew Rominger, Isaac Overcast, Megan Ruffley, Mike Hickerson
 Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
 Description: A simulation-based model the captures many processes across ecology and evolution 
-and jointly predicts multi-dimensional biodiversity data.
+    and jointly predicts multi-dimensional biodiversity data.
 License: GNU GENERAL PUBLIC LICENSE
 Encoding: UTF-8
 LazyData: true
+Depends:
+    R (>= 3.2)
+Imports:
+    pika
+Suggests:
+    testthat
+Remotes:
+    ajrominger/pika
+RoxygenNote: 7.1.1
