@@ -4,10 +4,20 @@
 #'
 #'
 #' @param params list of parameters
-#' @param nstep number of simulation steps to run
+#' @param nstep number of simulation steps to run; if \code{prop_equilib} is specified in the \code{params}
+#'     list, \code{nstep} will over-ride that parameter
 #' @param nsim number of simulations to run
 #'
 #' @details Stub
+#'
+#' @examples
+#' params <- list(species_meta = 100,
+#'                individuals_meta = 10000,
+#'                individuals_local = 1000,
+#'                dispersal_prob = 0.1,
+#'                speciation_local = 0.01)
+#' testSim <- roleSim(params, nstep = 10, nsim = 1)
+#' testSim
 #'
 #' @return An object of class \code{roleComm}
 #' @export
@@ -33,7 +43,7 @@ roleSim <- function(params, nstep = NULL, nsim = 1) {
     JiMax <- Sm
 
     # further parameters
-    m <- params$dispersal
+    m <- params$dispersal_prob
     nu <- params$speciation_local
 
     nT <- nstep
@@ -62,10 +72,13 @@ roleSim <- function(params, nstep = NULL, nsim = 1) {
     # update equilib in params (if neccesary)
     # stub
 
+    # trim local community to max possible species
+    JJ <- JJ[1:JiMax]
+
     # add nstep to params
     params$nstep <- nstep
 
-    out <- list(local_comm = JJ, params = params)
+    out <- list(local_comm = JJ, meta_comm = JJm, params = params)
     class(out) <- 'roleComm'
 
     return(out)
