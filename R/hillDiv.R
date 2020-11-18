@@ -6,6 +6,9 @@
 #'
 #' @param x a vector of species abundances
 #' @param q a vector of Renyei entropy scales
+#' @param traits a vector of species trait values, must be in the same order as
+#' \code{x}, no internal checks are provided, so make sure this is correct before
+#' running the function!
 #'
 #' @details Stub
 #'
