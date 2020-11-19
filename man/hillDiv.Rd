@@ -13,6 +13,10 @@ hillDivTrait(x, traits, q)
 \item{x}{a vector of species abundances}
 
 \item{q}{a vector of Renyei entropy scales}
+
+\item{traits}{a vector of species trait values, must be in the same order as
+\code{x}, no internal checks are provided, so make sure this is correct before
+running the function!}
 }
 \value{
 A vector, same length as \code{q}, giving diversities for each
