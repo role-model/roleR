@@ -17,9 +17,11 @@
 #' @export
 
 
-roleDistPlot <- function(x, type = c('Abundance', 'Trait', 'Pi', 'phylo')) {
-    type <- match.arg(type, c('Abundance', 'Trait', 'Pi', 'phylo'))
-    x <- x$type
+roleDistPlot <- function(x, type = c('Abundance', 'Trait', 'pi', 'phylo')) {
+    type <- match.arg(type, c('Abundance', 'Trait', 'pi', 'phylo'))
+
+    # browser()
+    x <- x$local_comm[[type]][x$local_comm$Abundance > 0]
 
     dat <- data.frame(rank = 1:length(x), y = sort(as.numeric(x), TRUE))
 

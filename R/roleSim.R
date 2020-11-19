@@ -75,10 +75,16 @@ roleSim <- function(params, nstep = NULL, nsim = 1) {
     # trim local community to max possible species
     JJ <- JJ[1:JiMax]
 
+    # STUB: add random trait and pi info
+    localComm <- list(Abundance = JJ,
+                      Trait = rnorm(length(JJ)),
+                      pi = rlnorm(length(JJ))
+    )
+
     # add nstep to params
     params$nstep <- nstep
 
-    out <- list(local_comm = JJ, meta_comm = JJm, params = params)
+    out <- list(local_comm = localComm, meta_comm = JJm, params = params)
     class(out) <- 'roleComm'
 
     return(out)
