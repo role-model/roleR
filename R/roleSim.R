@@ -1,12 +1,18 @@
 #' @title RoLE model simulation
 #'
-#' @description Simulate communities under the RoLE model
+#' @description Simulate communities under the RoLE model. The key distinction
+#' between the two functions is that \code{roleSim} is optimized to run many
+#' simulations, while \code{roleSimPlay} is meant to run one simulation with
+#' periodic output of results for visualization and exploration. \code{roleSimPlay}
+#' is intended primarily for the accompanying Shiny App.
 #'
 #'
 #' @param params list of parameters
-#' @param nstep number of simulation steps to run; if \code{prop_equilib} is specified in the \code{params}
-#'     list, \code{nstep} will over-ride that parameter
+#' @param init an optional initial condition specified as a \code{roleComm} object
+#' @param nstep number of simulation steps to run; if \code{prop_equilib} is
+#' specified in the \code{params} list, \code{nstep} will over-ride that parameter
 #' @param nsim number of simulations to run
+#' @param nout frequency of intermediate results output
 #'
 #' @details Stub
 #'
@@ -19,74 +25,190 @@
 #' testSim <- roleSim(params, nstep = 10, nsim = 1)
 #' testSim
 #'
-#' @return An object of class \code{roleComm}
+#' @return An object of class \code{roleComm} with the following elements:
+#' \describe{
+#'   \item{\code{local_comm}}{a list with three named elements: \code{Abundance},
+#'   \code{Traits}, \code{pi}}
+#'   \item{\code{meta_comm}}{a list with two named elements: \code{Abundance},
+#'   \code{Traits}}
+#'   \item{\code{phylo}}{a phylogeny (of class \code{ape::phylo}) for all species
+#'   (extinct and extant) in the meta and local communities}
+#'   \item{\code{params}}{a names list of model parameters}
+#' }
+#'
+#' In the case of \code{roleSimPlay}, a list of \code{roleComm} objects is returned
+#'
+#' @rdname roleSim
 #' @export
 
-roleSim <- function(params, nstep = NULL, nsim = 1) {
-    # number of species in the metacommunity
-    Sm <- params$species_meta
+roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
+    # ----
+    # initialize simulation
+
+    if(is.null(init)) {
+        init <- .initSim(params)
+    }
+
+    # make sure `params` reflect the user-specified values (potentially
+    # overwriting old values)
+    init$params <- params
+
+    # ----
+    # loop over steps
+    .iterSim(init, nstep)
+}
+
+
+
+#' @rdname roleSim
+#' @export
+
+roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
+    # ----
+    # initialize simulation
+
+    if(is.null(init)) {
+        init <- .initSim(params)
+    }
+
+    # make sure `params` reflect the user-specified values (potentially
+    # overwriting old values)
+    init$params <- params
+
+    # ----
+    # loop over steps
+
+    # number of chunks to iterate over
+    B <- floor(nstep / nout)
+    allSims <- vector('list', B)
+
+    # first set of iterations
+    allSims[[1]] <- .iterSim(init, nout)
+
+    # loop over remaining iterations
+    for(b in 2:B) {
+        # plotting stuff, etc goes here
+
+        # update `roleComm` object
+        allSims[[b]] <- .iterSim(allSims[[b - 1]], nout)
+    }
+
+    # return all the simulations
+    return(allSims)
+}
+
+# ----
+#' @description function to initialize role simulation, returns a `roleComm`
+#' object
+#' @param params list of model parameters
+
+.initSim <- function(params) {
+    # empty `roleComm` object
+    out <- list(local_comm = list(Abundance = numeric(),
+                                  Traits = numeric(),
+                                  pi = numeric()),
+                meta_comm = list(Abundance = numeric(),
+                                 Traits = numeric()),
+                phylo = list(),
+                params = params)
+    class(out) <- 'roleComm'
 
     # metacommunity SAD
-    JJm <- pika::rfish(Sm, 0.01)
-    JJm <- JJm / sum(JJm)
-
-    # number of local individuals
-    J <- params$individuals_local
+    out$meta_comm$Abundance <- .lseriesFromSN(params$species_meta,
+                                              params$individuals_meta)
 
     # vector of local species abundances
-    JJ <- rep(0, Sm * 100)
+    out$local_comm$Abundance <- rep(0, params$species_meta * 100)
 
     # initialize local species abundances with one species having all individuals
-    JJ[sample(Sm, 1, prob = JJm)] <- J
+    out$local_comm$Abundance[sample(params$species_meta, 1, prob = out$meta_comm$Abundance)] <-
+        params$individuals_local
 
     # counter keeping track of max number of possible species in local community
-    JiMax <- Sm
+    out$local_comm$JiMax <- params$species_meta
 
-    # further parameters
-    m <- params$dispersal_prob
-    nu <- params$speciation_local
+    return(out)
+}
 
-    nT <- nstep
 
-    for(i in 1:nT) {
+# ----
+#' @description function to iterate role simulation
+#' @param comm an object of class `roleComm`
+#' @param nstep number of steps to iterate
+
+.iterSim <- function(comm, nstep) {
+    # browser()
+    for(i in 1:nstep) {
         # death
-        dead <- sample(JiMax, 1, prob = JJ[1:JiMax])
-        JJ[dead] <- JJ[dead] - 1
+        dead <- sample(comm$local_comm$JiMax, 1,
+                       prob = comm$local_comm$Abundance[1:comm$local_comm$JiMax])
+        comm$local_comm$Abundance[dead] <- comm$local_comm$Abundance[dead] - 1
 
-
-        if(runif(1) <= nu) {
+        if(runif(1) <= comm$params$speciation_local) {
             # speciation
-            JJ[JiMax + 1] <- 1
-            JiMax <- JiMax + 1
-        } else if(runif(1) <= m) {
+            comm$local_comm$Abundance[comm$local_comm$JiMax + 1] <- 1
+            comm$local_comm$JiMax <- comm$local_comm$JiMax + 1
+        } else if(runif(1) <= comm$params$dispersal_prob) {
             # immigration
-            imm <- sample(Sm, 1, prob = JJm)
-            JJ[imm] <- JJ[imm] + 1
+            imm <- sample(comm$params$species_meta, 1, prob = comm$meta_comm$Abundance)
+            comm$local_comm$Abundance[imm] <- comm$local_comm$Abundance[imm] + 1
         } else {
             # local birth
-            birth <- sample(JiMax, 1, prob = JJ[1:JiMax])
-            JJ[birth] <- JJ[birth] + 1
+            birth <- sample(comm$local_comm$JiMax, 1,
+                            prob = comm$local_comm$Abundance[1:comm$local_comm$JiMax])
+            comm$local_comm$Abundance[birth] <- comm$local_comm$Abundance[birth] + 1
         }
     }
 
-    # update equilib in params (if neccesary)
-    # stub
-
-    # trim local community to max possible species
-    JJ <- JJ[1:JiMax]
+    # # update equilib in params (if neccesary)
+    # # stub
+    #
+    # # trim local community to max possible species
+    # # JJ <- JJ[1:JiMax]
 
     # STUB: add random trait and pi info
-    localComm <- list(Abundance = JJ,
-                      Trait = rnorm(length(JJ)),
-                      pi = rlnorm(length(JJ))
-    )
+    comm$local_comm$Trait <- rnorm(length(comm$local_comm$JiMax))
+    comm$local_comm$pi = rlnorm(length(comm$local_comm$JiMax))
 
-    # add nstep to params
-    params$nstep <- nstep
+    # # add nstep to params
+    # params$nstep <- nstep
+    #
+    # out <- list(local_comm = localComm, meta_comm = JJm, params = params)
+    # class(out) <- 'roleComm'
 
-    out <- list(local_comm = localComm, meta_comm = JJm, params = params)
-    class(out) <- 'roleComm'
-
-    return(out)
-
+    return(comm)
 }
+
+
+# ----
+#' @description function to solve for parameter of logseries
+#' @param S number of species
+#' @param N number of individuals
+
+.lseriesFromSN <- function(S, N) {
+    # solve for alpha paramter
+    asol <- uniroot(interval = c(.Machine$double.eps^0.25, .Machine$integer.max),
+                    f = function(a) {
+                        a * log(1 + N / a) - S
+                    })
+
+    # calculate p parameter and beta (as used by pika)
+    p <- 1 - exp(-S / asol$root)
+    beta <- -log(p)
+
+    # calculate idealized SAD from parameter
+    thisSAD <- pika::sad(model = 'fish', par = beta)
+    thisSAD <- pika::sad2Rank(thisSAD, S = S)
+
+    # return relative abundances
+    return(thisSAD / sum(thisSAD))
+}
+
+# testing
+# params <- list(species_meta = 100,
+#                individuals_meta = 10000,
+#                individuals_local = 1000,
+#                dispersal_prob = 0.1,
+#                speciation_local = 0.01)
+# testSim <- roleSimPlay(params, nstep = 100, nout = 5)
+# testSim

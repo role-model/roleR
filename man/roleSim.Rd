@@ -2,23 +2,45 @@
 % Please edit documentation in R/roleSim.R
 \name{roleSim}
 \alias{roleSim}
+\alias{roleSimPlay}
 \title{RoLE model simulation}
 \usage{
-roleSim(params, nstep = NULL, nsim = 1)
+roleSim(params, init = NULL, nstep = NULL, nsim = 1)
+
+roleSimPlay(params, init = NULL, nstep = NULL, nout = NULL)
 }
 \arguments{
 \item{params}{list of parameters}
 
-\item{nstep}{number of simulation steps to run; if \code{prop_equilib} is specified in the \code{params}
-list, \code{nstep} will over-ride that parameter}
+\item{init}{an optional initial condition specified as a \code{roleComm} object}
+
+\item{nstep}{number of simulation steps to run; if \code{prop_equilib} is
+specified in the \code{params} list, \code{nstep} will over-ride that parameter}
 
 \item{nsim}{number of simulations to run}
+
+\item{nout}{frequency of intermediate results output}
 }
 \value{
-An object of class \code{roleComm}
+An object of class \code{roleComm} with the following elements:
+\describe{
+  \item{\code{local_comm}}{a list with three named elements: \code{Abundance},
+  \code{Traits}, \code{pi}}
+  \item{\code{meta_comm}}{a list with two named elements: \code{Abundance},
+  \code{Traits}}
+  \item{\code{phylo}}{a phylogeny (of class \code{ape::phylo}) for all species
+  (extinct and extant) in the meta and local communities}
+  \item{\code{params}}{a names list of model parameters}
+}
+
+In the case of \code{roleSimPlay}, a list of \code{roleComm} objects is returned
 }
 \description{
-Simulate communities under the RoLE model
+Simulate communities under the RoLE model. The key distinction
+between the two functions is that \code{roleSim} is optimized to run many
+simulations, while \code{roleSimPlay} is meant to run one simulation with
+periodic output of results for visualization and exploration. \code{roleSimPlay}
+is intended primarily for the accompanying Shiny App.
 }
 \details{
 Stub
