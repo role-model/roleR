@@ -16,6 +16,7 @@
 #' @rdname roleSimPlots
 #' @export
 
+library(plyr)
 
 roleDistPlot <- function(x, type = c('Abundance', 'Trait', 'pi', 'phylo')) {
     type <- match.arg(type, c('Abundance', 'Trait', 'pi', 'phylo'))
