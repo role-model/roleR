@@ -64,15 +64,15 @@ roleDistAnim <- function(roleSim, type = all.types) {
 
     fig <- plotly::plot_ly(
         all_data, x = ~rank, y = ~y, frame = ~step, type = 'scatter', mode = 'markers',
-        marker = list(color = 'transparent', size = 8, line = list(color = 'black', width = 1.5)))
-
-    fig <- plotly::layout(
-        fig,
+        marker = list(color = 'transparent', size = 8, line = list(color = 'black', width = 1.5))
+    ) %>%
+    plotly::layout(
         xaxis = list(zeroline = FALSE, title = 'Species Rank'),
         yaxis = list(zeroline = FALSE, title = type,
-                     type = ifelse(type != 'Trait', 'log', 'linear')))
-
-    # fig <- animation_slider(fig, hide = T)
+                     type = ifelse(type != 'Trait', 'log', 'linear'))
+    ) %>%
+    plotly::animation_slider(hide = T) %>%
+    plotly::animation_button(visible = FALSE)
 
     fig
 }
@@ -80,4 +80,3 @@ roleDistAnim <- function(roleSim, type = all.types) {
 roleTSAnim <- function(roleSim, type = all.types) {
     'stub'
 }
-
