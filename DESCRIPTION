@@ -12,7 +12,8 @@ LazyData: true
 Depends:
     R (>= 3.2)
 Imports:
-    pika
+    pika, 
+    TreeSim
 Suggests:
     testthat, 
     hillR
