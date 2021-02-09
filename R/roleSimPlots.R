@@ -1,3 +1,5 @@
+all.types = c('Abundance', 'Trait', 'pi', 'phylo')
+
 #' @title Plotting RoLE model simulations
 #'
 #' @description Plot the dynamic distributions of RoLE model simulations and the
@@ -12,13 +14,13 @@
 # @examples
 #'
 #' @return A \code{plotly} object
-#'
-#' @rdname roleSimPlots
-#' @export
 
 library(plyr)
 
-roleDistPlot <- function(x, type = c('Abundance', 'Trait', 'pi', 'phylo')) {
+#' @rdname roleSimPlots
+#' @export
+
+roleDistPlot <- function(x, type = all.types) {
     type <- match.arg(type, c('Abundance', 'Trait', 'pi', 'phylo'))
 
     # browser()
@@ -42,11 +44,14 @@ roleDistPlot <- function(x, type = c('Abundance', 'Trait', 'pi', 'phylo')) {
 #' @export
 
 
-roleTSPlot <- function(x, type = c('Abundance', 'Trait', 'Pi', 'phylo')) {
+roleTSPlot <- function(x, type = all.types) {
     'stub'
 }
 
-all.types = c('Abundance', 'Trait', 'pi', 'phylo')
+
+#' @rdname roleSimPlots
+#' @export
+#'
 
 roleDistAnim <- function(roleSim, type = all.types) {
     type <- match.arg(type, all.types)
@@ -77,6 +82,10 @@ roleDistAnim <- function(roleSim, type = all.types) {
 
     fig
 }
+
+#' @rdname roleSimPlots
+#' @export
+#'
 
 roleTSAnim <- function(roleSim, type = all.types) {
     'stub'
