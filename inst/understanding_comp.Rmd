@@ -1,0 +1,30 @@
+---
+title: "Understanding competition"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Mathematical details
+
+For competition between any two individuals ($i$ and $j$) we use a trait-based competition kernal of form 
+$$
+f(x_i, x_j; \sigma) = \exp\left(-\left(\frac{x_i - x_j}{\sigma}\right)^2\right)
+$$
+This competition then determines the death rate for individual $i$:
+
+$$
+q(x_i) = \frac{1}{N} \sum_j^N f(x_i, x_j; \sigma)
+$$
+Finally, the probability of death of individual $i$ in any given time step is 
+$$
+p(x_i) = \frac{q(x_i)}{\sum_j^N q(x_j)}
+$$
+
+A few mathematical notes: one could modify the competition kernal by including a parameter (call it $\delta$) that influences the height of the kernal, i.e., $f(x_i, x_j; \sigma, \delta) = \delta \exp\left(-\left(\frac{x_i - x_j}{\sigma}\right)^2\right)$. However, this $\delta$ parameter would cancel out in the renormalization leading to $p(x_i)$ and so does not matter. Similarely, one could add a parameter (call it $\kappa$) that modifies the exponential, i.e., $f(x_i, x_j; \sigma, \kappa) = \exp\left(-\kappa \left(\frac{x_i - x_j}{\sigma}\right)^2\right)$. However, this parameter, because of its multiplicative relationship with $\sigma^2$ would not be identifiable, so is also not worth including.
+
+## Understanding what $\sigma$ does
+
+Recognizing that $\sigma$ is the only parameter we need consider, we can now figure out what it does
