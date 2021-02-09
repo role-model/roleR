@@ -80,6 +80,7 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
 
     # number of chunks to iterate over
     B <- floor(nstep / nout)
+    if(B <= 1) B <- 2
     allSims <- vector('list', B)
 
     # first set of iterations
@@ -105,10 +106,9 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
 .initSim <- function(params) {
     # empty `roleComm` object
     out <- list(local_comm = list(Abundance = numeric(),
-                                  Traits = numeric(),
                                   pi = numeric()),
-                meta_comm = list(Abundance = numeric(),
-                                 Traits = numeric()),
+                meta_comm = list(Abundance = numeric()),
+                Traits = numeric(),
                 phylo = list(),
                 params = params)
     class(out) <- 'roleComm'
@@ -117,12 +117,21 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
     out$meta_comm$Abundance <- .lseriesFromSN(params$species_meta,
                                               params$individuals_meta)
 
+    # initialize phylo
+    out$phylo <- TreeSim::sim.bd.taxa(params$species_meta, numbsim = 1,
+                                      lambda = params$speciation_meta,
+                                      mu = params$extinction_meta)[[1]]
+
+    # initialize traits
+    out$Traits <- c(ape::rTraitCont(out$phylo, sigma = params$sigma_bm),
+                    rep(NA, params$species_meta * 99))
+
     # vector of local species abundances
     out$local_comm$Abundance <- rep(0, params$species_meta * 100)
 
     # initialize local species abundances with one species having all individuals
-    out$local_comm$Abundance[sample(params$species_meta, 1, prob = out$meta_comm$Abundance)] <-
-        params$individuals_local
+    k <- sample(params$species_meta, 1, prob = out$meta_comm$Abundance)
+    out$local_comm$Abundance[k] <- params$individuals_local
 
     # counter keeping track of max number of possible species in local community
     out$local_comm$JiMax <- params$species_meta
