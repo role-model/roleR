@@ -80,6 +80,7 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
 
     # number of chunks to iterate over
     B <- floor(nstep / nout)
+    if(B <= 1) B <- 2
     allSims <- vector('list', B)
 
     # first set of iterations
