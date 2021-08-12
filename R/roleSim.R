@@ -3,14 +3,16 @@
 #' @description Simulate communities under the RoLE model. The key distinction
 #' between the two functions is that \code{roleSim} is optimized to run many
 #' simulations, while \code{roleSimPlay} is meant to run one simulation with
-#' periodic output of results for visualization and exploration. \code{roleSimPlay}
-#' is intended primarily for the accompanying Shiny App.
+#' periodic output of results for visualization and exploration.
+#' \code{roleSimPlay} is intended primarily for the accompanying Shiny App.
 #'
 #'
 #' @param params list of parameters
-#' @param init an optional initial condition specified as a \code{roleComm} object
+#' @param init an optional initial condition specified as a \code{roleComm}
+#' object
 #' @param nstep number of simulation steps to run; if \code{prop_equilib} is
-#' specified in the \code{params} list, \code{nstep} will over-ride that parameter
+#' specified in the \code{params} list, \code{nstep} will over-ride that
+#' parameter
 #' @param nsim number of simulations to run
 #' @param nout frequency of intermediate results output
 #'
@@ -27,16 +29,17 @@
 #'
 #' @return An object of class \code{roleComm} with the following elements:
 #' \describe{
-#'   \item{\code{local_comm}}{a list with three named elements: \code{Abundance},
-#'   \code{Traits}, \code{pi}}
+#'   \item{\code{local_comm}}{a list with three named elements:
+#'   \code{Abundance}, \code{Traits}, \code{pi}}
 #'   \item{\code{meta_comm}}{a list with two named elements: \code{Abundance},
 #'   \code{Traits}}
-#'   \item{\code{phylo}}{a phylogeny (of class \code{ape::phylo}) for all species
-#'   (extinct and extant) in the meta and local communities}
-#'   \item{\code{params}}{a names list of model parameters}
+#'   \item{\code{phylo}}{a phylogeny (of class \code{ape::phylo}) for all
+#'   species (extinct and extant) in the meta and local communities}
+#'   \item{\code{params}}{a named list of model parameters}
 #' }
 #'
-#' In the case of \code{roleSimPlay}, a list of \code{roleComm} objects is returned
+#' In the case of \code{roleSimPlay}, a list of \code{roleComm} objects is
+#' returned
 #'
 #' @rdname roleSim
 #' @export
@@ -121,11 +124,14 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
     # vector of local species abundances
     out$local_comm$Abundance <- rep(0, params$species_meta * 100)
 
-    # initialize local species abundances with one species having all individuals
-    out$local_comm$Abundance[sample(params$species_meta, 1, prob = out$meta_comm$Abundance)] <-
+    # initialize local species abundances with one species having all
+    # individuals
+    out$local_comm$Abundance[sample(params$species_meta, 1,
+                                    prob = out$meta_comm$Abundance)] <-
         params$individuals_local
 
-    # counter keeping track of max number of possible species in local community
+    # counter keeping track of max number of possible species in local
+    # community
     out$local_comm$JiMax <- params$species_meta
 
     return(out)
@@ -151,13 +157,16 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
             comm$local_comm$JiMax <- comm$local_comm$JiMax + 1
         } else if(runif(1) <= comm$params$dispersal_prob) {
             # immigration
-            imm <- sample(comm$params$species_meta, 1, prob = comm$meta_comm$Abundance)
+            imm <- sample(comm$params$species_meta, 1,
+                          prob = comm$meta_comm$Abundance)
             comm$local_comm$Abundance[imm] <- comm$local_comm$Abundance[imm] + 1
         } else {
             # local birth
-            birth <- sample(comm$local_comm$JiMax, 1,
-                            prob = comm$local_comm$Abundance[1:comm$local_comm$JiMax])
-            comm$local_comm$Abundance[birth] <- comm$local_comm$Abundance[birth] + 1
+            birth <-
+                sample(comm$local_comm$JiMax, 1,
+                       prob = comm$local_comm$Abundance[1:comm$local_comm$JiMax])
+            comm$local_comm$Abundance[birth] <-
+                comm$local_comm$Abundance[birth] + 1
         }
     }
 
@@ -188,7 +197,8 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
 
 .lseriesFromSN <- function(S, N) {
     # solve for alpha paramter
-    asol <- uniroot(interval = c(.Machine$double.eps^0.25, .Machine$integer.max),
+    asol <- uniroot(interval = c(.Machine$double.eps^0.25,
+                                 .Machine$integer.max),
                     f = function(a) {
                         a * log(1 + N / a) - S
                     })
