@@ -121,6 +121,20 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
     out$meta_comm$Abundance <- .lseriesFromSN(params$species_meta,
                                               params$individuals_meta)
 
+    # initialize phylo
+    out$phylo <- TreeSim::sim.bd.taxa(params$species_meta, numbsim = 1,
+                                      lambda = params$speciation_meta,
+                                      mu = params$extinction_meta)[[1]]
+
+    # General not on book keeping: for vectors that we expect to grow (i.e.,
+    # traits and local abundances) we make a vector 100 times longer than the
+    # initial number of species in the metacommunity rather than needing to
+    # augment those vectors
+
+    # initialize traits
+    out$Traits <- c(ape::rTraitCont(out$phylo, sigma = params$sigma_bm),
+                    rep(NA, params$species_meta * 99))
+
     # vector of local species abundances
     out$local_comm$Abundance <- rep(0, params$species_meta * 100)
 
@@ -155,6 +169,9 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
             # speciation
             comm$local_comm$Abundance[comm$local_comm$JiMax + 1] <- 1
             comm$local_comm$JiMax <- comm$local_comm$JiMax + 1
+
+            # need to update phylogeny
+            # need to assign new trait
         } else if(runif(1) <= comm$params$dispersal_prob) {
             # immigration
             imm <- sample(comm$params$species_meta, 1,
