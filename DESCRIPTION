@@ -20,3 +20,12 @@ Suggests:
 Remotes:
     ajrominger/pika
 RoxygenNote: 7.1.1
+Collate: 
+    'comm.R'
+    'hillDiv.R'
+    'rolePhylo.R'
+    'roleParams.R'
+    'roleModel.R'
+    'roleR-package.R'
+    'roleSim.R'
+    'roleSimPlots.R'
