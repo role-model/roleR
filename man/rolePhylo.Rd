@@ -4,7 +4,7 @@
 \alias{rolePhylo}
 \title{Specify a RoLE model phylogeny}
 \usage{
-rolePhylo()
+rolePhylo(n, e, alive, tipNames, scale)
 }
 \arguments{
 \item{n}{number of tips}

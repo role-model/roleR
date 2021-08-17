@@ -11,10 +11,11 @@
 #' @export
 
 setClass('rolePhylo',
-         slots = c(abundance = 'numeric',
-                   traits = 'matrix',
-                   pi = 'numeric',
-                   Smax = 'numeric'))
+         slots = c(n = 'numeric',
+                   e = 'matrix',
+                   alive = 'logical',
+                   tipNames = 'character',
+                   scale = 'numeric'))
 
 
 #' @title Specify a RoLE model phylogeny
@@ -28,7 +29,7 @@ setClass('rolePhylo',
 #'
 #' @export
 
-rolePhylo <- function() {
+rolePhylo <- function(n, e, alive, tipNames, scale) {
     new('rolePhylo',
         n = n, e = e, alive = alive, tipNames = tipNames, scale = scale)
 }
@@ -69,3 +70,63 @@ checkRolePhylo <- function(object) {
 
 # validate
 setValidity('rolePhylo', checkRolePhylo)
+
+
+# set coercion method from ape::phylo to roleR::rolePhylo
+setAs(from = 'phylo', to = 'rolePhylo',
+      def = function(from) {
+          # extract number of times
+          n <- ape::Ntip(from)
+
+          # extract edge matrix and edge lengths
+          e <-  cbind(from$edge, from$edge.length)
+
+          # extract tip labels
+          tipNames <- from$tip.label
+
+          # calculate alive or not
+
+          tipAge <- ape::node.depth.edgelength(from)[1:n]
+
+          alive <- rep(TRUE, n)
+          alive[tipAge < max(tipAge)] <- FALSE
+
+
+          # set default scale
+          scale <- 1
+
+
+          # buffer objects so we can add new species without augmenting objects
+          addOn <- n * 100
+          e <- rbind(e, matrix(NA, nrow = addOn, ncol = 3))
+          alive <- c(alive, rep(FALSE, addOn))
+
+
+          return(rolePhylo(n = n, e = e, alive = alive,
+                           tipNames = tipNames, scale = scale))
+      }
+)
+
+
+# set coercion method from roleR::rolePhylo to ape::phylo
+setAs(from = 'rolePhylo', to = 'phylo',
+      def = function(from) {
+          i <- 2 * (from@n - 1)
+
+          y <- list(edge = from@e[1:i, 1:2], edge.length = from@e[1:i, 3],
+                    tip.label = from@tipNames,
+                    Nnode = from@n - 1)
+
+          class(y) <- 'phylo'
+
+          return(y)
+      }
+)
+
+# test
+# tre <- ape::rphylo(5, 1, 0.1)
+# plot(tre)
+# ape::nodelabels()
+# foo <- as(tre, 'rolePhylo')
+# boo <- as(foo, 'phylo')
+# plot(boo)
