@@ -86,7 +86,7 @@ metaComm <- function(abundance, traits, Smax) {
 }
 
 
-# checker function for validation
+# checker function for parent comm class validation
 #' @param object an object of class comm
 
 checkComm <- function(object) {
@@ -116,5 +116,29 @@ checkComm <- function(object) {
 }
 
 
-# validate
+# validate parent comm class
 setValidity('comm', checkComm)
+
+
+# checker function for localComm class validation
+#' @param object an object of class localComm
+
+checkLocalComm <- function(object) {
+    checks <- c()
+
+    if(length(object@abundance) != length(object@pi)) {
+        checks <- c(checks,
+                    'lenths of @abundance and @pi must be equal')
+    }
+
+    # if any issues, return them, otherwise all OK
+    if(length(checks) > 0) {
+        return(checks)
+    } else {
+        return(TRUE)
+    }
+}
+
+
+# validate localComm class
+setValidity('localComm', checkLocalComm)
