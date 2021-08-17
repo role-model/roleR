@@ -3,9 +3,9 @@
 \docType{class}
 \name{roleParams-class}
 \alias{roleParams-class}
-\title{An S4 class to specify paramters of the RoLE model}
+\title{An S4 class to specify parameters of the RoLE model}
 \description{
-An S4 class to specify paramters of the RoLE model
+An S4 class to specify parameters of the RoLE model
 }
 \section{Slots}{
 

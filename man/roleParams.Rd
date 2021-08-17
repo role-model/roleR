@@ -17,7 +17,7 @@ simulations only, or also fit the model to data}
 the prior distributions of parameters}
 }
 \value{
-an object of class roleParams
+an object of class \code{roleParams}
 }
 \description{
 Specify parameters for a RoLE model

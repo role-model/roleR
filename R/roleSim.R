@@ -153,7 +153,7 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
 
 
 # ----
-#' @description function to iterate role simulation
+# function to iterate role simulation
 #' @param comm an object of class `roleComm`
 #' @param nstep number of steps to iterate
 
