@@ -37,7 +37,7 @@ roleParams <- function(params, runType, priors) {
 }
 
 
-#' checker function for validation
+# checker function for validation
 #' @param object an object of class roleParams
 
 checkParams <- function(object) {
@@ -112,7 +112,7 @@ checkParams <- function(object) {
     }
 }
 
-#' validate
+# validate
 setValidity('roleParams', checkParams)
 
 
