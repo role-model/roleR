@@ -1,18 +1,25 @@
-# private generic for speciation
+#' @title Speciation
+#'
+#' @description Generic and methods for computing the speciation process
+#'
 #' @param x the object which determines method dispatch
-#' @param i the index of the tip undergoing speciation
+#' @param i the index of the species undergoing speciation
+#'
+#' @rdname speciation
+#' @export
 
 setGeneric('speciation',
-           function(x, i) standardGeneric('speciation'),
+           function(x, i, ...) standardGeneric('speciation'),
            signature = 'x')
 
 
-# function to implement speciation for \code{rolePhylo} class objects
+#' function to implement speciation for \code{rolePhylo} class objects
 #' @param x an object of class \code{rolePhylo}
 #' @param i the index of the tip undergoing speciation
+#' @param ... additional parameters passed to specific methods
 #' @note method is set below after the function def
 
-.specFun <- function(x, i) {
+.specPhylo <- function(x, i) {
     # number of tips
     n <- x@n
 
@@ -48,8 +55,8 @@ setGeneric('speciation',
 }
 
 
-# set the (private) method
-setMethod('speciation', 'rolePhylo', .specFun)
+# set the method
+setMethod('speciation', 'rolePhylo', .specPhylo)
 
 # test
 # foo <- ape::rphylo(5, 1, 0.1)
@@ -62,3 +69,42 @@ setMethod('speciation', 'rolePhylo', .specFun)
 # doo <- speciation(boo, 3)
 # bla <- as(doo, 'phylo')
 # plot(bla)
+
+
+#' function to implement speciation for \code{*comm} class objects
+#' @param x an object of class \code{localComm}
+#' @param i the index of the species undergoing speciation
+#' @param params a \code{roleParams} object
+
+.specComm <- function(x, i) {
+    # update number of species
+    x@Smax <- x@Smax + 1
+
+    # add abundance to new species
+    x@abundance[x@Smax] <- 1
+
+    return(x)
+}
+
+setMethod('speciation', 'comm', .specComm)
+
+
+#' function to implement speciation for \code{localComm} class objects
+#' @param params a \code{roleParams} object
+
+.specLocal <- function(x, i, params) {
+    # update abund and Smax
+    x <- .specComm(x, i)
+
+    # index of where unrealized traits begin
+    # note: we need to do `Smax - 1` because above where we did `.specComm(x, i)`
+    # that already updated `Smax`
+    j <- max(which(x@traits[, 1] == x@Smax - 1)) + 1
+
+    # add trait
+    x@traits[j, 1] <- x@Smax
+    x@traits[j, 2] <- x@traits[i, 2] + rnorm(1, 0, params@params$sigma_traits) # need to figure this out
+
+    return(x)
+}
+

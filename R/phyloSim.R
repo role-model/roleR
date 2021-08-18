@@ -24,4 +24,4 @@ phyloSim <- function(x, i) {
 # plot(newTre, edge.color = 'red')
 # axis(1, col = 'red')
 #
-# speciation(as(tre, 'rolePhylo'), i) # should be a missing function error
+# speciation(as(tre, 'rolePhylo'), 3)
