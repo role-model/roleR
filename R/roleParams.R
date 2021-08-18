@@ -4,7 +4,7 @@
 #' are specified, \code{params} are used as initial values
 #' @slot runType a character vector of length one specifying the type of run
 #' (either "sim" or "fit")
-#' @slot priors a names list of functions that generate samples from the
+#' @slot priors a named list of functions that generate samples from the
 #' desired prior distributions
 #'
 #'
@@ -23,8 +23,9 @@ setClass('roleParams',
 #' @param runType can be either "sim" or "fit", specifying whether to run
 #' simulations only, or also fit the model to data
 #' @param priors a named list of functions to be used to generate samples from
-#' the prior distributions of parameters; can be \code{NULL} if no priors are
-#' to be used
+#' the prior distributions of parameters; this argument can be omitted in which
+#' case it will defult to \code{NULL} and no priors will be used (e.g. for
+#' realizing one simulation)
 #'
 #' @return an object of class \code{roleParams}
 #'
@@ -33,6 +34,8 @@ setClass('roleParams',
 #' @export
 
 roleParams <- function(params, runType, priors) {
+    if(missing(priors)) priors <- lapply(params, function(x) NULL)
+
     new('roleParams',
         params = params, runType = runType, priors = priors)
 }
@@ -96,8 +99,10 @@ checkParams <- function(object) {
     # check that priors are functions or NULL
     priors <- object@priors
 
-    if(!is.null(priors)) {
-        if(!all(sapply(priors, class) == 'function')) {
+    priorClass <- sapply(priors, class)
+
+    if(!all(priorClass == 'NULL')) {
+        if(!all(priorClass == 'function')) {
             checks <- c(checks,
                         'all priors must be functions or NULL')
         }
