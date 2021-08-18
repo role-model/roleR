@@ -1,46 +1,64 @@
-setGeneric('speciation', function(x, ...) standardGeneric('speciation'))
+# private generic for speciation
+#' @param x the object which determines method dispatch
+#' @param i the index of the tip undergoing speciation
 
-setMethod('speciation', 'rolePhylo', .specFun)
+setGeneric('speciation',
+           function(x, i) standardGeneric('speciation'),
+           signature = 'x')
 
-.specFun <- function(x) {
+
+# function to implement speciation for \code{rolePhylo} class objects
+#' @param x an object of class \code{rolePhylo}
+#' @param i the index of the tip undergoing speciation
+#' @note method is set below after the function def
+
+.specFun <- function(x, i) {
+    # number of tips
     n <- x@n
 
-    # add edge
-    e <- x@e[, 1:2]
-    i <- 3
-    j <- which(e[, 2] == i)
+    # index of where unrealized edges in edge matrix start
+    eNew <- min(which(x@e[, 1] == -1))
 
-    # browser()
-    e[e > n] <- e[e > n] + 1
+    # index of where to add new edge
+    j <- which(x@e[, 2] == i)
 
-    newNode <- 2 * n + 1
-    e <- rbind(e, matrix(c(newNode, newNode,
-                           e[j, 2], n + 1),
-                         ncol = 2))
 
-    e[j, 2] <- newNode
+    # add one to internal node indices
+    x@e[x@e > n] <- x@e[x@e > n] + 1
+
+    # add new node
+    newNode <- 2 * n + 1 # index of new node
+    x@e[(0:1) + eNew, 1] <- newNode # add internal node
+    x@e[eNew, 2] <- x@e[j, 2] # add old tip
+    x@e[eNew + 1, 2] <- n + 1 # add new tip
+
+    # add edge connecting parent to new node
+    x@e[j, 2] <- newNode
 
     # augment edge lengths
-    l <- x@e[, 3]
-    l <- c(l, 0, 0)
-    l[e[, 2] <= n + 1] <- l[e[, 2] <= n + 1] + 1
+    x@l[(0:1) + eNew] <- 0 # add new edges
+    # x@l[x@e[, 2] <= n + 1] <- x@l[x@e[, 2] <= n + 1] + 1 # increase tip length
 
-    # over-write `x` with new info
-    x@e <- cbind(e, l)
+    # over-write other slots of `x` with new info
     x@alive[n + 1] <- TRUE
-    x@tipNames[n + 1] <- paste('t', n + 1)
+    x@tipNames[n + 1] <- paste0('t', n + 1)
     x@n <- n + 1
 
     return(x)
 }
 
-set.seed(1)
-foo <- ape::rphylo(5, 1, 0.1)
-foo$edge.length <- foo$edge.length * 5
-plot(foo)
-axis(1)
 
-boo <- as(foo, 'rolePhylo')
-doo <- .specFun(boo)
-bla <- as(doo, 'phylo')
-bla$edge
+# set the (private) method
+setMethod('speciation', 'rolePhylo', .specFun)
+
+# test
+# foo <- ape::rphylo(5, 1, 0.1)
+# foo$edge.length <- foo$edge.length * 5
+# plot(foo)
+# axis(1)
+#
+# boo <- as(foo, 'rolePhylo')
+#
+# doo <- speciation(boo, 3)
+# bla <- as(doo, 'phylo')
+# plot(bla)
