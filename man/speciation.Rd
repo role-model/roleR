@@ -4,7 +4,7 @@
 \alias{speciation}
 \title{Speciation}
 \usage{
-speciation(x, i)
+speciation(x, i, ...)
 }
 \arguments{
 \item{x}{the object which determines method dispatch}

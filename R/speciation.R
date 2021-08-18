@@ -13,7 +13,7 @@ setGeneric('speciation',
            signature = 'x')
 
 
-#' function to implement speciation for \code{rolePhylo} class objects
+# function to implement speciation for \code{rolePhylo} class objects
 #' @param x an object of class \code{rolePhylo}
 #' @param i the index of the tip undergoing speciation
 #' @param ... additional parameters passed to specific methods
@@ -71,10 +71,9 @@ setMethod('speciation', 'rolePhylo', .specPhylo)
 # plot(bla)
 
 
-#' function to implement speciation for \code{*comm} class objects
+# function to implement speciation for \code{*comm} class objects
 #' @param x an object of class \code{localComm}
 #' @param i the index of the species undergoing speciation
-#' @param params a \code{roleParams} object
 
 .specComm <- function(x, i) {
     # update number of species
@@ -89,7 +88,7 @@ setMethod('speciation', 'rolePhylo', .specPhylo)
 setMethod('speciation', 'comm', .specComm)
 
 
-#' function to implement speciation for \code{localComm} class objects
+# function to implement speciation for \code{localComm} class objects
 #' @param params a \code{roleParams} object
 
 .specLocal <- function(x, i, params) {
@@ -97,14 +96,21 @@ setMethod('speciation', 'comm', .specComm)
     x <- .specComm(x, i)
 
     # index of where unrealized traits begin
-    # note: we need to do `Smax - 1` because above where we did `.specComm(x, i)`
-    # that already updated `Smax`
+    # note: we need to do `Smax - 1` because above where we did
+    # `.specComm(x, i)` that already updated `Smax`
     j <- max(which(x@traits[, 1] == x@Smax - 1)) + 1
 
     # add trait
     x@traits[j, 1] <- x@Smax
-    x@traits[j, 2] <- x@traits[i, 2] + rnorm(1, 0, params@params$sigma_traits) # need to figure this out
+    x@traits[j, 2] <- x@traits[i, 2] + rnorm(1, 0, params@params$trait_sigma) # need to figure this out
 
     return(x)
 }
 
+setMethod('speciation', 'localComm', .specLocal)
+
+# test
+# foo <- c(1:5, rep(0, 5))
+# x <-  localComm(foo, cbind(foo, foo), foo, 5)
+# p <- roleParams(list(trait_sigma = 0.0001), 'sim')
+# speciation(x, 5, params = p)
