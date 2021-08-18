@@ -23,7 +23,8 @@ setClass('roleParams',
 #' @param runType can be either "sim" or "fit", specifying whether to run
 #' simulations only, or also fit the model to data
 #' @param priors a named list of functions to be used to generate samples from
-#' the prior distributions of parameters
+#' the prior distributions of parameters; can be \code{NULL} if no priors are
+#' to be used
 #'
 #' @return an object of class \code{roleParams}
 #'
@@ -44,7 +45,18 @@ checkParams <- function(object) {
     checks <- c()
 
     # check parameter names
-    allowedParams <- c('foo', 'bar')
+    allowedParams <- c('speciation_meta',
+                       'extinction_meta',
+                       'trait_sigma',
+                       'species_meta',
+                       'individuals_meta',
+                       'individuals_local',
+                       'dispersal_prob',
+                       'speciation_local',
+                       'env_sigma',
+                       'comp_sigma',
+                       'mu',
+                       'alpha')
     namedParams <- names(object@params)
 
     if(is.null(namedParams)) {

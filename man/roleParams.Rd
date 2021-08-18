@@ -14,7 +14,8 @@ priors are specified}
 simulations only, or also fit the model to data}
 
 \item{priors}{a named list of functions to be used to generate samples from
-the prior distributions of parameters}
+the prior distributions of parameters; can be \code{NULL} if no priors are
+to be used}
 }
 \value{
 an object of class \code{roleParams}
