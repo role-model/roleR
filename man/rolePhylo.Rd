@@ -4,13 +4,15 @@
 \alias{rolePhylo}
 \title{Specify a RoLE model phylogeny}
 \usage{
-rolePhylo(n, e, alive, tipNames, scale)
+rolePhylo(n, e, l, alive, tipNames, scale)
 }
 \arguments{
 \item{n}{number of tips}
 
-\item{e}{extended edge matrix; first two columns give ancestor, child pair,
-their column is edge lengths (in units of time steps = 1/J generations)}
+\item{e}{edge matrix; two columns give ancestor, child pair}
+
+\item{l}{numeric vector of edge lengths (in units of time steps = 1/J
+generations)}
 
 \item{alive}{vector indicating whether tips are extant or not}
 

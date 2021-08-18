@@ -2,8 +2,9 @@
 #' evolved through simulation
 #'
 #' @slot n number of tips
-#' @slot e extended edge matrix; first two columns give ancestor, child pair,
-#' their column is edge lengths (in units of time steps = 1/J generations)
+#' @slot e edge matrix; two columns give ancestor, child pair
+#' @slot l numeric vector of edge lengths (in units of time steps = 1/J
+#' generations)
 #' @slot alive vector indicating whether tips are extant or not
 #' @slot tipNames vector of tip names
 #' @slot scale time scale translation to years
@@ -13,6 +14,7 @@
 setClass('rolePhylo',
          slots = c(n = 'numeric',
                    e = 'matrix',
+                   l = 'numeric',
                    alive = 'logical',
                    tipNames = 'character',
                    scale = 'numeric'))
@@ -21,17 +23,18 @@ setClass('rolePhylo',
 #' @title Specify a RoLE model phylogeny
 #'
 #' @param n number of tips
-#' @param e extended edge matrix; first two columns give ancestor, child pair,
-#' their column is edge lengths (in units of time steps = 1/J generations)
+#' @param e edge matrix; two columns give ancestor, child pair
+#' @param l numeric vector of edge lengths (in units of time steps = 1/J
+#' generations)
 #' @param alive vector indicating whether tips are extant or not
 #' @param tipNames vector of tip names
 #' @param scale time scale translation to years
 #'
 #' @export
 
-rolePhylo <- function(n, e, alive, tipNames, scale) {
+rolePhylo <- function(n, e, l, alive, tipNames, scale) {
     new('rolePhylo',
-        n = n, e = e, alive = alive, tipNames = tipNames, scale = scale)
+        n = n, e = e, l = l, alive = alive, tipNames = tipNames, scale = scale)
 }
 
 # checker function for validation
@@ -59,6 +62,11 @@ checkRolePhylo <- function(object) {
                     'edge matrix does not contain sufficient rows for number of tips')
     }
 
+    if(nrow(object@e) != length(object@l)) {
+      checks <- c(checks,
+                  'unequal number of edges in @e and edge lengths in @l')
+    }
+
     # if any issues, return them, otherwise all OK
     if(length(checks) > 0) {
         return(checks)
@@ -79,13 +87,13 @@ setAs(from = 'phylo', to = 'rolePhylo',
           n <- ape::Ntip(from)
 
           # extract edge matrix and edge lengths
-          e <-  cbind(from$edge, from$edge.length)
+          e <- from$edge
+          l <- from$edge.length
 
           # extract tip labels
           tipNames <- from$tip.label
 
           # calculate alive or not
-
           tipAge <- ape::node.depth.edgelength(from)[1:n]
 
           alive <- rep(TRUE, n)
@@ -98,11 +106,13 @@ setAs(from = 'phylo', to = 'rolePhylo',
 
           # buffer objects so we can add new species without augmenting objects
           addOn <- n * 100
-          e <- rbind(e, matrix(NA, nrow = addOn, ncol = 3))
+          e <- rbind(e, matrix(-1, nrow = addOn, ncol = 2))
+          l <- c(l, rep(0, addOn))
           alive <- c(alive, rep(FALSE, addOn))
+          tipNames <- c(tipNames, rep('', addOn))
 
 
-          return(rolePhylo(n = n, e = e, alive = alive,
+          return(rolePhylo(n = n, e = e, l = l, alive = alive,
                            tipNames = tipNames, scale = scale))
       }
 )
@@ -113,9 +123,13 @@ setAs(from = 'rolePhylo', to = 'phylo',
       def = function(from) {
           i <- 2 * (from@n - 1)
 
-          y <- list(edge = from@e[1:i, 1:2], edge.length = from@e[1:i, 3],
-                    tip.label = from@tipNames,
+          y <- list(edge = from@e[1:i, ], edge.length = from@l[1:i],
+                    tip.label = from@tipNames[1:from@n],
                     Nnode = from@n - 1)
+
+          # make any possible 0 or negative edge lengths equal to
+          # very small number
+          y$edge.length[y$edge.length <= 0] <- .Machine$double.eps
 
           class(y) <- 'phylo'
 
