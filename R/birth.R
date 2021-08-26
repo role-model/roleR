@@ -14,13 +14,13 @@ setGeneric('birth',
 
 #' function to implement birth for \code{localComm} class objects
 #' @param x an object of class \code{localComm}
-#' @param i the index of the species undergoing speciation
+#' @param i the vector of indices of the species undergoing birth
 #' @param params a \code{roleParams} object
 
 .birthLocal <- function(x, i, params) {
 
-    #increment abundance of local community by 1
-    x@abundance <- x@abundance + 1
+    #increment abundance of species in local community by 1
+    x@abundance[i] <- x@abundance[i] + 1
 
     #intraspecific models will need code for trait inheritance etc later
 
