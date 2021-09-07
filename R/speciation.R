@@ -3,21 +3,19 @@
 #' @description Generic and methods for computing the speciation process
 #'
 #' @param x the object which determines method dispatch
-#' @param i the index of the species undergoing speciation
+#' @param ... additional parameters passed to specific methods
 #'
 #' @rdname speciation
 #' @export
 
 setGeneric('speciation',
-           function(x, i, ...) standardGeneric('speciation'),
+           function(x, ...) standardGeneric('speciation'),
            signature = 'x')
 
 
 # function to implement speciation for \code{rolePhylo} class objects
 #' @param x an object of class \code{rolePhylo}
 #' @param i the index of the tip undergoing speciation
-#' @param ... additional parameters passed to specific methods
-#' @note method is set below after the function def
 
 .specPhylo <- function(x, i) {
     # number of tips
@@ -66,21 +64,21 @@ setMethod('speciation', 'rolePhylo', .specPhylo)
 #
 # boo <- as(foo, 'rolePhylo')
 #
-# doo <- speciation(boo, 3)
+# doo <- speciation(boo, i = 3)
 # bla <- as(doo, 'phylo')
 # plot(bla)
 
 
 # function to implement speciation for \code{*comm} class objects
-#' @param x an object of class \code{localComm}
+#' @param x an object of class \code{comm}
 #' @param i the index of the species undergoing speciation
 
 .specComm <- function(x, i) {
     # update number of species
     x@Smax <- x@Smax + 1
 
-    # add abundance to new species
-    x@abundance[x@Smax] <- 1
+    # initialize abundance for new species
+    x@abundance[x@Smax] <- 0
 
     return(x)
 }
@@ -89,11 +87,16 @@ setMethod('speciation', 'comm', .specComm)
 
 
 # function to implement speciation for \code{localComm} class objects
+#' @param x an object of class \code{localComm}
+#' @param i the index of the species undergoing speciation
 #' @param params a \code{roleParams} object
 
 .specLocal <- function(x, i, params) {
-    # update abund and Smax
+    # update Smax and initialize abundance
     x <- .specComm(x, i)
+
+    # update abundance
+    x@abundance[x@Smax] <- 1
 
     # index of where unrealized traits begin
     # note: we need to do `Smax - 1` because above where we did
@@ -113,4 +116,40 @@ setMethod('speciation', 'localComm', .specLocal)
 # foo <- c(1:5, rep(0, 5))
 # x <-  localComm(foo, cbind(foo, foo), foo, 5)
 # p <- roleParams(list(trait_sigma = 0.0001), 'sim')
-# speciation(x, 5, params = p)
+# speciation(x, i = 5, params = p)
+
+
+
+# speciation method for the entire RoLE model class
+
+.specRoLE <- function(x) {
+    # sample parent species ----
+    # note: `Smax` from `@localComm` and `@metaComm` and `n` from `@phylo` are
+    # all enforced to be equal, so we can sample from any but we have to
+    # weight the probabilities by abundances and immigration
+
+    # dispersal prob
+    dp <- x@params@params$dispersal_prob
+
+    # normalized abundances at meta and local levels
+    mp <- x@metaComm@abundance[1:x@metaComm@Smax]
+    mp <- mp / sum(mp)
+    lp <- x@localComm@abundance[1:x@localComm@Smax]
+    lp <- lp / sum(lp)
+
+    # prob of selecting a parent
+    pp <- dp * mp + (1 - dp) * lp
+
+    # index of parent
+    i <- sample(x@phylo@n, size = 1, prop = pp)
+
+
+    # update slots of the role model object
+    x@localComm <- speciation(x@localComm, i = i, params = x@params)
+    x@metaComm <- speciation(x@metaComm, i = i)
+    x@phylo <- speciation(x@phylo, i = i)
+
+    return(x)
+}
+
+
