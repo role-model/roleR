@@ -58,7 +58,8 @@ setGeneric('speciation',
 # set the method
 setMethod('speciation', 'rolePhylo', .specPhylo)
 
-# test
+# TEST
+# source("R/speciation.R")
 # foo <- ape::rphylo(5, 1, 0.1)
 # foo$edge.length <- foo$edge.length * 5
 # plot(foo)
@@ -108,3 +109,18 @@ setMethod('speciation', 'comm', .specComm)
     return(x)
 }
 
+setMethod('speciation', 'localComm', .specLocal)
+
+#' function to implement speciation for \code{roleModel} class objects
+#' @param params a \code{roleParams} object
+
+.specRoleModel <- function(x, params) {
+
+    # add sampling for i
+    x@localComm <- speciation(x@localComm)
+    x@rolePhylo <- speciation(x@rolePhylo)
+
+    return(x)
+}
+
+setMethod('speciation', 'localComm', .specLocal)

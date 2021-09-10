@@ -15,9 +15,8 @@ setGeneric('birth',
 #' function to implement birth for \code{localComm} class objects
 #' @param x an object of class \code{localComm}
 #' @param i the vector of indices of the species undergoing birth
-#' @param params a \code{roleParams} object
 
-.birthLocal <- function(x, i, params) {
+.birthLocal <- function(x, i) {
 
     #increment abundance of species in local community by 1
     x@abundance[i] <- x@abundance[i] + 1
@@ -29,3 +28,11 @@ setGeneric('birth',
 
 # set the method
 setMethod('birth', 'localComm', .birthLocal)
+
+# TEST
+# source("R/comm.R")
+# source("R/birth.R")
+# foo <- localComm(1:10,matrix(1:100,nrow = 10, ncol = 10),1:10,10)
+# foo@abundance[1]
+# foo <- birth(foo,1)
+# foo@abundance[1]

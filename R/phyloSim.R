@@ -13,7 +13,7 @@ phyloSim <- function(x, i) {
     return(newX)
 }
 
-# test
+# TEST
 # set.seed(1)
 # tre <- ape::rphylo(5, 1, 0.1)
 # plot(tre)
