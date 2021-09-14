@@ -4,12 +4,12 @@
 \alias{speciation}
 \title{Speciation}
 \usage{
-speciation(x, i)
+speciation(x, ...)
 }
 \arguments{
 \item{x}{the object which determines method dispatch}
 
-\item{i}{the index of the species undergoing speciation}
+\item{...}{additional parameters passed to specific methods}
 }
 \description{
 Generic and methods for computing the speciation process

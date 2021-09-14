@@ -126,7 +126,7 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
                                       lambda = params$speciation_meta,
                                       mu = params$extinction_meta)[[1]]
 
-    # General not on book keeping: for vectors that we expect to grow (i.e.,
+    # General note on book keeping: for vectors that we expect to grow (i.e.,
     # traits and local abundances) we make a vector 100 times longer than the
     # initial number of species in the metacommunity rather than needing to
     # augment those vectors

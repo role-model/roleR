@@ -16,7 +16,7 @@ are specified, \code{params} are used as initial values}
 \item{\code{runType}}{a character vector of length one specifying the type of run
 (either "sim" or "fit")}
 
-\item{\code{priors}}{a names list of functions that generate samples from the
+\item{\code{priors}}{a named list of functions that generate samples from the
 desired prior distributions}
 }}
 

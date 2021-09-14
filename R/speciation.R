@@ -3,21 +3,19 @@
 #' @description Generic and methods for computing the speciation process
 #'
 #' @param x the object which determines method dispatch
-#' @param i the index of the species undergoing speciation
+#' @param ... additional parameters passed to specific methods
 #'
 #' @rdname speciation
 #' @export
 
 setGeneric('speciation',
-           function(x, i, ...) standardGeneric('speciation'),
+           function(x, ...) standardGeneric('speciation'),
            signature = 'x')
 
 
-#' function to implement speciation for \code{rolePhylo} class objects
+# function to implement speciation for \code{rolePhylo} class objects
 #' @param x an object of class \code{rolePhylo}
 #' @param i the index of the tip undergoing speciation
-#' @param ... additional parameters passed to specific methods
-#' @note method is set below after the function def
 
 .specPhylo <- function(x, i) {
     # number of tips
@@ -67,22 +65,21 @@ setMethod('speciation', 'rolePhylo', .specPhylo)
 #
 # boo <- as(foo, 'rolePhylo')
 #
-# doo <- speciation(boo, 3)
+# doo <- speciation(boo, i = 3)
 # bla <- as(doo, 'phylo')
 # plot(bla)
 
 
-#' function to implement speciation for \code{*comm} class objects
-#' @param x an object of class \code{localComm}
+# function to implement speciation for \code{*comm} class objects
+#' @param x an object of class \code{comm}
 #' @param i the index of the species undergoing speciation
-#' @param params a \code{roleParams} object
 
 .specComm <- function(x, i) {
     # update number of species
     x@Smax <- x@Smax + 1
 
-    # add abundance to new species
-    x@abundance[x@Smax] <- 1
+    # initialize abundance for new species
+    x@abundance[x@Smax] <- 0
 
     return(x)
 }
@@ -90,21 +87,26 @@ setMethod('speciation', 'rolePhylo', .specPhylo)
 setMethod('speciation', 'comm', .specComm)
 
 
-#' function to implement speciation for \code{localComm} class objects
+# function to implement speciation for \code{localComm} class objects
+#' @param x an object of class \code{localComm}
+#' @param i the index of the species undergoing speciation
 #' @param params a \code{roleParams} object
 
 .specLocal <- function(x, i, params) {
-    # update abund and Smax
+    # update Smax and initialize abundance
     x <- .specComm(x, i)
 
+    # update abundance
+    x@abundance[x@Smax] <- 1
+
     # index of where unrealized traits begin
-    # note: we need to do `Smax - 1` because above where we did `.specComm(x, i)`
-    # that already updated `Smax`
+    # note: we need to do `Smax - 1` because above where we did
+    # `.specComm(x, i)` that already updated `Smax`
     j <- max(which(x@traits[, 1] == x@Smax - 1)) + 1
 
     # add trait
     x@traits[j, 1] <- x@Smax
-    x@traits[j, 2] <- x@traits[i, 2] + rnorm(1, 0, params@params$sigma_traits) # need to figure this out
+    x@traits[j, 2] <- x@traits[i, 2] + rnorm(1, 0, params@params$trait_sigma) # need to figure this out
 
     return(x)
 }
