@@ -21,13 +21,29 @@ setGeneric('birth',
     #increment abundance of species in local community by 1
     x@abundance[i] <- x@abundance[i] + 1
 
+    return(x)
+}
+
+setMethod('birth', 'localComm', .birthLocal)
+
+#' function to implement birth for \code{roleModel} class objects
+#' @param x an object of class \code{roleModel}
+#' @param i the vector of indices of the species undergoing birth
+
+.birthRole <- function(x, i) {
+
+    # sample a species for birth relative to local abundance
+    i <- sample(x@localComm@Smax, 1,
+                prob = x@localComm@Abundance[1:x@localComm@Smax])
+
+    x@localComm <- birth(x@localComm, i)
+
     #intraspecific models will need code for trait inheritance etc later
 
     return(x)
 }
 
-# set the method
-setMethod('birth', 'localComm', .birthLocal)
+setMethod('birth', 'roleModel', .birthRole)
 
 # TEST
 # source("R/comm.R")
