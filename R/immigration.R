@@ -15,21 +15,30 @@ setGeneric('immigration',
 #' function to implement immigration for \code{localComm} class objects
 #' @param x an object of class \code{localComm}
 #' @param i the vector of indices of the species undergoing immigration
-#' @param params a \code{roleParams} object
 
-.immigrationLocal <- function(x, i, params) {
+.immigrationLocal <- function(x, i) {
 
-    #immigration moving from metacommunity to local?
 
     #increment abundance of species in local community by 1
-
     x@abundance[i] <- x@abundance[i] + 1
 
     return(x)
 }
-
-# set the method
 setMethod('immigration', 'localComm', .immigrationLocal)
+
+
+#' function to implement immigration for \code{roleModel} class objects
+#' @param x an object of class \code{roleModel}
+
+.immigrationRole <- function(x) {
+
+    i <- sample(x@params@species_meta, 1,
+                prob = x@metaComm@abundance)
+    x@localComm <- immigration(x@localComm)
+    return(x)
+}
+setMethod('immigration', 'roleModel', .immigrationRole)
+
 
 # TEST
 # source("R/comm.R")
