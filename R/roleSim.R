@@ -108,6 +108,7 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
     p <- params
 
     #if null params, initialize default plausible set of params
+    # change to set any non input to defaults
     if(is.null(p))
         p <- list(species_meta = 15,
                    individuals_meta = 500,
@@ -132,15 +133,24 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
     # simulate metacommunity SAD
     meta@abundance <- .lseriesFromSN(p@params$species_meta,
                                              p@params$individuals_meta)
-    meta@Smax <- p@params$individuals_meta
+    meta@Smax <- p@params$species_meta
+
+    #initalize meta comm traits without rep NA
+    local@traits <- matrix(c(ape::rTraitCont(phy, sigma = p@params$trait_sigma),
+                             rep(NA, p@params$species_meta * 99)))
 
     # create localComm object
     local <- localComm(abundance = numeric(),
                        traits = matrix(numeric()), pi = numeric(), Smax = 0)
+    # vector of 0 abundances
     local@abundance <- rep(0, p@params$species_meta * 100)
 
-    # initialize local species abundances with one species having all
-    # individuals
+    # initialize local species abundances with one species having all individuals
+    # eventually may want different ways of initializing abundances based on Harmon paper
+    # argument in params  specifying abundance initalization model
+    # save sampling index and use to assign to correct species of local abundances,
+    # and the appropriate trait from the metacomm pool and add to trait matrix
+
     local@abundance[sample(p@params$species_meta, 1,
                                    prob = meta@abundance)] <-
         p@params$individuals_local
