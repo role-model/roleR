@@ -135,9 +135,10 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
                                              p@params$individuals_meta)
     meta@Smax <- p@params$species_meta
 
-    #initalize meta comm traits without rep NA
-    local@traits <- matrix(c(ape::rTraitCont(phy, sigma = p@params$trait_sigma),
-                             rep(NA, p@params$species_meta * 99)))
+    # initalize meta comm traits:
+    # first column is species ID, second column is trait value
+    local@traits <- cbind(1:meta@Smax,
+                          ape::rTraitCont(phy, sigma = p@params$trait_sigma))
 
     # create localComm object
     local <- localComm(abundance = numeric(),
@@ -151,16 +152,18 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
     # save sampling index and use to assign to correct species of local abundances,
     # and the appropriate trait from the metacomm pool and add to trait matrix
 
-    local@abundance[sample(p@params$species_meta, 1,
-                                   prob = meta@abundance)] <-
-        p@params$individuals_local
+    # index of the species that will initially have all abundance
+    i <- sample(p@params$species_meta, 1, prob = meta@abundance)
+
+    # assing all abundance to that species
+    local@abundance[i] <- p@params$individuals_local
 
     # counter keeping track of max number of possible species in local comm
     local@Smax <- p@params$species_meta
 
-    # simulate local comm traits
-    local@traits <- matrix(c(ape::rTraitCont(phy, sigma = p@params$trait_sigma),
-                              rep(NA, p@params$species_meta * 99)))
+    # extract local comm traits from meta traits
+    local@traits <- matrix(NA, nrow = p@params$species_meta * 10000, ncol = 2)
+    local@traits[1, 1] <- c(i, meta@traits[meta@traits[, 1] == i, 2])
 
     # convert ape phylo to rolePhylo
     phy <- as(phy, "rolePhylo")
