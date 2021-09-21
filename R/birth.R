@@ -28,13 +28,12 @@ setMethod('birth', 'localComm', .birthLocal)
 
 #' function to implement birth for \code{roleModel} class objects
 #' @param x an object of class \code{roleModel}
-#' @param i the vector of indices of the species undergoing birth
 
-.birthRole <- function(x, i) {
+.birthRole <- function(x) {
 
     # sample a species for birth relative to local abundance
     i <- sample(x@localComm@Smax, 1,
-                prob = x@localComm@Abundance[1:x@localComm@Smax])
+                prob = x@localComm@abundance[1:x@localComm@Smax])
 
     x@localComm <- birth(x@localComm, i)
 

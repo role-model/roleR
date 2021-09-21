@@ -21,17 +21,17 @@ setClass('roleModel',
 #' @param localComm an object of class \code{localComm}
 #' @param metaComm an object of class \code{metaComm}
 #' @param phylo an object of class \code{rolePhylo}
-#' @param params an object of calss \code{roleParams}
+#' @param params an object of class \code{roleParams}
 #'
 #' @return an object of class \code{roleModel}
 #'
 #' @export
 
 
-roleModel <- function(localComm, metaComm, phylo, params) {
+roleModel <- function(local, meta, phy, p) {
     new('roleModel',
-        localComm = localComm,
-        metaComm = metaComm,
-        phylo = rolePhylo,
-        params = roleParams)
+        localComm = local,
+        metaComm = meta,
+        phylo = phy,
+        params = p)
 }

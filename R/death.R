@@ -12,27 +12,6 @@ setGeneric('death',
            function(x, i, ...) standardGeneric('death'),
            signature = 'x')
 
-#' function to implement death for \code{*roleModel} class objects
-#' @param x an object of class \code{roleModel}
-#' @param i the index of the species undergoing death
-
-.deathRoleModel <- function(x) {
-
-    # sample a species for death proportional to species abundance
-    i <- sample(x@localComm@Smax, 1, prob = x@localComm@abundance[1:x@localComm@Smax])
-
-    # call death on localComm
-    x@localComm <- death(x@localComm, i)
-
-    # if death led to extinction, call death on rolePhylo
-    if(x@localComm@abundance[i] <= 0)
-        x@rolePhylo <- death(x@rolePhylo, i)
-
-    return(x)
-}
-
-setMethod('death', 'roleModel', .deathRoleModel)
-
 #' function to implement death for \code{*comm} class objects
 #' @param x an object of class \code{localComm}
 #' @param i the index of the species undergoing death
@@ -50,7 +29,6 @@ setMethod('death', 'comm', .deathComm)
 #' function to implement death for \code{*rolePhylo} class objects
 #' @param x an object of class \code{rolePhylo}
 #' @param i the index of the tip undergoing death
-#' @param params a \code{roleParams} object
 
 .deathPhylo <- function(x, i) {
 
@@ -61,6 +39,26 @@ setMethod('death', 'comm', .deathComm)
 }
 
 setMethod('death', 'rolePhylo', .deathPhylo)
+
+#' function to implement death for \code{*roleModel} class objects
+#' @param x an object of class \code{roleModel}
+
+.deathRole <- function(x) {
+
+    # sample a species for death proportional to species abundance
+    i <- sample(x@localComm@Smax, 1, prob = x@localComm@abundance[1:x@localComm@Smax])
+
+    # call death on localComm
+    x@localComm <- death(x@localComm, i)
+
+    # if death led to extinction, call death on rolePhylo
+    if(x@localComm@abundance[i] <= 0)
+        x@rolePhylo <- death(x@rolePhylo, i)
+
+    return(x)
+}
+
+setMethod('death', 'roleModel', .deathRole)
 
 # TEST
 # source("R/comm.R")

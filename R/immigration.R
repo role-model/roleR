@@ -18,7 +18,6 @@ setGeneric('immigration',
 
 .immigrationLocal <- function(x, i) {
 
-
     #increment abundance of species in local community by 1
     x@abundance[i] <- x@abundance[i] + 1
 
@@ -32,7 +31,7 @@ setMethod('immigration', 'localComm', .immigrationLocal)
 
 .immigrationRole <- function(x) {
 
-    i <- sample(x@params@species_meta, 1,
+    i <- sample(x@params@params$species_meta, 1,
                 prob = x@metaComm@abundance)
     x@localComm <- immigration(x@localComm)
     return(x)
