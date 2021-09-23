@@ -72,14 +72,13 @@ setMethod('speciation', 'rolePhylo', .specPhylo)
 
 # function to implement speciation for \code{*comm} class objects
 #' @param x an object of class \code{comm}
-#' @param i the index of the species undergoing speciation
 
-.specComm <- function(x, i) {
+.specComm <- function(x) {
     # update number of species
     x@Smax <- x@Smax + 1
 
     # initialize abundance for new species
-    x@abundance[x@Smax] <- 0
+    x@abundance[x@Smax] <- 1
 
     return(x)
 }
@@ -89,10 +88,9 @@ setMethod('speciation', 'comm', .specComm)
 
 # function to implement speciation for \code{localComm} class objects
 #' @param x an object of class \code{localComm}
-#' @param i the index of the species undergoing speciation
-#' @param params a \code{roleParams} object
 
-.specLocal <- function(x, i, params) {
+.specLocal <- function(x, i) {
+
     # update Smax and initialize abundance
     x <- .specComm(x, i)
 
@@ -106,23 +104,43 @@ setMethod('speciation', 'comm', .specComm)
 
     # add trait
     x@traits[j, 1] <- x@Smax
-    x@traits[j, 2] <- x@traits[i, 2] + rnorm(1, 0, params@params$trait_sigma) # need to figure this out
+    x@traits[j, 2] <- x@traits[i, 2] + rnorm(1, 0, params@params@trait_sigma) # need to figure this out
 
     return(x)
 }
-
 setMethod('speciation', 'localComm', .specLocal)
+
 
 #' function to implement speciation for \code{roleModel} class objects
-#' @param params a \code{roleParams} object
+#' @param x an object of class \code{roleModel}
+#'
+.specRole <- function(x) {
 
-.specRoleModel <- function(x, params) {
+    # note: `Smax` from `@localComm` and `@metaComm` and `n` from `@phylo` are
+    # all enforced to be equal, so we can sample from any but we have to
+    # weight the probabilities by abundances and immigration
 
-    # add sampling for i
-    x@localComm <- speciation(x@localComm)
-    x@rolePhylo <- speciation(x@rolePhylo)
+    # dispersal prob
+    dp <- x@params@params$dispersal_prob
+
+    # normalized abundances at meta and local levels
+    mp <- x@metaComm@abundance[1:x@metaComm@Smax]
+    mp <- mp / sum(mp)
+    lp <- x@localComm@abundance[1:x@localComm@Smax]
+    lp <- lp / sum(lp)
+
+    # prob of selecting a parent
+    # metacomm abundance weighted by dispersal prob + local comm abundance weighted by birth
+    pp <- dp * mp + (1 - dp) * lp
+
+    # index of parent
+    i <- sample(x@phylo@n, size = 1, prop = pp)
+
+    # update slots of the role model object
+    x@localComm <- speciation(x@localComm, i = i)
+    x@metaComm <- speciation(x@metaComm, i = i)
+    x@phylo <- speciation(x@phylo, i = i)
 
     return(x)
 }
-
-setMethod('speciation', 'localComm', .specLocal)
+setMethod('speciation', 'roleModel', .specRole)
