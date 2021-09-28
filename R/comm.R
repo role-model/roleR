@@ -131,6 +131,21 @@ checkLocalComm <- function(object) {
                     'lengths of @abundance and @pi must be equal')
     }
 
+    #make sure all indices of trait values match indices of nonzero abundance
+    indices = na.omit(object@traits[,1])
+    #if all indices with trait values have <= 0 abundance
+    if(all(object@abundance[indices] <= 0)){
+        checks <- c(checks, 'all indices of trait values match indices of
+                    nonzero abundance')
+    }
+
+    #make sure local indices dont exceed Smax
+    traits = na.omit(object@traits)
+    # if last index of traits > Smax
+    if(tail(traits[,1], n = 1) > object@Smax){
+        checks <- c(checks, 'local indices cannot exceed Smax')
+    }
+
     # if any issues, return them, otherwise all OK
     if(length(checks) > 0) {
         return(checks)
