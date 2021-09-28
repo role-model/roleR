@@ -89,10 +89,10 @@ setMethod('speciation', 'comm', .specComm)
 # function to implement speciation for \code{localComm} class objects
 #' @param x an object of class \code{localComm}
 
-.specLocal <- function(x, i) {
+.specLocal <- function(x, i, p) {
 
     # update Smax and initialize abundance
-    x <- .specComm(x, i)
+    x <- .specComm(x)
 
     # update abundance
     x@abundance[x@Smax] <- 1
@@ -104,7 +104,7 @@ setMethod('speciation', 'comm', .specComm)
 
     # add trait
     x@traits[j, 1] <- x@Smax
-    x@traits[j, 2] <- x@traits[i, 2] + rnorm(1, 0, params@params@trait_sigma) # need to figure this out
+    x@traits[j, 2] <- x@traits[i, 2] + rnorm(1, 0, p@params$trait_sigma) # need to figure this out
 
     return(x)
 }
@@ -134,11 +134,11 @@ setMethod('speciation', 'localComm', .specLocal)
     pp <- dp * mp + (1 - dp) * lp
 
     # index of parent
-    i <- sample(x@phylo@n, size = 1, prop = pp)
+    i <- sample(x@phylo@n, size = 1, prob = pp)
 
     # update slots of the role model object
-    x@localComm <- speciation(x@localComm, i = i)
-    x@metaComm <- speciation(x@metaComm, i = i)
+    x@localComm <- speciation(x@localComm, i = i, p = x@params)
+    x@metaComm <- speciation(x@metaComm)
     x@phylo <- speciation(x@phylo, i = i)
 
     return(x)

@@ -90,8 +90,8 @@ metaComm <- function(abundance, traits, Smax) {
 #' @param object an object of class comm
 
 checkComm <- function(object) {
-    checks <- c()
 
+    checks <- c()
     if(length(object@abundance) < object@Smax) {
         checks <- c(checks,
                     '@Smax greater than number of species with data')
@@ -128,7 +128,7 @@ checkLocalComm <- function(object) {
 
     if(length(object@abundance) != length(object@pi)) {
         checks <- c(checks,
-                    'lenths of @abundance and @pi must be equal')
+                    'lengths of @abundance and @pi must be equal')
     }
 
     # if any issues, return them, otherwise all OK

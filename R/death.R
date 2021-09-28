@@ -53,7 +53,7 @@ setMethod('death', 'rolePhylo', .deathPhylo)
 
     # if death led to extinction, call death on rolePhylo
     if(x@localComm@abundance[i] <= 0)
-        x@rolePhylo <- death(x@rolePhylo, i)
+        x@phylo <- death(x@phylo, i)
 
     return(x)
 }

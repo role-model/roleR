@@ -33,7 +33,7 @@ setMethod('immigration', 'localComm', .immigrationLocal)
 
     i <- sample(x@params@params$species_meta, 1,
                 prob = x@metaComm@abundance)
-    x@localComm <- immigration(x@localComm)
+    x@localComm <- immigration(x@localComm, i)
     return(x)
 }
 setMethod('immigration', 'roleModel', .immigrationRole)
