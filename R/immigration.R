@@ -31,8 +31,8 @@ setMethod('immigration', 'localComm', .immigrationLocal)
 
 .immigrationRole <- function(x) {
 
-    i <- sample(x@params@params$species_meta, 1,
-                prob = x@metaComm@abundance)
+    i <- sample(x@metaComm@Smax, 1,
+                prob = x@metaComm@abundance[1:x@metaComm@Smax])
     x@localComm <- immigration(x@localComm, i)
     return(x)
 }

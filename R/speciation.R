@@ -98,9 +98,7 @@ setMethod('speciation', 'comm', .specComm)
     x@abundance[x@Smax] <- 1
 
     # index of where unrealized traits begin
-    # note: we need to do `Smax - 1` because above where we did
-    # `.specComm(x, i)` that already updated `Smax`
-    j <- max(which(x@traits[, 1] == x@Smax - 1)) + 1
+    j <- min(which(is.na(x@traits[, 1])))
 
     # add trait
     x@traits[j, 1] <- x@Smax
