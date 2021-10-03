@@ -31,5 +31,11 @@ meta@Smax <- p@params$species_meta
 microbenchmark(meta@traits <- cbind(1:meta@Smax,
                      ape::rTraitCont(phy, sigma = p@params$trait_sigma)))
 
+defaultRoleModel <- out
+
+source("R/speciation.R")
+source("R/immigration.R")
+source("R/death.R")
+
 # bench iterSim
-microbenchmark(.iterSim(defaultRoleModel, 10))
+microbenchmark(.iterSim(defaultRoleModel, 50))
