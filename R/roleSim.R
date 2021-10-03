@@ -217,8 +217,6 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
     # equilibrium rosindell-harmon - escape from initial conditions
     # when every initial individual has been replaced by immigrant or speciation
     # user can specify to stop model when X% of equilibrium is achieved
-
-    return(comm)
 }
 
 
