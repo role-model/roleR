@@ -21,13 +21,17 @@ Remotes:
     ajrominger/pika
 RoxygenNote: 7.1.1
 Collate: 
+    'birth.R'
     'comm.R'
+    'death.R'
     'hillDiv.R'
+    'immigration.R'
     'phyloSim.R'
     'rolePhylo.R'
     'roleParams.R'
     'roleModel.R'
     'roleR-package.R'
     'roleSim.R'
+    'roleSimOld.R'
     'roleSimPlots.R'
     'speciation.R'
