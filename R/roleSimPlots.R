@@ -15,7 +15,7 @@ all.types = c('Abundance', 'Trait', 'pi', 'phylo')
 #'
 #' @return A \code{plotly} object
 
-library(plyr)
+# library(plyr)
 
 #' @rdname roleSimPlots
 #' @export
@@ -51,7 +51,7 @@ roleTSPlot <- function(x, type = all.types) {
 
 #' @rdname roleSimPlots
 #' @export
-#'
+
 
 roleDistAnim <- function(roleSim, type = all.types) {
     type <- match.arg(type, all.types)
@@ -85,7 +85,7 @@ roleDistAnim <- function(roleSim, type = all.types) {
 
 #' @rdname roleSimPlots
 #' @export
-#'
+
 
 roleTSAnim <- function(roleSim, type = all.types) {
     'stub'

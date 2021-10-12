@@ -3,11 +3,17 @@
 \name{roleDistPlot}
 \alias{roleDistPlot}
 \alias{roleTSPlot}
+\alias{roleDistAnim}
+\alias{roleTSAnim}
 \title{Plotting RoLE model simulations}
 \usage{
-roleDistPlot(x, type = c("Abundance", "Trait", "pi", "phylo"))
+roleDistPlot(x, type = all.types)
 
-roleTSPlot(x, type = c("Abundance", "Trait", "Pi", "phylo"))
+roleTSPlot(x, type = all.types)
+
+roleDistAnim(roleSim, type = all.types)
+
+roleTSAnim(roleSim, type = all.types)
 }
 \arguments{
 \item{x}{a \code{roleSim} object}

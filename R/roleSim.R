@@ -47,25 +47,22 @@
 roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
     # ----
     # initialize simulation
-
     if(is.null(init)) {
         init <- .initSim(params)
     }
 
     # make sure `params` reflect the user-specified values (potentially
     # overwriting old values)
-    init$params <- params
+    #init@params <- params
 
     # ----
     # loop over steps
     .iterSim(init, nstep)
 }
 
-
-
 #' @rdname roleSim
 #' @export
-
+#'
 roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
     # ----
     # initialize simulation
@@ -76,7 +73,7 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
 
     # make sure `params` reflect the user-specified values (potentially
     # overwriting old values)
-    init$params <- params
+    init@params <- params
 
     # ----
     # loop over steps
@@ -107,103 +104,119 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
 #' @param params list of model parameters
 
 .initSim <- function(params) {
-    # empty `roleComm` object
-    out <- list(local_comm = list(Abundance = numeric(),
-                                  Traits = numeric(),
-                                  pi = numeric()),
-                meta_comm = list(Abundance = numeric(),
-                                 Traits = numeric()),
-                phylo = list(),
-                params = params)
-    class(out) <- 'roleComm'
 
-    # metacommunity SAD
-    out$meta_comm$Abundance <- .lseriesFromSN(params$species_meta,
-                                              params$individuals_meta)
+    p <- params
 
-    # initialize phylo
-    out$phylo <- TreeSim::sim.bd.taxa(params$species_meta, numbsim = 1,
-                                      lambda = params$speciation_meta,
-                                      mu = params$extinction_meta)[[1]]
+    #if null params, initialize default plausible set of params
+    # change to set any non input to defaults
+    if(is.null(p))
+        p <- list(species_meta = 15,
+                   individuals_meta = 500,
+                   individuals_local = 100,
+                   dispersal_prob = 0.5,
+                   speciation_local = 0.1,
+                   extinction_meta = 0.8,
+                   speciation_meta = 1,
+                   trait_sigma = 0.1)
 
-    # General not on book keeping: for vectors that we expect to grow (i.e.,
+    #create roleParams object
+    p <- roleParams(p,"sim")
+
+        # simulate phylogeny
+    phy <- TreeSim::sim.bd.taxa(p@params$species_meta, numbsim = 1,
+                                lambda = p@params$speciation_meta,
+                                mu = p@params$extinction_meta, complete = FALSE)[[1]]
+
+    # create metaComm object
+    meta <- metaComm(abundance = numeric(), traits = matrix(numeric()),
+                     Smax = 0)
+    # simulate metacommunity SAD
+    meta@abundance <- .lseriesFromSN(p@params$species_meta,
+                                             p@params$individuals_meta)
+    meta@Smax <- p@params$species_meta
+
+    # initalize meta comm traits:
+    # first column is species ID, second column is trait value
+    # Smax rows
+    meta@traits <- cbind(1:meta@Smax,
+                          ape::rTraitCont(phy, sigma = p@params$trait_sigma))
+    # create localComm object
+    local <- localComm(abundance = numeric(),
+                       traits = matrix(numeric()), pi = numeric(), Smax = 0)
+    # vector of 0 abundances
+    local@abundance <- rep(0, p@params$species_meta * 100)
+
+    # initialize local species abundances with one species having all individuals
+    # eventually may want different ways of initializing abundances based on Harmon paper
+    # argument in params  specifying abundance initalization model
+    # save sampling index and use to assign to correct species of local abundances,
+    # and the appropriate trait from the metacomm pool and add to trait matrix
+
+    # index of the species that will initially have all abundance
+    i <- sample(p@params$species_meta, 1, prob = meta@abundance)
+
+    # passing all abundance to that species
+    local@abundance[i] <- p@params$individuals_local
+
+    # counter keeping track of max number of possible species in local comm
+    local@Smax <- p@params$species_meta
+
+    # extract local comm traits from meta traits
+    local@traits <- matrix(NA, nrow = p@params$species_meta * 10000, ncol = 2) #nrow = p@params$species_meta * 10000
+
+    #changed this - correct?
+    local@traits[i,] <- c(i, meta@traits[meta@traits[,1] == i, 2])
+
+    # convert ape phylo to rolePhylo
+    phy <- as(phy, "rolePhylo")
+
+    # create roleModel object of local comm, meta comm, phylogeny, and params
+    out <- roleModel(local,meta,phy,p)
+
+    # General note on book keeping: for vectors that we expect to grow (i.e.,
     # traits and local abundances) we make a vector 100 times longer than the
     # initial number of species in the metacommunity rather than needing to
     # augment those vectors
 
-    # initialize traits
-    out$Traits <- c(ape::rTraitCont(out$phylo, sigma = params$sigma_bm),
-                    rep(NA, params$species_meta * 99))
-
-    # vector of local species abundances
-    out$local_comm$Abundance <- rep(0, params$species_meta * 100)
-
-    # initialize local species abundances with one species having all
-    # individuals
-    out$local_comm$Abundance[sample(params$species_meta, 1,
-                                    prob = out$meta_comm$Abundance)] <-
-        params$individuals_local
-
-    # counter keeping track of max number of possible species in local
-    # community
-    out$local_comm$JiMax <- params$species_meta
-
     return(out)
 }
 
-
+# Altered to fit new methods but incompatible with old initSim
 # ----
-#' @description function to iterate role simulation
-#' @param comm an object of class `roleComm`
+# function to iterate role simulation
+#' @param model an object of class `roleModel`
 #' @param nstep number of steps to iterate
 
-.iterSim <- function(comm, nstep) {
+.iterSim <- function(model, nstep) {
     # browser()
     for(i in 1:nstep) {
-        # death
-        dead <- sample(comm$local_comm$JiMax, 1,
-                       prob = comm$local_comm$Abundance[1:comm$local_comm$JiMax])
-        comm$local_comm$Abundance[dead] <- comm$local_comm$Abundance[dead] - 1
 
-        if(runif(1) <= comm$params$speciation_local) {
-            # speciation
-            comm$local_comm$Abundance[comm$local_comm$JiMax + 1] <- 1
-            comm$local_comm$JiMax <- comm$local_comm$JiMax + 1
+        # calls deathRole, which samples a species for death then calls death on localComm & rolePhylo
+        model <- death(model)
 
-            # need to update phylogeny
-            # need to assign new trait
-        } else if(runif(1) <= comm$params$dispersal_prob) {
-            # immigration
-            imm <- sample(comm$params$species_meta, 1,
-                          prob = comm$meta_comm$Abundance)
-            comm$local_comm$Abundance[imm] <- comm$local_comm$Abundance[imm] + 1
-        } else {
-            # local birth
-            birth <-
-                sample(comm$local_comm$JiMax, 1,
-                       prob = comm$local_comm$Abundance[1:comm$local_comm$JiMax])
-            comm$local_comm$Abundance[birth] <-
-                comm$local_comm$Abundance[birth] + 1
+        # if speciation occurs based on speciation chance param
+        if(runif(1) <= model@params@params$speciation_local) {
+
+            # call speciation on localComm & rolePhylo
+            model <- speciation(model)
+        }
+
+        # if immigration occurs based on dispersal chance param
+        else if(runif(1) <= model@params@params$dispersal_prob) {
+
+            model <- immigration(model)
+        }
+
+        # else birth occurs
+        else {
+            # sample a species for birth relative to local abundance
+            model <- birth(model)
         }
     }
 
-    # # update equilib in params (if neccesary)
-    # # stub
-    #
-    # # trim local community to max possible species
-    # # JJ <- JJ[1:JiMax]
-
-    # STUB: add random trait and pi info
-    comm$local_comm$Trait <- rnorm(length(comm$local_comm$JiMax))
-    comm$local_comm$pi = rlnorm(length(comm$local_comm$JiMax))
-
-    # # add nstep to params
-    # params$nstep <- nstep
-    #
-    # out <- list(local_comm = localComm, meta_comm = JJm, params = params)
-    # class(out) <- 'roleComm'
-
-    return(comm)
+    # equilibrium rosindell-harmon - escape from initial conditions
+    # when every initial individual has been replaced by immigrant or speciation
+    # user can specify to stop model when X% of equilibrium is achieved
 }
 
 
