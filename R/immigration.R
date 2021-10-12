@@ -38,7 +38,6 @@ setMethod('immigration', 'localComm', .immigrationLocal)
 }
 setMethod('immigration', 'roleModel', .immigrationRole)
 
-
 # TEST
 # source("R/comm.R")
 # source("R/immigration.R")

@@ -19,10 +19,13 @@ Suggests:
     hillR
 Remotes:
     ajrominger/pika
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Collate: 
+    'birth.R'
     'comm.R'
+    'death.R'
     'hillDiv.R'
+    'immigration.R'
     'phyloSim.R'
     'rolePhylo.R'
     'roleParams.R'
