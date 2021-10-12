@@ -20,12 +20,15 @@ test_that('deathRole works', {
     r <- .initSim(NULL)
     #set starting species (starts at 100) to have abundance of 1
     index <- match(100,r@localComm@abundance)
+    index
     r@localComm@abundance[index] <- 1
+    r@localComm@abundance
+    r@phylo@alive
     r <- death(r)
+    r@phylo@alive
     #verify that death occured (no 1s)
     expect_true(!is.element(1,r@localComm@abundance))
     #verify that phylodeath occurred, i.e. tip has been set to dead
     #below does not work currently due to misaligned indices, todo figure this out
-    #expect_false(r@phylo@alive[index])
+    expect_false(r@phylo@alive[index])
 })
-

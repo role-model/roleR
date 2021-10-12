@@ -88,7 +88,8 @@ setMethod('speciation', 'comm', .specComm)
 
 # function to implement speciation for \code{localComm} class objects
 #' @param x an object of class \code{localComm}
-
+#' @param i the index to undergo speciation
+#' @param p the roleModel params
 .specLocal <- function(x, i, p) {
 
     # update Smax and initialize abundance

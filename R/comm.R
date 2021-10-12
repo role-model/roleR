@@ -117,7 +117,7 @@ checkComm <- function(object) {
 
 
 # validate parent comm class
-setValidity('comm', checkComm)
+#setValidity('comm', checkComm)
 
 
 # checker function for localComm class validation
@@ -141,9 +141,12 @@ checkLocalComm <- function(object) {
 
     #make sure local indices dont exceed Smax
     traits = na.omit(object@traits)
+    # if traits is not null
     # if last index of traits > Smax
-    if(tail(traits[,1], n = 1) > object@Smax){
-        checks <- c(checks, 'local indices cannot exceed Smax')
+    if(isTRUE(traits)){
+        if(tail(traits[,1], n = 1) > object@Smax){
+            checks <- c(checks, 'local indices cannot exceed Smax')
+        }
     }
 
     # if any issues, return them, otherwise all OK
@@ -156,4 +159,4 @@ checkLocalComm <- function(object) {
 
 
 # validate localComm class
-setValidity('localComm', checkLocalComm)
+#setValidity('localComm', checkLocalComm)

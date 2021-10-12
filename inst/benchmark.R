@@ -39,3 +39,5 @@ source("R/death.R")
 
 # bench iterSim
 microbenchmark(.iterSim(defaultRoleModel, 50))
+
+test <- .iterSim(defaultRoleModel,50)

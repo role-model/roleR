@@ -27,5 +27,7 @@ test_that('specRole works', {
     r <- speciation(r)
     expect_true(sum(r@phylo@alive) == prevSumAlive + 1)
     expect_true(sum(r@metaComm@Smax) == prevSmax + 1)
+
+
 })
 
