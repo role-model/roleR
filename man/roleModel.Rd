@@ -4,7 +4,7 @@
 \alias{roleModel}
 \title{Create a RoLE model object}
 \usage{
-roleModel(local, meta, phy, p)
+roleModel(localComm, metaComm, phylo, params)
 }
 \arguments{
 \item{localComm}{an object of class \code{localComm}}
@@ -13,7 +13,7 @@ roleModel(local, meta, phy, p)
 
 \item{phylo}{an object of class \code{rolePhylo}}
 
-\item{params}{an object of class \code{roleParams}}
+\item{params}{an object of calss \code{roleParams}}
 }
 \value{
 an object of class \code{roleModel}

@@ -8,7 +8,7 @@
 #'
 #'
 #' @param params list of parameters
-#' @param init an optional initial condition specified as a \code{roleComm}
+#' @param init an optional initial condition specified as a \code{roleModelCpp}
 #' object
 #' @param nstep number of simulation steps to run; if \code{prop_equilib} is
 #' specified in the \code{params} list, \code{nstep} will over-ride that
@@ -45,106 +45,69 @@
 #' @export
 
 roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
-    # ----
+
     # initialize simulation
     if(is.null(init)) {
         init <- .initSim(params)
     }
 
-    # make sure `params` reflect the user-specified values (potentially
-    # overwriting old values)
-    #init@params <- params
 
-    # ----
+    #temp
+    sourceCpp("R/iterSim.cpp")
+    loadModule("iterSim")
+
     # loop over steps
-    .iterSim(init, nstep)
-}
-
-#' @rdname roleSim
-#' @export
-#'
-roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
-    # ----
-    # initialize simulation
-
-    if(is.null(init)) {
-        init <- .initSim(params)
-    }
-
-    # make sure `params` reflect the user-specified values (potentially
-    # overwriting old values)
-    init@params <- params
-
-    # ----
-    # loop over steps
-
-    # number of chunks to iterate over
-    B <- floor(nstep / nout)
-    if(B <= 1) B <- 2
-    allSims <- vector('list', B)
-
-    # first set of iterations
-    allSims[[1]] <- .iterSim(init, nout)
-
-    # loop over remaining iterations
-    for(b in 2:B) {
-        # plotting stuff, etc goes here
-
-        # update `roleComm` object
-        allSims[[b]] <- .iterSim(allSims[[b - 1]], nout)
-    }
-
-    # return all the simulations
-    return(allSims)
+    iterSimCpp(init, nstep)
 }
 
 # ----
-#' @description function to initialize role simulation, returns a `roleComm`
+#' @description function to initialize role simulation, returns a `roleModelCpp`
 #' object
-#' @param params list of model parameters
+#' @param params a roleParamsCpp object containing the model parameters
 
 .initSim <- function(params) {
 
-    p <- params
+    #temp
+    sourceCpp("paramValuesCpp.cpp")
+    loadModule("paramValsCpp")
+    sourceCpp("roleParamsCpp.cpp")
+    loadModule("paramsCpp")
 
-    #if null params, initialize default plausible set of params
-    # change to set any non input to defaults
-    if(is.null(p))
-        p <- list(species_meta = 15,
-                   individuals_meta = 500,
-                   individuals_local = 100,
-                   dispersal_prob = 0.5,
-                   speciation_local = 0.1,
-                   extinction_meta = 0.8,
-                   speciation_meta = 1,
-                   trait_sigma = 0.1)
+    # if no roleParamsCpp object provided
+    if(params == NULL)
+    {
+        #create empty paramValuesCpp object
+        #empty constructor includes a plausible set of values
+        vals <- new(paramValuesCpp)
 
-    #create roleParams object
-    p <- roleParams(p,"sim")
+        #create roleParamsCpp object from values
+        params <- new(roleParamsCpp,vals,1,"sim")
+    }
 
-        # simulate phylogeny
-    phy <- TreeSim::sim.bd.taxa(p@params$species_meta, numbsim = 1,
-                                lambda = p@params$speciation_meta,
-                                mu = p@params$extinction_meta, complete = FALSE)[[1]]
+    # simulate phylogeny
+    phy <- TreeSim::sim.bd.taxa(params$values$species_meta, numbsim = 1,
+                                lambda = params$values$speciation_meta,
+                                mu = params$values$extinction_meta, complete = FALSE)[[1]]
 
-    # create metaComm object
-    meta <- metaComm(abundance = numeric(), traits = matrix(numeric()),
-                     Smax = 0)
     # simulate metacommunity SAD
-    meta@abundance <- .lseriesFromSN(p@params$species_meta,
-                                             p@params$individuals_meta)
-    meta@Smax <- p@params$species_meta
+    abundance_m <- .lseriesFromSN(params$values$species_meta,
+                                params$values$individuals_meta)
 
     # initalize meta comm traits:
     # first column is species ID, second column is trait value
     # Smax rows
-    meta@traits <- cbind(1:meta@Smax,
-                          ape::rTraitCont(phy, sigma = p@params$trait_sigma))
-    # create localComm object
-    local <- localComm(abundance = numeric(),
-                       traits = matrix(numeric()), pi = numeric(), Smax = 0)
+    traits_m <- cbind(1:params$values$species_meta,
+                         ape::rTraitCont(phy, sigma = params$values$trait_sigma))
+
+    #temp
+    sourceCpp("R/commCpp2.cpp")
+    loadModule("commCpp")
+
+    # create metaCommCpp object
+    meta <- new(metaCommCpp, abundance_m, traits_m, 0)
+
     # vector of 0 abundances
-    local@abundance <- rep(0, p@params$species_meta * 100)
+    abundance_l <- rep(0, params$values$species_meta * 100)
 
     # initialize local species abundances with one species having all individuals
     # eventually may want different ways of initializing abundances based on Harmon paper
@@ -153,72 +116,31 @@ roleSimPlay <- function(params, init = NULL, nstep = NULL, nout = NULL) {
     # and the appropriate trait from the metacomm pool and add to trait matrix
 
     # index of the species that will initially have all abundance
-    i <- sample(p@params$species_meta, 1, prob = meta@abundance)
+    i <- sample(params$values$species_meta, 1, prob = meta$abundance)
 
     # passing all abundance to that species
-    local@abundance[i] <- p@params$individuals_local
+    abundance_l[i] <- params$values$individuals_local
 
     # counter keeping track of max number of possible species in local comm
-    local@Smax <- p@params$species_meta
+    Smax_ <- params$values$species_meta
 
     # extract local comm traits from meta traits
-    local@traits <- matrix(NA, nrow = p@params$species_meta * 10000, ncol = 2) #nrow = p@params$species_meta * 10000
+    traits_l <- matrix(NA, nrow = params$values$species_meta * 10000, ncol = 2)
 
     #changed this - correct?
-    local@traits[i,] <- c(i, meta@traits[meta@traits[,1] == i, 2])
+    traits_l[i,] <- c(i, meta$traits[meta$traits[,1] == i, 2])
 
-    # convert ape phylo to rolePhylo
+    # create localCommCpp object
+    local <- new(localCommCpp, abundance_l, Smax_,NULL)
+
+    # convert ape phylo to rolePhyloCpp
     phy <- as(phy, "rolePhylo")
 
-    # create roleModel object of local comm, meta comm, phylogeny, and params
-    out <- roleModel(local,meta,phy,p)
-
-    # General note on book keeping: for vectors that we expect to grow (i.e.,
-    # traits and local abundances) we make a vector 100 times longer than the
-    # initial number of species in the metacommunity rather than needing to
-    # augment those vectors
+    # create roleModelCpp object of local comm, meta comm, phylogeny, and params
+    out <- new(roleModel,local,meta,phy,params)
 
     return(out)
 }
-
-# Altered to fit new methods but incompatible with old initSim
-# ----
-# function to iterate role simulation
-#' @param model an object of class `roleModel`
-#' @param nstep number of steps to iterate
-
-.iterSim <- function(model, nstep) {
-    # browser()
-    for(i in 1:nstep) {
-
-        # calls deathRole, which samples a species for death then calls death on localComm & rolePhylo
-        model <- death(model)
-
-        # if speciation occurs based on speciation chance param
-        if(runif(1) <= model@params@params$speciation_local) {
-
-            # call speciation on localComm & rolePhylo
-            model <- speciation(model)
-        }
-
-        # if immigration occurs based on dispersal chance param
-        else if(runif(1) <= model@params@params$dispersal_prob) {
-
-            model <- immigration(model)
-        }
-
-        # else birth occurs
-        else {
-            # sample a species for birth relative to local abundance
-            model <- birth(model)
-        }
-    }
-
-    # equilibrium rosindell-harmon - escape from initial conditions
-    # when every initial individual has been replaced by immigrant or speciation
-    # user can specify to stop model when X% of equilibrium is achieved
-}
-
 
 # ----
 #' @description function to solve for parameter of logseries
