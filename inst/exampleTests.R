@@ -62,11 +62,30 @@ sourceCpp("R/birthCpp.cpp")
 loadModule("birthCpp")
 
 l <- birthL(l,1)
+
 r <- birthR(r)
 
 #------
 
-#ROLE SIM TESTS
+#ROLE SIM MODEL TESTS
 
 source("R/roleSim.R")
-.initSim()
+# initSim works
+model <- .initSim()
+
+install.packages("devtools")
+library(devtools)
+install_github("ajrominger/pika")
+
+sourceCpp("R/iterSimCpp.cpp")
+loadModule("iterSimCpp")
+
+#iterSim runs, but doesnt work
+model <- iterSim(model,100)
+
+#todo
+#bugfix iterSim
+#fully document scripts
+#finish speciation
+#consider making local and meta subclasses again
+#consider getting overloaded birth death etc methods working

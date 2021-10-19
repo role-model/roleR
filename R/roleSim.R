@@ -65,16 +65,16 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
 #' object
 #' @param params a roleParamsCpp object containing the model parameters
 
-.initSim <- function(params) {
+.initSim <- function(params = NULL) {
 
     #temp
-    sourceCpp("paramValuesCpp.cpp")
+    sourceCpp("R/paramValuesCpp.cpp")
     loadModule("paramValsCpp")
-    sourceCpp("roleParamsCpp.cpp")
+    sourceCpp("R/roleParamsCpp.cpp")
     loadModule("paramsCpp")
 
     # if no roleParamsCpp object provided
-    if(params == NULL)
+    if(is.null(params))
     {
         #create empty paramValuesCpp object
         #empty constructor includes a plausible set of values
@@ -100,7 +100,7 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
                          ape::rTraitCont(phy, sigma = params$values$trait_sigma))
 
     #temp
-    sourceCpp("R/commCpp2.cpp")
+    sourceCpp("R/commCpp.cpp")
     loadModule("commCpp")
 
     # create metaCommCpp object
@@ -130,14 +130,24 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
     #changed this - correct?
     traits_l[i,] <- c(i, meta$traits[meta$traits[,1] == i, 2])
 
+    pi_l <- rep(1:Smax)
+
     # create localCommCpp object
-    local <- new(localCommCpp, abundance_l, Smax_,NULL)
+    local <- new(localCommCpp, abundance_l, traits_l, Smax_,pi_l)
+
+    #temp
+    sourceCpp("R/rolePhyloCpp.cpp")
+    loadModule("phyloCpp")
 
     # convert ape phylo to rolePhyloCpp
-    phy <- as(phy, "rolePhylo")
+    phy <- .apeToPhyloCpp(phy)
+
+    #temp
+    sourceCpp("R/roleModelCpp.cpp")
+    loadModule("modelCpp")
 
     # create roleModelCpp object of local comm, meta comm, phylogeny, and params
-    out <- new(roleModel,local,meta,phy,params)
+    out <- new(roleModelCpp,local,meta,phy,params)
 
     return(out)
 }
@@ -167,11 +177,16 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
     return(thisSAD / sum(thisSAD))
 }
 
-# testing
-# params <- list(species_meta = 100,
-#                individuals_meta = 10000,
-#                individuals_local = 1000,
-#                dispersal_prob = 0.1,
-#                speciation_local = 0.01)
-# testSim <- roleSimPlay(params, nstep = 100, nout = 5)
-# testSim
+.apeToPhyloCpp <- function(phylo){
+    n <- ape::Ntip(phylo)
+
+    e <- phylo$edge
+    l <- phylo$edge.length
+    tipNames <- phylo$tip.label
+    tipAge <- ape::node.depth.edgelength(phylo)[1:n]
+    alive <- rep(TRUE,n)
+    alive[tipAge < max(tipAge)] <- FALSE;
+    scale <- 1;
+    out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
+    return(out)
+}

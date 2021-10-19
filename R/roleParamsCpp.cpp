@@ -1,6 +1,7 @@
 #include <Rcpp.h>
 #include <map>
 #include <paramValuesCpp.cpp>
+#pragma once
 
 using namespace Rcpp;
 

@@ -2,6 +2,7 @@
 #include <commCpp.cpp>
 #include <rolePhyloCpp.cpp>
 #include <roleParamsCpp.cpp>
+#pragma once
 
 using namespace Rcpp;
 

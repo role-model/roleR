@@ -3,7 +3,21 @@
 
 using namespace Rcpp;
 
-// localComm class
+//' @name localCommCpp
+//' @title a C++ class to specify the local community
+//' @field new Constructor
+//' @param abundance a numeric vector of abundances for each species
+//' @param traits matrix of traits; the first column specifies the species index
+//' (i.e. the index of that species in the \code{abundance} vector) and the
+//' subsequent columns specify the trait values
+//' @param Smax a single integer specifying the total number of species ever
+//' recorded in the local community (both locally extinct and extant)
+//' @details Smax is used for internal bookkeeping.  The dimensions of
+//' \code{abundance} and \code{traits} can be greater than
+//' \code{Smax}.  In such cases, \code{Smax} is used to index where to begin
+//' adding new information (e.g. a new species can be added at the index
+//' \code{Smax + 1}).
+
 class localCommCpp {
     private:
 
