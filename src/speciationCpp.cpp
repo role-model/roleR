@@ -1,7 +1,9 @@
+#pragma once
+
 #include <Rcpp.h>
-#include <commCpp.cpp>
-#include <roleModelCpp.cpp>
-#include <roleParamsCpp.cpp>
+#include "commCpp.cpp"
+#include "roleModelCpp.cpp"
+#include "roleParamsCpp.cpp"
 
 using namespace Rcpp;
 
@@ -18,14 +20,17 @@ localCommCpp specLocal(localCommCpp x, int i, roleParamsCpp p)
     x.Smax += 1;
 
     // initialize abundance for new species
-    x.abundance[x.Smax] = 1
+    x.abundance[x.Smax] = 1;
 
     // index of where unrealized traits begin
-    j = min(which(is.na(x.traits[,1])))
+    int j = x.traitMax + 1;
 
     // add trait
-    x.traits[j, 1] = x.Smax
-    x.traits[j, 2] = x.traits[i, 2] + rnorm(1, 0, p.values.trait_sigma)
+    x.traits(j, 1) = x.Smax;
+    x.traits(j, 2) = x.traits(i, 2) + R::rnorm(0, p.values.trait_sigma);
+
+    //increase traitMax
+    x.traitMax += 1;
 
     return(x);
 }
@@ -42,21 +47,26 @@ roleModelCpp specRole(roleModelCpp x)
 
     // normalized abundances at meta and local levels
     NumericVector mp = x.metaComm.abundance[Rcpp::Range(1,x.localComm.Smax)];
-    mp = mp / R::sum(mp);
-    lp = x.localComm.abundance[1:x.localComm.Smax];
-    lp = lp / R::sum(lp);
+    mp = mp / sum(mp);
+    NumericVector lp = x.localComm.abundance[Rcpp::Range(1,x.localComm.Smax)];
+    lp = lp / sum(lp);
 
     // prob of selecting a parent
     // metacomm abundance weighted by dispersal prob + local comm abundance weighted by birth
-    pp = dp * mp + (1 - dp) * lp;
+    NumericVector pp = dp * mp + (1 - dp) * lp;
 
     // index of parent
-    i = R::sample(x.phylo.n, 1, pp);
+    NumericVector i = sample(x.phylo.e, 1, false, pp);
 
     // update slots of the role model object
-    x.localComm = speciation(x.localComm, i, x.params);
-    x.metaComm = speciation(x.metaComm);
-    x@phylo = speciation(x.phylo, i);
+    x.localComm = specLocal(x.localComm, i[0], x.params);
+    //x.phylo = speciation(x.phylo, i);
 
     return(x);
 }
+
+RCPP_MODULE(speciationCpp) {
+    function("speciationL" , &specLocal);
+    function("speciationR" , &specRole);
+}
+

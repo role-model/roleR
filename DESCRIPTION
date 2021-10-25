@@ -8,7 +8,8 @@ Description: A simulation-based model the captures many processes across ecology
     and evolution and jointly predicts multi-dimensional biodiversity data.
 License: GNU GENERAL PUBLIC LICENSE
 Encoding: UTF-8
-LazyData: true
+Imports: methods, Rcpp (>= 1.0.7)
+LinkingTo: Rcpp
 Depends:
     R (>= 3.2)
 Imports:
@@ -19,15 +20,12 @@ Suggests:
     hillR
 Remotes:
     ajrominger/pika
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Collate: 
-    'comm.R'
-    'hillDiv.R'
-    'phyloSim.R'
-    'rolePhylo.R'
-    'roleParams.R'
-    'roleModel.R'
-    'roleR-package.R'
-    'roleSim.R'
-    'roleSimPlots.R'
-    'speciation.R'
+	hillDiv.R
+	roleModel.R
+	roleR-package.R
+	roleSim.R
+	zzz.R
+	RcppExports.R
+	rolePhylo.R

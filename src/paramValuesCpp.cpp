@@ -1,8 +1,25 @@
-#include <Rcpp.h>
 #pragma once
+
+#include <Rcpp.h>
 
 using namespace Rcpp;
 
+//' @name paramValuesCpp
+//' @title an object containing the values of parameters, a field of roleParamsCpp
+//' @field new Constructor initialize an empty paramValuesCpp containing defaults
+//' @field speciation_meta the rate of speciation in the metacommunity
+//' @field extinction_meta the rate of extinction in the metacommunity
+//' @field trait_sigma the rate of trait change
+//' @field species_meta the number of species in the metacommunity
+//' @field individuals_meta the number of individuals in the metacommunity
+//' @field individuals_local the number of individuals in the local community
+//' @field dispersal_prob the probability of dispersal from the metacommunity to the local community
+//' @field speciation_local the rate of speciation in the localcommunity
+//' @field env_sigma
+//' @field comp_sigma
+//' @field mu
+//' @field alpha
+//'
 class paramValuesCpp {
 public:
     double speciation_meta;
@@ -31,7 +48,7 @@ public:
         trait_sigma = 0.1;
     }
 
-    // //full constructor
+    // //full constructor - may want to use this in the future
     // paramValuesCpp(double sm, double em, double ts, double spm,double im, double il, double dp, double sl, double es, double cs, double m, double a)
     //     : speciation_meta(sm), extinction_meta(em), trait_sigma(ts), species_meta(spm),
     //       individuals_meta(im), individuals_local(il), dispersal_prob(dp),
@@ -41,19 +58,3 @@ public:
 };
 
 RCPP_EXPOSED_CLASS(paramValuesCpp)
-
-RCPP_MODULE(paramValsCpp) {
-    class_<paramValuesCpp>("paramValuesCpp")
-        .constructor()
-        .field("speciation_meta", &paramValuesCpp::speciation_meta)
-        .field("extinction_meta", &paramValuesCpp::extinction_meta)
-        .field("trait_sigma", &paramValuesCpp::extinction_meta)
-        .field("species_meta", &paramValuesCpp::species_meta)
-        .field("individuals_meta", &paramValuesCpp::individuals_meta)
-        .field("individuals_local", &paramValuesCpp::individuals_local)
-        .field("dispersal_prob", &paramValuesCpp::dispersal_prob)
-        .field("speciation_local", &paramValuesCpp::speciation_local)
-        .field("dispersal_prob", &paramValuesCpp::dispersal_prob)
-        //.constructor<double, double, double, double,double, double, double, double, double, double, double, double>()
-        ;
-}

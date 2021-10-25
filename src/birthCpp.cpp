@@ -1,10 +1,11 @@
+#pragma once
+
 #include <Rcpp.h>
-#include <commCpp.cpp>
-#include <roleModelCpp.cpp>
+#include "commCpp.cpp"
+//#include "commCpp.h"
+#include "roleModelCpp.cpp"
 
 using namespace Rcpp;
-
-// [[Rcpp::export]]
 
 localCommCpp birthLocal(localCommCpp x, int i)
 {
@@ -23,10 +24,7 @@ roleModelCpp birthRole(roleModelCpp x)
     return x;
 }
 
-//todo - permit calling birth() rather than birthL/R, however this may not be
-//possible thru modules
 RCPP_MODULE(birthCpp) {
     function("birthL" , &birthLocal);
     function("birthR" , &birthRole);
 }
-

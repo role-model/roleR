@@ -3,6 +3,21 @@
 
 using namespace Rcpp;
 
+class commCpp {
+private:
+
+public:
+    NumericVector abundance;
+    NumericMatrix traits;
+    int Smax;
+
+    //constructor
+    commCpp(NumericVector abundance_, NumericMatrix traits_, int Smax_)
+            : abundance(abundance_),traits(traits_), Smax(Smax_)
+    {
+    }
+};
+
 //' @name localCommCpp
 //' @title a C++ class to specify the local community
 //' @field new Constructor
@@ -32,11 +47,6 @@ class localCommCpp {
                      NumericVector pi_) : abundance(abundance_),
                      traits(traits_), Smax(Smax_), pi(pi_)
         {
-        }
-
-        //test birth function
-        void birth(int i) {
-            abundance[i] = abundance[i] + 1;
         }
 };
 

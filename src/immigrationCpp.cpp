@@ -1,10 +1,10 @@
+#pragma once
+
 #include <Rcpp.h>
-#include <commCpp.cpp>
-#include <roleModelCpp.cpp>
+#include "commCpp.cpp"
+#include "roleModelCpp.cpp"
 
 using namespace Rcpp;
-
-// [[Rcpp::export]]
 
 localCommCpp immigrationLocal(localCommCpp x, int i)
 {
@@ -19,14 +19,11 @@ roleModelCpp immigrationRole(roleModelCpp x)
     NumericVector probs = x.metaComm.abundance[Rcpp::Range(1,x.metaComm.Smax)];
     IntegerVector i = sample(x.metaComm.Smax, 1, false, probs);
 
-    x.localComm = birthLocal(x.localComm, i[0]);
+    x.localComm = immigrationLocal(x.localComm, i[0]);
     return x;
 }
 
-//todo - permit calling birth() rather than birthL/R, however this may not be
-//possible thru modules
 RCPP_MODULE(immigrationCpp) {
     function("immigrationL" , &immigrationLocal);
     function("immigrationR" , &immigrationRole);
 }
-

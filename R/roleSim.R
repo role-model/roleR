@@ -4,7 +4,7 @@
 #' between the two functions is that \code{roleSim} is optimized to run many
 #' simulations, while \code{roleSimPlay} is meant to run one simulation with
 #' periodic output of results for visualization and exploration.
-#' \code{roleSimPlay} is intended primarily for the accompanying Shiny App.
+#' \code{roleSimPlay} is intended primarily for the accompanying Shiny App. R
 #'
 #'
 #' @param params list of parameters
@@ -51,11 +51,6 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
         init <- .initSim(params)
     }
 
-
-    #temp
-    sourceCpp("R/iterSim.cpp")
-    loadModule("iterSim")
-
     # loop over steps
     iterSimCpp(init, nstep)
 }
@@ -63,25 +58,19 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
 # ----
 #' @description function to initialize role simulation, returns a `roleModelCpp`
 #' object
-#' @param params a roleParamsCpp object containing the model parameters
+#' @param params a roleParamsCpp object containing the model parameters - if null, defaults are set
 
 .initSim <- function(params = NULL) {
-
-    #temp
-    sourceCpp("R/paramValuesCpp.cpp")
-    loadModule("paramValsCpp")
-    sourceCpp("R/roleParamsCpp.cpp")
-    loadModule("paramsCpp")
 
     # if no roleParamsCpp object provided
     if(is.null(params))
     {
         #create empty paramValuesCpp object
-        #empty constructor includes a plausible set of values
+        #empty constructor includes a plausible default set of values
         vals <- new(paramValuesCpp)
 
         #create roleParamsCpp object from values
-        params <- new(roleParamsCpp,vals,1,"sim")
+        params <- new(roleParamsCpp,vals,"sim", 1)
     }
 
     # simulate phylogeny
@@ -98,10 +87,6 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
     # Smax rows
     traits_m <- cbind(1:params$values$species_meta,
                          ape::rTraitCont(phy, sigma = params$values$trait_sigma))
-
-    #temp
-    sourceCpp("R/commCpp.cpp")
-    loadModule("commCpp")
 
     # create metaCommCpp object
     meta <- new(metaCommCpp, abundance_m, traits_m, 0)
@@ -139,7 +124,10 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
     sourceCpp("R/rolePhyloCpp.cpp")
     loadModule("phyloCpp")
 
-    # convert ape phylo to rolePhyloCpp
+    # convert ape phylo to rolePhylo
+    phy <- as(phy, "rolePhylo")
+
+    # convert rolePhylo to rolePhyloCpp
     phy <- .apeToPhyloCpp(phy)
 
     #temp
@@ -177,8 +165,8 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
     return(thisSAD / sum(thisSAD))
 }
 
-.apeToPhyloCpp <- function(phylo){
-    n <- ape::Ntip(phylo)
+.rolePhyloToCpp <- function(phylo){
+    n <- phylo@
 
     e <- phylo$edge
     l <- phylo$edge.length
@@ -190,3 +178,17 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
     out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
     return(out)
 }
+
+# .rolePhyloToCpp <- function(phylo){
+#     n <- ape::Ntip(phylo)
+#
+#     e <- phylo$edge
+#     l <- phylo$edge.length
+#     tipNames <- phylo$tip.label
+#     tipAge <- ape::node.depth.edgelength(phylo)[1:n]
+#     alive <- rep(TRUE,n)
+#     alive[tipAge < max(tipAge)] <- FALSE;
+#     scale <- 1;
+#     out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
+#     return(out)
+# }

@@ -1,11 +1,11 @@
+#pragma once
+
 #include <Rcpp.h>
-#include <commCpp.cpp>
-#include <roleModelCpp.cpp>
-#include <rolePhyloCpp.cpp>
+#include "commCpp.cpp"
+#include "roleModelCpp.cpp"
+#include "rolePhyloCpp.cpp"
 
 using namespace Rcpp;
-
-// [[Rcpp::export]]
 
 localCommCpp deathLocal(localCommCpp x, int i)
 {
@@ -39,8 +39,6 @@ roleModelCpp deathRole(roleModelCpp x)
     return(x);
 }
 
-//todo - permit calling birth() rather than birthL/R, however this may not be
-//possible thru modules
 RCPP_MODULE(deathCpp) {
     function("deathL" , &deathLocal);
     function("deathR" , &deathRole);

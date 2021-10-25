@@ -1,6 +1,6 @@
-setwd("roleRcpp")
 
 library("Rcpp")
+library("roleR")
 
 #------
 
@@ -67,6 +67,10 @@ r <- birthR(r)
 
 #------
 
+sourceCpp("src/speciationCpp.cpp")
+loadModule("speciationCpp")
+
+#------
 #ROLE SIM MODEL TESTS
 
 source("R/roleSim.R")
@@ -80,12 +84,17 @@ install_github("ajrominger/pika")
 sourceCpp("R/iterSimCpp.cpp")
 loadModule("iterSimCpp")
 
-#iterSim runs, but doesnt work
+#iterSim runs, but doesnt work properly
 model <- iterSim(model,100)
 
 #todo
-#bugfix iterSim
-#fully document scripts
-#finish speciation
-#consider making local and meta subclasses again
-#consider getting overloaded birth death etc methods working
+#get rccp package working DONE
+#finish speciation DONE - TEST
+#fix bug where iterSim not updating
+#document objects, roleSim, & iterSimCpp DONE
+#re-subclass local & meta DONE
+#phylo coercion ape to role & role to c++ DONE
+#add traitMax element to localComm DONE
+
+# run this if "moving to final location" errors appear on build
+Sys.setenv(R_INSTALL_STAGED = FALSE)
