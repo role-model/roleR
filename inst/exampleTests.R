@@ -1,5 +1,5 @@
 
-#Clean and rebuild package first
+# clean and rebuild package first
 
 # run this if "moving to final location" errors appear on build
 Sys.setenv(R_INSTALL_STAGED = FALSE)
@@ -86,3 +86,8 @@ model$immigration()
 #move function modules to objects for testing DONE
 #fix bug where iterSim not updating
 #move tests over
+#coerce
+
+
+#qs
+# should the Cpp functions take indices starting at 1 or 0? I'm leaning towards 1, partially so they are compatible with tests and whatnot

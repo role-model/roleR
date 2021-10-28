@@ -45,6 +45,7 @@ RCPP_MODULE(modelCpp) {
     .field("local", &roleModelCpp::localComm)
     .field("meta", &roleModelCpp::metaComm)
     .field("phylo", &roleModelCpp::phylo)
+    .field("params", &roleModelCpp::params)
     .method("birth", &roleModelCpp::birth)
     .method("death", &roleModelCpp::death)
     .method("speciation", &roleModelCpp::speciation)

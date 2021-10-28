@@ -12,6 +12,7 @@ LinkingTo: Rcpp
 Depends:
     R (>= 3.2)
 Imports:
+	Rcpp (>= 1.0.7),
     pika, 
     methods, 
     Rcpp (>= 1.0.7)
