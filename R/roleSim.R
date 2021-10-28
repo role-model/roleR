@@ -18,29 +18,6 @@
 #'
 #' @details Stub
 #'
-#' @examples
-#' params <- list(species_meta = 100,
-#'                individuals_meta = 10000,
-#'                individuals_local = 1000,
-#'                dispersal_prob = 0.1,
-#'                speciation_local = 0.01)
-#' testSim <- roleSim(params, nstep = 10, nsim = 1)
-#' testSim
-#'
-#' @return An object of class \code{roleComm} with the following elements:
-#' \describe{
-#'   \item{\code{local_comm}}{a list with three named elements:
-#'   \code{Abundance}, \code{Traits}, \code{pi}}
-#'   \item{\code{meta_comm}}{a list with two named elements: \code{Abundance},
-#'   \code{Traits}}
-#'   \item{\code{phylo}}{a phylogeny (of class \code{ape::phylo}) for all
-#'   species (extinct and extant) in the meta and local communities}
-#'   \item{\code{params}}{a named list of model parameters}
-#' }
-#'
-#' In the case of \code{roleSimPlay}, a list of \code{roleComm} objects is
-#' returned
-#'
 #' @rdname roleSim
 #' @export
 
@@ -48,7 +25,7 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
 
     # initialize simulation
     if(is.null(init)) {
-        init <- .initSim(params)
+        init <- initSim(params)
     }
 
     # loop over steps

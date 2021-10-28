@@ -85,9 +85,19 @@ model$immigration()
 #add traitMax element to localComm DONE
 #move function modules to objects for testing DONE
 #fix bug where iterSim not updating
+
 #move tests over
 #coerce
 
+#unable to load shared object roleR.so
 
 #qs
 # should the Cpp functions take indices starting at 1 or 0? I'm leaning towards 1, partially so they are compatible with tests and whatnot
+# investigate conventions with Rcpp
+# shoot an email with the package skeleton package , new repo in roleModel organization
+# maximize portability & ease
+# get broader group feedback about package
+# testing framework k
+
+Rcpp::Rcpp.package.skeleton()
+Rcpp:package.skeleton()
