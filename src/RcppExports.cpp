@@ -11,28 +11,20 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 
-RcppExport SEXP _rcpp_module_boot_birthCpp();
-RcppExport SEXP _rcpp_module_boot_deathCpp();
-RcppExport SEXP _rcpp_module_boot_immigrationCpp();
 RcppExport SEXP _rcpp_module_boot_iterSimCpp();
 RcppExport SEXP _rcpp_module_boot_commCpp();
 RcppExport SEXP _rcpp_module_boot_phyloCpp();
 RcppExport SEXP _rcpp_module_boot_modelCpp();
 RcppExport SEXP _rcpp_module_boot_paramsCpp();
 RcppExport SEXP _rcpp_module_boot_paramValuesCpp();
-RcppExport SEXP _rcpp_module_boot_speciationCpp();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rcpp_module_boot_birthCpp", (DL_FUNC) &_rcpp_module_boot_birthCpp, 0},
-    {"_rcpp_module_boot_deathCpp", (DL_FUNC) &_rcpp_module_boot_deathCpp, 0},
-    {"_rcpp_module_boot_immigrationCpp", (DL_FUNC) &_rcpp_module_boot_immigrationCpp, 0},
     {"_rcpp_module_boot_iterSimCpp", (DL_FUNC) &_rcpp_module_boot_iterSimCpp, 0},
     {"_rcpp_module_boot_commCpp", (DL_FUNC) &_rcpp_module_boot_commCpp, 0},
     {"_rcpp_module_boot_phyloCpp", (DL_FUNC) &_rcpp_module_boot_phyloCpp, 0},
     {"_rcpp_module_boot_modelCpp", (DL_FUNC) &_rcpp_module_boot_modelCpp, 0},
     {"_rcpp_module_boot_paramsCpp", (DL_FUNC) &_rcpp_module_boot_paramsCpp, 0},
     {"_rcpp_module_boot_paramValuesCpp", (DL_FUNC) &_rcpp_module_boot_paramValuesCpp, 0},
-    {"_rcpp_module_boot_speciationCpp", (DL_FUNC) &_rcpp_module_boot_speciationCpp, 0},
     {NULL, NULL, 0}
 };
 

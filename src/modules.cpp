@@ -1,3 +1,4 @@
+#pragma once
 #include <Rcpp.h>
 using namespace Rcpp;
 
@@ -17,6 +18,10 @@ RCPP_MODULE(commCpp) {
         .derives<commCpp>("commCpp")
         .constructor<NumericVector,NumericMatrix,int,NumericVector>()
         .field("pi", &localCommCpp::pi)
+        .method("birth", &localCommCpp::birth)
+        .method("death", &localCommCpp::death)
+        .method("speciation", &localCommCpp::speciation)
+        .method("immigration", &localCommCpp::immigration)
     ;
 }
 
@@ -25,6 +30,10 @@ RCPP_MODULE(commCpp) {
 RCPP_MODULE(phyloCpp) {
     class_<rolePhyloCpp>("rolePhyloCpp")
     .constructor<int,NumericMatrix,NumericVector,LogicalVector,StringVector,long>()
+    .method("birth", &rolePhyloCpp::birth)
+    .method("death", &rolePhyloCpp::death)
+    .method("speciation", &rolePhyloCpp::speciation)
+    .method("immigration", &rolePhyloCpp::immigration)
     ;
 }
 
@@ -35,6 +44,11 @@ RCPP_MODULE(modelCpp) {
     .constructor<localCommCpp,metaCommCpp,rolePhyloCpp,roleParamsCpp>()
     .field("local", &roleModelCpp::localComm)
     .field("meta", &roleModelCpp::metaComm)
+    .field("phylo", &roleModelCpp::phylo)
+    .method("birth", &roleModelCpp::birth)
+    .method("death", &roleModelCpp::death)
+    .method("speciation", &roleModelCpp::speciation)
+    .method("immigration", &roleModelCpp::immigration)
     ;
 }
 

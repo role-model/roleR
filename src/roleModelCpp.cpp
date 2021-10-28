@@ -32,7 +32,12 @@ class roleModelCpp {
         {
             //sample a species for birth relative to local abundance
             //0 vs 1 start indices may cause problems
-            NumericVector probs = localComm.abundance[Rcpp::Range(1,localComm.Smax)];
+            NumericVector probs = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)];
+
+            for(int i=0; i<probs.length(); ++i){
+                Rprintf("the value of v[%i] : %f \n", i, probs[i]);
+            }
+
             IntegerVector i = sample(localComm.Smax, 1, false, probs);
 
             localComm.birth(i[0]);

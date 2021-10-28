@@ -60,7 +60,7 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
 #' object
 #' @param params a roleParamsCpp object containing the model parameters - if null, defaults are set
 
-.initSim <- function(params = NULL) {
+initSim <- function(params = NULL) {
 
     # if no roleParamsCpp object provided
     if(is.null(params))
@@ -115,24 +115,17 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
     #changed this - correct?
     traits_l[i,] <- c(i, meta$traits[meta$traits[,1] == i, 2])
 
-    pi_l <- rep(1:Smax)
+    pi_l <- rep(1:Smax_)
 
     # create localCommCpp object
     local <- new(localCommCpp, abundance_l, traits_l, Smax_,pi_l)
 
-    #temp
-    sourceCpp("R/rolePhyloCpp.cpp")
-    loadModule("phyloCpp")
-
     # convert ape phylo to rolePhylo
-    phy <- as(phy, "rolePhylo")
+    #phy <- as(phy, "rolePhylo")
+    phy <- .apeToRolePhylo(phy)
 
     # convert rolePhylo to rolePhyloCpp
-    phy <- .apeToPhyloCpp(phy)
-
-    #temp
-    sourceCpp("R/roleModelCpp.cpp")
-    loadModule("modelCpp")
+    phy <- .rolePhyloToCpp(phy)
 
     # create roleModelCpp object of local comm, meta comm, phylogeny, and params
     out <- new(roleModelCpp,local,meta,phy,params)
@@ -166,20 +159,50 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
 }
 
 .rolePhyloToCpp <- function(phylo){
-    n <- phylo@
+    n <- phylo@n
 
-    e <- phylo$edge
-    l <- phylo$edge.length
-    tipNames <- phylo$tip.label
-    tipAge <- ape::node.depth.edgelength(phylo)[1:n]
-    alive <- rep(TRUE,n)
-    alive[tipAge < max(tipAge)] <- FALSE;
-    scale <- 1;
+    e <- phylo@e
+    l <- phylo@l
+    alive <- phylo@alive
+    tipNames <- phylo@tipNames
+    scale <- phylo@scale
     out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
     return(out)
 }
 
-# .rolePhyloToCpp <- function(phylo){
+.apeToRolePhylo <- function(phylo){
+
+    # extract number of times
+    n <- ape::Ntip(phylo)
+
+    # extract edge matrix and edge lengths
+    e <- phylo$edge
+    l <- phylo$edge.length
+
+    # extract tip labels
+    tipNames <- phylo$tip.label
+
+    # calculate alive or not
+    tipAge <- ape::node.depth.edgelength(phylo)[1:n]
+
+    alive <- rep(TRUE, n)
+    alive[tipAge < max(tipAge)] <- FALSE
+
+    # set default scale
+    scale <- 1
+
+    # buffer objects so we can add new species without augmenting objects
+    addOn <- n * 100
+    e <- rbind(e, matrix(-1, nrow = addOn, ncol = 2))
+    l <- c(l, rep(0, addOn))
+    alive <- c(alive, rep(FALSE, addOn))
+    tipNames <- c(tipNames, rep('', addOn))
+
+    return(rolePhylo(n = n, e = e, l = l, alive = alive,
+                     tipNames = tipNames, scale = scale))
+}
+
+# .apeToPhyloCpp <- function(phylo){
 #     n <- ape::Ntip(phylo)
 #
 #     e <- phylo$edge

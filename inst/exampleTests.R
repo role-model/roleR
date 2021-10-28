@@ -1,100 +1,88 @@
 
+#Clean and rebuild package first
+
+# run this if "moving to final location" errors appear on build
+Sys.setenv(R_INSTALL_STAGED = FALSE)
+
 library("Rcpp")
 library("roleR")
+library("ape")
 
 #------
-
-sourceCpp("R/commCpp.cpp")
-loadModule("commCpp")
 
 m <- new(metaCommCpp, rep(1:10), matrix(), 10)
 l <- new(localCommCpp, rep(1:10), matrix(), 10, rep(1:10))
 
 #------
 
-sourceCpp("R/paramValuesCpp.cpp")
-loadModule("paramValsCpp")
-
 pv <- new(paramValuesCpp)
 pv$individuals_local
 
 #------
 
-sourceCpp("R/roleParamsCpp.cpp")
-loadModule("paramsCpp")
-
-p <- new(roleParamsCpp, pv, 1, "sim")
+p <- new(roleParamsCpp, pv, "sim", 1)
 p$values$individuals_meta
 
 #------
-
-sourceCpp("R/rolePhyloCpp.cpp")
-loadModule("phyloCpp")
 
 phylo <- TreeSim::sim.bd.taxa(p$values$species_meta, numbsim = 1,
                             lambda = p$values$speciation_meta,
                             mu = p$values$extinction_meta, complete = FALSE)[[1]]
 
-apeToPhyloCpp <- function(phylo){
-    n = ape::Ntip(phylo)
+phylo <- .apeToRolePhylo(phylo)
 
-    e = phylo$edge
-    l = phylo$edge.length
-    tipNames = phylo$tip.label
-    tipAge = ape::node.depth.edgelength(phylo)[1:n]
-    alive = rep(TRUE,n)
-    alive[tipAge < max(tipAge)] = FALSE;
-    scale = 1;
-    out = new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
-    return(out)
-}
-
-phy <- apeToPhyloCpp(phylo)
+phylo <- .rolePhyloToCpp(phylo)
 
 #------
 
-sourceCpp("R/roleModelCpp.cpp")
-loadModule("modelCpp")
-
-r <- new(roleModelCpp,l,m,phy,p)
-
-sourceCpp("R/birthCpp.cpp")
-loadModule("birthCpp")
-
-l <- birthL(l,1)
-
-r <- birthR(r)
+r <- new(roleModelCpp,l,m,phylo,p)
 
 #------
 
-sourceCpp("src/speciationCpp.cpp")
-loadModule("speciationCpp")
 
 #------
 #ROLE SIM MODEL TESTS
 
-source("R/roleSim.R")
 # initSim works
-model <- .initSim()
+model <- initSim()
 
 install.packages("devtools")
 library(devtools)
 install_github("ajrominger/pika")
 
-sourceCpp("R/iterSimCpp.cpp")
-loadModule("iterSimCpp")
+model$local$birth(1)
+model$local$abundance
 
 #iterSim runs, but doesnt work properly
 model <- iterSim(model,100)
 
+library(Rcpp)
+source("R/roleSim.R")
+sourceCpp("src/roleModelCpp.cpp")
+sourceCpp("src/modules.cpp")
+sourceCpp("test_modules.cpp")
+
+#these work
+model$local$death(1)
+model$local$birth(1)
+model$local$immigration(1)
+
+model$phylo$death(1)
+model$phylo$speciation(1)
+
+#these dont work as sampling isn't correct
+model$birth()
+model$death()
+model$speciation()
+model$immigration()
+
 #todo
 #get rccp package working DONE
-#finish speciation DONE - TEST
-#fix bug where iterSim not updating
+#finish speciation DONE WITH THINGS TO CHECK
 #document objects, roleSim, & iterSimCpp DONE
 #re-subclass local & meta DONE
 #phylo coercion ape to role & role to c++ DONE
 #add traitMax element to localComm DONE
-
-# run this if "moving to final location" errors appear on build
-Sys.setenv(R_INSTALL_STAGED = FALSE)
+#move function modules to objects for testing DONE
+#fix bug where iterSim not updating
+#move tests over

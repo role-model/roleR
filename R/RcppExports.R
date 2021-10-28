@@ -7,10 +7,3 @@
 #' @param nstep the number of steps to iterate
 NULL
 
-#' @name specLocal
-#' @title function to implement speciation for \code{localComm} class objects
-#' @param x an object of class \code{localComm}
-#' @param i the index to undergo speciation
-#' @param p the roleModel params
-NULL
-
