@@ -1,4 +1,4 @@
-#pragma once
+
 #include <Rcpp.h>
 using namespace Rcpp;
 
