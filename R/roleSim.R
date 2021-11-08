@@ -179,16 +179,16 @@ initSim <- function(params = NULL) {
                      tipNames = tipNames, scale = scale))
 }
 
-# .apeToPhyloCpp <- function(phylo){
-#     n <- ape::Ntip(phylo)
-#
-#     e <- phylo$edge
-#     l <- phylo$edge.length
-#     tipNames <- phylo$tip.label
-#     tipAge <- ape::node.depth.edgelength(phylo)[1:n]
-#     alive <- rep(TRUE,n)
-#     alive[tipAge < max(tipAge)] <- FALSE;
-#     scale <- 1;
-#     out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
-#     return(out)
-# }
+.apeToPhyloCpp <- function(phylo){
+    n <- ape::Ntip(phylo)
+
+    e <- phylo$edge
+    l <- phylo$edge.length
+    tipNames <- phylo$tip.label
+    tipAge <- ape::node.depth.edgelength(phylo)[1:n]
+    alive <- rep(TRUE,n)
+    alive[tipAge < max(tipAge)] <- FALSE;
+    scale <- 1;
+    out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
+    return(out)
+}

@@ -30,6 +30,7 @@ RCPP_MODULE(commCpp) {
 RCPP_MODULE(phyloCpp) {
     class_<rolePhyloCpp>("rolePhyloCpp")
     .constructor<int,NumericMatrix,NumericVector,LogicalVector,StringVector,long>()
+    .field("alive", &rolePhyloCpp::alive)
     .method("birth", &rolePhyloCpp::birth)
     .method("death", &rolePhyloCpp::death)
     .method("speciation", &rolePhyloCpp::speciation)

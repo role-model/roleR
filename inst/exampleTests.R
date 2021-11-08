@@ -1,7 +1,5 @@
-# install pika & TreeSim
-
+# install pika
 install.packages("devtools")
-install.packages("TreeSim")
 library(devtools)
 install_github("ajrominger/pika")
 
@@ -12,7 +10,6 @@ install_github("ajrominger/pika")
 Sys.setenv(R_INSTALL_STAGED = FALSE)
 
 # make sure you have the current version of R and Rtools 
-
 library("roleR")
 
 #------
@@ -80,6 +77,11 @@ model$death()
 model$speciation()
 model$immigration()
 
+#benchmark
+library(microbenchmark)
+sim <- initSim()
+microbenchmark(iterSim(sim, 100))
+
 #todo
 #fix bug where iterSim not updating
 #move tests over
@@ -89,6 +91,4 @@ model$immigration()
 #qs for group
 # should the Cpp functions take indices starting at 1 or 0? I'm leaning towards 1, partially so they are compatible with tests and whatnot
 # should localcomm, metacomm, phylocomm, etc be accessible to user? what methods should be exposed to user
-# testing framework k
-library(Rcpp)
-Rcpp.package.skeleton()
+

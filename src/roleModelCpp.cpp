@@ -34,12 +34,16 @@ class roleModelCpp {
             //0 vs 1 start indices may cause problems
             NumericVector probs = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)];
 
-            for(int i=0; i<probs.length(); ++i){
-                Rprintf("the value of v[%i] : %f \n", i, probs[i]);
-            }
+            //for(int i=0; i<probs.length(); ++i){
+            //    Rprintf("the value of v[%i] : %f \n", i, probs[i]);
+            //}
 
             IntegerVector i = sample(localComm.Smax, 1, false, probs);
-
+            
+            // make i from 0 to Smax - 1 (previously 1 to Smax)
+            i[0] -= 1;
+            
+            // call birth
             localComm.birth(i[0]);
         }
 
@@ -68,9 +72,9 @@ class roleModelCpp {
             double dp = params.values.dispersal_prob;
 
             // normalized abundances at meta and local levels
-            NumericVector mp = metaComm.abundance[Rcpp::Range(1,localComm.Smax)];
+            NumericVector mp = metaComm.abundance[Rcpp::Range(0,localComm.Smax-1)];
             mp = mp / sum(mp);
-            NumericVector lp = localComm.abundance[Rcpp::Range(1,localComm.Smax)];
+            NumericVector lp = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)];
             lp = lp / sum(lp);
 
             // prob of selecting a parent
@@ -86,9 +90,14 @@ class roleModelCpp {
 
         void immigration()
         {
+            //for(int i=0; i<probs.length(); ++i){
+            //    Rprintf("the value of v[%i] : %f \n", i, probs[i]);
+            //}
+            
+    
             //sample a species for birth relative to local abundance
             //0 vs 1 start indices may cause problems
-            NumericVector probs = metaComm.abundance[Rcpp::Range(1,metaComm.Smax)];
+            NumericVector probs = metaComm.abundance[Rcpp::Range(0,metaComm.Smax-1)];
             IntegerVector i = sample(metaComm.Smax, 1, false, probs);
 
             localComm.immigration(i[0]);
