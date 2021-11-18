@@ -24,7 +24,7 @@ roleModelCpp iterSim(roleModelCpp model,int nstep) {
 
         //if speciation occurs based on local speciation param
         if(R::runif(1,1) <= model.params.values.speciation_local){
-            out.speciation();
+            //out.speciation();
         }
 
         // else if immigration occurs based on dispersal chance param

@@ -2,8 +2,10 @@ Package: roleR
 Type: Package
 Title: Rules of Life Engine
 Version: 0.1.0
-Author: Andrew Rominger, Isaac Overcast, Megan Ruffley, Mike Hickerson
+Date: 2021-11-04
+Author: Andrew Rominger, Isaac Overcast, Megan Ruffley, Mike Hickerson. Jacob Idec
 Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
+<<<<<<< HEAD
 Description: A simulation-based model the captures many processes across ecology 
     and evolution and jointly predicts multi-dimensional biodiversity data.
 License: GNU GENERAL PUBLIC LICENSE
@@ -32,3 +34,10 @@ Collate:
     'roleR-package.R'
     'roleSim.R'
     'zzz.R'
+=======
+Description: A simulation-based model the captures many processes across ecology and evolution and jointly predicts multi-dimensional biodiversity data.
+License: GPL (>= 2)
+Depends: R (>= 3.2)
+Imports: Rcpp (>= 1.0.4), TreeSim, ape
+LinkingTo: Rcpp
+>>>>>>> a2732574fb9763c6014e7942927f496f73a8c9e2

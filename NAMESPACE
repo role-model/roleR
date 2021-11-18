@@ -1,4 +1,3 @@
 useDynLib(roleR, .registration=TRUE)
-import(methods, Rcpp)
 exportPattern("^[[:alpha:]]+")
-
+importFrom(Rcpp, evalCpp)

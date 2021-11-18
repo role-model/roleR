@@ -68,7 +68,7 @@ class localCommCpp : public commCpp {
             Smax += 1;
 
             // initialize abundance for new species
-            abundance[Smax] = 1;
+            abundance[Smax-1] = 1;
 
             // index of where unrealized traits begin
             int j = traitMax + 1;

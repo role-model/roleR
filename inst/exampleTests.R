@@ -1,16 +1,21 @@
+# install pika
+install.packages("devtools")
+library(devtools)
+install_github("ajrominger/pika")
 
 # clean and rebuild package first
+# Build -> Clean and Rebuild
 
 # run this if "moving to final location" errors appear on build
 Sys.setenv(R_INSTALL_STAGED = FALSE)
 
-library("Rcpp")
+# make sure you have the current version of R and Rtools 
 library("roleR")
-library("ape")
 
 #------
 
 m <- new(metaCommCpp, rep(1:10), matrix(), 10)
+
 l <- new(localCommCpp, rep(1:10), matrix(), 10, rep(1:10))
 
 #------
@@ -46,10 +51,6 @@ r <- new(roleModelCpp,l,m,phylo,p)
 # initSim works
 model <- initSim()
 
-install.packages("devtools")
-library(devtools)
-install_github("ajrominger/pika")
-
 model$local$birth(1)
 model$local$abundance
 
@@ -76,18 +77,18 @@ model$death()
 model$speciation()
 model$immigration()
 
+#benchmark
+library(microbenchmark)
+sim <- initSim()
+microbenchmark(iterSim(sim, 100))
+
 #todo
-#get rccp package working DONE
-#finish speciation DONE WITH THINGS TO CHECK
-#document objects, roleSim, & iterSimCpp DONE
-#re-subclass local & meta DONE
-#phylo coercion ape to role & role to c++ DONE
-#add traitMax element to localComm DONE
-#move function modules to objects for testing DONE
 #fix bug where iterSim not updating
 #move tests over
-#coerce
 
+#unable to load shared object roleR.so
 
-#qs
+#qs for group
 # should the Cpp functions take indices starting at 1 or 0? I'm leaning towards 1, partially so they are compatible with tests and whatnot
+# should localcomm, metacomm, phylocomm, etc be accessible to user? what methods should be exposed to user
+
