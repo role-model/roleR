@@ -39,10 +39,10 @@ class roleModelCpp {
             //}
 
             IntegerVector i = sample(localComm.Smax, 1, false, probs);
-            
+
             // make i from 0 to Smax - 1 (previously 1 to Smax)
             i[0] -= 1;
-            
+
             // call birth
             localComm.birth(i[0]);
         }
@@ -56,7 +56,7 @@ class roleModelCpp {
             localComm.death(i[0]);
 
             // if death led to extinction, call death on rolePhylo
-            if(localComm.abundance[i] <= 0)
+            if(localComm.abundance[i[0]] <= 0)
             {
                 phylo.death(i[0]);
             }
@@ -93,8 +93,8 @@ class roleModelCpp {
             //for(int i=0; i<probs.length(); ++i){
             //    Rprintf("the value of v[%i] : %f \n", i, probs[i]);
             //}
-            
-    
+
+
             //sample a species for birth relative to local abundance
             //0 vs 1 start indices may cause problems
             NumericVector probs = metaComm.abundance[Rcpp::Range(0,metaComm.Smax-1)];
