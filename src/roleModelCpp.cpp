@@ -14,6 +14,7 @@ using namespace Rcpp;
 //' @field phylo the phylogeny of the metacommunity, an object of class rolePhyloCpp
 //' @field params the parameters for the model, an object of class roleParamsCpp
 //'
+
 class roleModelCpp {
     public:
         localCommCpp localComm;
@@ -50,7 +51,7 @@ class roleModelCpp {
         void death()
         {
             // sample a species for death proportional to species abundance
-            NumericVector probs = localComm.abundance[Rcpp::Range(1,localComm.Smax)];
+            NumericVector probs = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)]; //localComm.Smax
             IntegerVector i = sample(localComm.Smax, 1, false, probs);
 
             localComm.death(i[0]);
@@ -72,20 +73,31 @@ class roleModelCpp {
             double dp = params.values.dispersal_prob;
 
             // normalized abundances at meta and local levels
-            NumericVector mp = metaComm.abundance[Rcpp::Range(0,localComm.Smax-1)];
+            // mp has length equal to the number of species in the metacomm
+            NumericVector mp = metaComm.abundance[Rcpp::Range(0,localComm.Smax)]; //Smax - 1
             mp = mp / sum(mp);
-            NumericVector lp = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)];
+            // lp has length equal to the number of species in the localcom
+            NumericVector lp = localComm.abundance[Rcpp::Range(0,localComm.Smax)]; //Smax - 1
             lp = lp / sum(lp);
-
-            // prob of selecting a parent
+            
+            // prob of selecting a parent for speciation depends of abundance 
             // metacomm abundance weighted by dispersal prob + local comm abundance weighted by birth
             NumericVector pp = dp * mp + (1 - dp) * lp;
-
+            
+            // vector of phylo parents
+            // this is not the case because includes extinct edges 
+            //NumericVector v = phylo.e(_, 0); 
+            
+            //Rcout << "vect: " << v << "\n";
+            Rcout << "probs size: " << pp.size() << "\n";
+            Rcout << "phylo n size : " << phylo.n << "\n";
+            
             // index of parent
-            NumericVector i = sample(phylo.e, 1, false, pp);
-
+            IntegerVector i = sample(phylo.n, 1, false, pp);
+            
             // update slots of the role model object
             localComm.speciation(i[0], params);
+            phylo.speciation(i[0]);
         }
 
         void immigration()
@@ -94,10 +106,9 @@ class roleModelCpp {
             //    Rprintf("the value of v[%i] : %f \n", i, probs[i]);
             //}
 
-
             //sample a species for birth relative to local abundance
             //0 vs 1 start indices may cause problems
-            NumericVector probs = metaComm.abundance[Rcpp::Range(0,metaComm.Smax-1)];
+            NumericVector probs = metaComm.abundance[Rcpp::Range(0,metaComm.Smax)];//metaComm.Smax-1
             IntegerVector i = sample(metaComm.Smax, 1, false, probs);
 
             localComm.immigration(i[0]);

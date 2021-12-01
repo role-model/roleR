@@ -1,4 +1,5 @@
 library(testthat)
+library(roleR)
 context('birth functions work')
 
 test_that('birthLocal works', {

@@ -81,12 +81,17 @@ model$immigration()
 library(microbenchmark)
 sim <- initSim()
 microbenchmark(iterSim(sim, 100))
+microbenchmark(iterSim(sim,10))
 
 #todo
-#fix bug where iterSim not updating
-#move tests over
-
-#unable to load shared object roleR.so
+# fix speciation sampling bug
+# finish testing speciation
+# start working on environmental filtering
+# start working on competitive filtering
+#big todo
+# add metadata exports
+# add fitting to real data
+# add intraspecific speciation 
 
 #qs for group
 # should the Cpp functions take indices starting at 1 or 0? I'm leaning towards 1, partially so they are compatible with tests and whatnot

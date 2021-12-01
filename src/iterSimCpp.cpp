@@ -20,20 +20,24 @@ roleModelCpp iterSim(roleModelCpp model,int nstep) {
     for(int i = 0; i < nstep; i++) {
 
         // death always occurs
+        Rcout << "death has occurred" << "\n";
         out.death();
 
         //if speciation occurs based on local speciation param
         if(R::runif(1,1) <= model.params.values.speciation_local){
-            //out.speciation();
+            Rcout << "speciation has occurred" << "\n";
+            out.speciation();
         }
 
         // else if immigration occurs based on dispersal chance param
         if(R::runif(1,1) <= model.params.values.dispersal_prob) { //else
+            Rcout << "immigration has occurred" << "\n";
             out.immigration();
         }
 
         // else a birth event occurs
         else{
+            Rcout << "birth has occurred" << "\n";
             out.birth();
         }
     }
@@ -41,5 +45,5 @@ roleModelCpp iterSim(roleModelCpp model,int nstep) {
 }
 
 RCPP_MODULE(iterSimCpp) {
-    function("iterSim" , &iterSim);
+  function("iterSim", &iterSim);
 }

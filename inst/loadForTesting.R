@@ -1,0 +1,14 @@
+library(Rcpp)
+sourceCpp("src/roleModelCpp.cpp")
+sourceCpp("src/rolePhyloCpp.cpp")
+sourceCpp("src/commCpp.cpp")
+sourceCpp("src/modules.cpp")
+
+
+Rcpp::loadModule("paramsCpp", TRUE)
+Rcpp::loadModule("commCpp", TRUE)
+Rcpp::loadModule("phyloCpp", TRUE)
+Rcpp::loadModule("modelCpp", TRUE)
+
+source("R/roleSim.R")
+source("R/rolePhylo.R")

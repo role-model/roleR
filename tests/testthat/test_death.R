@@ -1,4 +1,5 @@
 library(testthat)
+library(roleR)
 context('death functions work')
 
 test_that('deathComm works', {
@@ -11,10 +12,11 @@ test_that('deathPhylo works', {
     p <- TreeSim::sim.bd.taxa(15, numbsim = 1,
                                 lambda = 1,
                                 mu = 0.8)[[1]]
-    p <- .apeToPhyloCpp(p)
+    p <- apeToPhyloCpp(p)
     
-    p$death(1)
-    #unfinished
+    # 0 call here aligns with 1 index in alive 
+    p$death(0)
+
     expect_false(p$alive[1])
 })
 
@@ -23,12 +25,12 @@ test_that('deathRole works', {
     #set starting species (starts at 100) to have abundance of 1
     index <- match(100,r$local$abundance)
     r$local$abundance[index] <- 1
-    r$death()
-    
+
     #verify that death occured (no 1s)
     expect_true(!is.element(1,r$local$abundance))
     #unfinished
     #verify that phylodeath occurred, i.e. tip has been set to dead
+    
     #below does not work currently due to misaligned indices, todo figure this out
     expect_false(r$phylo$alive[index])
 })

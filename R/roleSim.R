@@ -66,7 +66,7 @@ initSim <- function(params = NULL) {
                          ape::rTraitCont(phy, sigma = params$values$trait_sigma))
 
     # create metaCommCpp object
-    meta <- new(metaCommCpp, abundance_m, traits_m, 0)
+    meta <- new(metaCommCpp, abundance_m, traits_m, params$values$species_meta)
 
     # vector of 0 abundances
     abundance_l <- rep(0, params$values$species_meta * 100)
@@ -99,10 +99,10 @@ initSim <- function(params = NULL) {
 
     # convert ape phylo to rolePhylo
     #phy <- as(phy, "rolePhylo")
-    phy <- .apeToRolePhylo(phy)
+    phy <- apeToRolePhylo(phy)
 
     # convert rolePhylo to rolePhyloCpp
-    phy <- .rolePhyloToCpp(phy)
+    phy <- rolePhyloToCpp(phy)
 
     # create roleModelCpp object of local comm, meta comm, phylogeny, and params
     out <- new(roleModelCpp,local,meta,phy,params)
@@ -135,7 +135,7 @@ initSim <- function(params = NULL) {
     return(thisSAD / sum(thisSAD))
 }
 
-.rolePhyloToCpp <- function(phylo){
+rolePhyloToCpp <- function(phylo){
     n <- phylo@n
 
     e <- phylo@e
@@ -147,7 +147,7 @@ initSim <- function(params = NULL) {
     return(out)
 }
 
-.apeToRolePhylo <- function(phylo){
+apeToRolePhylo <- function(phylo){
 
     # extract number of times
     n <- ape::Ntip(phylo)
@@ -179,7 +179,7 @@ initSim <- function(params = NULL) {
                      tipNames = tipNames, scale = scale))
 }
 
-.apeToPhyloCpp <- function(phylo){
+apeToPhyloCpp <- function(phylo){
     n <- ape::Ntip(phylo)
 
     e <- phylo$edge
