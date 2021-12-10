@@ -55,11 +55,11 @@ class roleModelCpp {
             double sigma_e = 0.5;
             
             // environmental filtering pseudocode
-            NumericVector f_probs = 1 - exp(-1/sigma_e * pow(localComm.traits - trait_z, 2))
+            //NumericVector f_probs = 1 - exp(-1/sigma_e * pow(localComm.traits - trait_z, 2))
             // is environmental filtering + comp filtering the probs multiplied? 
             
             // comp filtering pseudocode
-            NumericVector c_probs = 1 - exp(-1/sigma_e * pow(localComm.traits - Rcpp::mean(localComm.traits), 2)
+            //NumericVector c_probs = 1 - exp(-1/sigma_e * pow(localComm.traits - Rcpp::mean(localComm.traits), 2)
             
             // sample a species for death proportional to species abundance
             NumericVector probs = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)]; //localComm.Smax
