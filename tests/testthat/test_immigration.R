@@ -2,9 +2,12 @@ library(testthat)
 context('immigration functions work')
 
 test_that('immigrationLocal works', {
-    l <- new(localCommCpp, rep(1:10), matrix(1:100, nrow = 10), 10, rep(1:10))
-    l$immigration(0)
-    expect_equal(l$abundance[1], 2)
+    l <- new(localCommCpp, rep(1,10),rep(1,10),10,rep(1,10))
+    s <- initSim()
+    m <- s$meta
+    l$immigration(0,m) 
+    expect_equal(l$abundance_indv[11], 1)
+    expect_equal(l$species_ids[11], 0)
 })
 
 test_that('immigrationRole works', {

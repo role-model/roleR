@@ -1,23 +1,29 @@
 
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 using namespace Rcpp;
 
 #include "commCpp.cpp"
 
 RCPP_MODULE(commCpp) {
-    class_<commCpp>("commCpp")
-    .field("abundance", &commCpp::abundance)
-    .field("traits", &commCpp::traits)
-    .field("Smax", &commCpp::Smax)
-    ;
     class_<metaCommCpp>("metaCommCpp")
-        .derives<commCpp>("commCpp")
         .constructor<NumericVector,NumericMatrix,int>()
+    
+        .field("abundance", &metaCommCpp::abundance)
+        .field("traits", &metaCommCpp::traits)
+        .field("Smax", &metaCommCpp::Smax)
     ;
     class_<localCommCpp>("localCommCpp")
-        .derives<commCpp>("commCpp")
-        .constructor<NumericVector,NumericMatrix,int,NumericVector>()
+        .constructor<NumericVector,NumericVector,int,NumericVector>()
+    
+        .field("abundance_indv", &localCommCpp::abundance_indv)
+        .field("species_ids", &localCommCpp::species_ids)
+        .field("Imax", &localCommCpp::Imax)
+        .field("Smax", &localCommCpp::Smax)
         .field("pi", &localCommCpp::pi)
+        .field("traitdiffs", &localCommCpp::traitdiffs)
+        .field("abundance_sp", &localCommCpp::abundance_sp)
+        .field("traits_sp", &localCommCpp::traits_sp)
+    
         .method("birth", &localCommCpp::birth)
         .method("death", &localCommCpp::death)
         .method("speciation", &localCommCpp::speciation)

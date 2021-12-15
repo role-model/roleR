@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 
 using namespace Rcpp;
 
@@ -34,6 +34,8 @@ public:
     double comp_sigma;
     double mu;
     double alpha;
+    double trait_z; // the optimal trait for an environment 
+    double sigma_e; // determines how quickly fitness decays with the distance to the optimum
 
     //empty constructor
     paramValuesCpp(){

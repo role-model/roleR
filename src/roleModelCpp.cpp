@@ -1,4 +1,4 @@
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 #include "commCpp.cpp"
 #include "rolePhyloCpp.cpp"
 #include "roleParamsCpp.cpp"
@@ -22,60 +22,90 @@ class roleModelCpp {
         rolePhyloCpp phylo;
         roleParamsCpp params;
 
-        //constructor
+        // constructor
         roleModelCpp(localCommCpp local_, metaCommCpp meta_, rolePhyloCpp phy_,
                      roleParamsCpp params_) : localComm(local_), metaComm(meta_),
                      phylo(phy_), params(params_)
         {
         }
-
-        void birth()
+        
+        // samples an individual for birth, then calls localComm.birth(individual)
+        void birth() 
         {
-            //sample a species for birth relative to local abundance
-            //0 vs 1 start indices may cause problems
-            NumericVector probs = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)];
-
-            for(int i=0; i<probs.length(); i++){
-                Rprintf("the value of v[%i] : %f \n", i, probs[i]);
-            }
-              
-            // samples an int from 1 to Smax, weighted by probs 
-            IntegerVector i = Rcpp::sample(localComm.Smax, 1, false, probs);
+            //sample an individual for birth randomly
+            NumericVector probs = localComm.abundance_indv;
+            IntegerVector i = Rcpp::sample(10000, 1, false, probs);
+            
+            //for(int i=0; i<probs.length(); i++){
+            //    Rprintf("the value of v[%i] : %f \n", i, probs[i]);
+            //}
 
             // make i from 0 to Smax - 1 (previously 1 to Smax)
             i[0] -= 1;
 
-            // call birth
+            // call birth on an individual
             localComm.birth(i[0]);
         }
 
         void death()
         {
-            double trait_z = 0.34; 
-            double sigma_e = 0.5;
+            // trait_z is the optimal trait for an environment 
+            // sigma_e determines how quickly fitness decays with the distance to the optimum
+            // NOTE - allow trait_z to vary as a time series later
             
-            // environmental filtering pseudocode
-            //NumericVector f_probs = 1 - exp(-1/sigma_e * pow(localComm.traits - trait_z, 2))
-            // is environmental filtering + comp filtering the probs multiplied? 
+            // probs of death due to environmental filtering
+            NumericVector f_probs = 1 - exp(-1/params.values.sigma_e * pow(localComm.traits - params.values.trait_z, 2));
             
-            // comp filtering pseudocode
-            //NumericVector c_probs = 1 - exp(-1/sigma_e * pow(localComm.traits - Rcpp::mean(localComm.traits), 2)
+            arma::vec pr = f_probs; 
+            pr.print();
+              
+            // calculate probs of death due to competitive filtering
+            // init c_probs
+            NumericVector c_probs = NumericVector(10000);
             
-            // sample a species for death proportional to species abundance
-            NumericVector probs = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)]; //localComm.Smax
-          
+            // calculate for each individual
+            // does not use traitdiffs matrix currently
+            // for(int i = 0; i < localComm.Imax; i++)
+            // {
+            //   float sum = 0; 
+            //   
+            //   for(int j = 0; j < localComm.Imax; j++)
+            //   {
+            //     sum += exp(-1/params.values.sigma_e * pow(localComm.traits[i] - localComm.traits[j], 2));
+            //   }
+            //   
+            //   c_probs[i] = (1/localComm.Imax) * sum; 
+            // }
+            
+            // keep thinking about how to do this or talk it over - here are some attempts 
+            // traitdiffs contains i - j in all indices (i,j)
+            for(int i = 0; i < localComm.Imax; i++)
+            {
+              c_probs[i] = 1 - exp(-1/params.values.sigma_e * pow(mean(localComm.traitdiffs.row(i)), 2));
+            }
+            
+            pr = c_probs; 
+            pr.print();
+            
+            // OLD sample a species for death proportional to species abundance
+            //NumericVector probs = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)]; //localComm.Smax
+            
+            // probs is sum of f_probs and c_probs 
+            NumericVector probs = f_probs + c_probs; 
+            
             Rcout << "probs size: " << probs.size() << "\n";
-            Rcout << "n size : " << localComm.Smax << "\n";
+            Rcout << "n size : " << 10000 << "\n";
           
-            IntegerVector i = Rcpp::sample(localComm.Smax, 1, false, probs);
+            IntegerVector i = Rcpp::sample(10000, 1, false, probs);
             
             // make i from 0 to Smax - 1 (previously 1 to Smax)
             i[0] -= 1;
             
+            // call death on individual
             localComm.death(i[0]);
 
-            // if death led to extinction, call death on rolePhylo
-            if(localComm.abundance[i[0]] <= 0)
+            // if death of indv led to extinction of species, call death on rolePhylo
+            if(localComm.abundance_sp[localComm.species_ids[i[0]]] <= 0)
             {
                 phylo.death(i[0]);
             }
@@ -94,12 +124,25 @@ class roleModelCpp {
             // mp has length equal to the number of species in the metacomm
             NumericVector mp = metaComm.abundance[Rcpp::Range(0,localComm.Smax-1)]; //Smax - 1
             mp = mp / sum(mp);
+            
+            // prob of selecting a parent for speciation depends on abundance 
+            // metacomm abundance weighted by dispersal prob + local comm abundance weighted by birth
+            
+            //CHANGE - how to do this? decollapse metacomm abundance? cant really do that 
+            // collapse individual vector?
             // lp has length equal to the number of species in the localcom
-            NumericVector lp = localComm.abundance[Rcpp::Range(0,localComm.Smax-1)]; //Smax - 1
+            // EZ - save species abundances, should be easy enough 
+            NumericVector sa = NumericVector(localComm.Smax); 
+   
+            //for(int s = 0; s < localComm.Smax; s++)
+            //{
+            // NumericVector indices = match(localComm.species_ids, s);
+            
+            //  sa[s] = match(localComm.species_ids
+            //}
+            NumericVector lp = localComm.abundance_sp[Rcpp::Range(0,localComm.Smax-1)]; //Smax - 1
             lp = lp / sum(lp);
             
-            // prob of selecting a parent for speciation depends of abundance 
-            // metacomm abundance weighted by dispersal prob + local comm abundance weighted by birth
             NumericVector pp = dp * mp + (1 - dp) * lp;
             
             // vector of phylo parents
@@ -123,9 +166,9 @@ class roleModelCpp {
 
         void immigration()
         {
-            // absolutely no idea whats happening here
+            // Smax was not changing - I think I fixed this 
             Rcout << "Smax: " << metaComm.Smax << "\n";
-            
+        
             //sample a species for birth relative to local abundance
             //0 vs 1 start indices may cause problems
             
@@ -139,7 +182,8 @@ class roleModelCpp {
             // make i from 0 to Smax - 1 (previously 1 to Smax)
             i[0] -= 1;
             
-            localComm.immigration(i[0]);
+            // call immigration on species i
+            localComm.immigration(i[0], metaComm);
         }
 };
 

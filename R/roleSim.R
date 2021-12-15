@@ -86,14 +86,17 @@ initSim <- function(params = NULL) {
     # counter keeping track of max number of possible species in local comm
     Smax_ <- params$values$species_meta
 
-    # extract local comm traits from meta traits
-    traits_l <- matrix(NA, nrow = params$values$species_meta * 10000, ncol = 2)
-
-    #changed this - correct?
-    traits_l[i,] <- c(i, meta$traits[meta$traits[,1] == i, 2])
-
+    # init local species traits
+    traits_l <- numeric(100)
+    # extract trait for starting species from meta
+    traits_l[i] <- which(meta$traits[meta$traits[,1]] == i)
+    
+    # TODO - add simulation of genetic abundance 
     pi_l <- rep(1:Smax_)
-
+    
+    # create traitdiffs in R (doing so in C++ crashes RStudio apparently)
+    # traitdiffs <- outer(traits_l, traits_l, FUN="*")
+    
     # create localCommCpp object
     local <- new(localCommCpp, abundance_l, traits_l, Smax_,pi_l)
 

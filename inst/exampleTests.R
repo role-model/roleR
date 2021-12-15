@@ -2,6 +2,7 @@
 install.packages("devtools")
 library(devtools)
 install_github("ajrominger/pika")
+install.packages("RcppArmadillo")
 
 # clean and rebuild package first
 # Build -> Clean and Rebuild
@@ -96,3 +97,4 @@ microbenchmark(iterSim(sim,10))
 # should the Cpp functions take indices starting at 1 or 0? I'm leaning towards 1, partially so they are compatible with tests and whatnot
 # should localcomm, metacomm, phylocomm, etc be accessible to user? what methods should be exposed to user
 
+RcppArmadillo.package.skeleton()

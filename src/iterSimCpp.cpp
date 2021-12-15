@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 #include "roleModelCpp.cpp"
 //#include "birthCpp.cpp"
 //#include "deathCpp.cpp"

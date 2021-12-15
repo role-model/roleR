@@ -14,5 +14,5 @@ Suggests:
     hillR
 Remotes:
     ajrominger/pika
-LinkingTo: Rcpp
+LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.2

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Rcpp.h>
+#include <RcppArmadillo.h>
 #include "paramValuesCpp.cpp"
 
 using namespace Rcpp;

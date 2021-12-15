@@ -11,3 +11,11 @@ metadata <- data.frame(values)
 colnames(metadata) <- "Value"
 rownames(metadata) <- names
 View(metadata)
+
+# paramter value = inverse gamma 
+# expression, text, parse etc to
+# maybe executable code? 
+# how to capture priors in metadata
+# optional field - user specified description of project 
+# keyword field - based on description 
+# version information R, roleR 
