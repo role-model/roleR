@@ -1,6 +1,7 @@
 library(testthat)
 context('immigration functions work')
 
+# works
 test_that('immigrationLocal works', {
     l <- new(localCommCpp, rep(1,10),rep(1,10),10,rep(1,10))
     s <- initSim()
@@ -10,16 +11,18 @@ test_that('immigrationLocal works', {
     expect_equal(l$species_ids[11], 0)
 })
 
+# works
 test_that('immigrationRole works', {
     r <- initSim()
-    r$local <- new(localCommCpp, rep(1:10), matrix(1:100, nrow = 10), 10, rep(1:10))
-    r$immigration()
+    r$local <- new(localCommCpp, rep(1,10),rep(1,10),10,rep(1,10))
     
-    expect_true(is.element(2,r$local$abundance))
-    r <- .initSim(NULL)
-    r@localComm <- localComm(1:10,matrix(1:100,nrow = 10, ncol = 10),1:10,10)
-    r <- immigration(r)
-    expect_equal(r@localComm@abundance[1],2)
+    # simulate death of indv at index 9 
+    r$local$abundance_indv[9] = 0
+    # call imm on death_index
+    r$immigration(9)
+  
+    # there should now be an individual at that index
+    expect_equal(r$local$abundance_indv[10],1)
 })
 
 sourceCpp("src/roleModelCpp.cpp")

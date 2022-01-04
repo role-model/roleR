@@ -21,27 +21,27 @@ roleModelCpp iterSim(roleModelCpp model,int nstep) {
 
         // death always occurs
         Rcout << "death triggered" << "\n";
-        out.death();
+        int dead_index = out.death();
         Rcout << "death has occurred" << "\n";
         
         //if speciation occurs based on local speciation param
         if(R::runif(0,1) <= model.params.values.speciation_local){
             Rcout << "speciation triggered" << "\n";
-            out.speciation();
+            out.speciation(dead_index);
             Rcout << "speciation occurred" << "\n";
         }
 
         // else if immigration occurs based on dispersal chance param
         if(R::runif(0,1) <= model.params.values.dispersal_prob) { //else
             Rcout << "immigration triggered" << "\n";
-            out.immigration();
+            out.immigration(dead_index);
             Rcout << "immigration occurred" << "\n";
         }
 
         // else a birth event occurs
         else{
             Rcout << "birth triggered" << "\n";
-            out.birth();
+            out.birth(dead_index);
             Rcout << "birth has occurred" << "\n";
         }
     }

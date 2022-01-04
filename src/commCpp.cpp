@@ -50,11 +50,12 @@ class localCommCpp {
         NumericVector abundance_indv; // a vector of 0s and 1s specifying alive or dead individuals
         NumericVector species_ids; // the species num that each individual belongs to
         NumericVector traits; // trait values 
-        int Imax; // max number of individuals in the community, index used often
+        int J; // constant number of individuals in the community
+        int Imax; // max number of individuals in the community
         int Smax; // max number of species in community, index used to create new species ids 
         NumericVector pi; // genetic diversities of species - unsure how this plays into new structure
   
-        arma::sp_mat traitdiffs; // a sparse matrix that is the outer product of traits*traits 
+        arma::mat traitdiffs; // a matrix that is the outer product of traits*traits 
                                   // calculated at object creation then altered rather than recalculated
         //int traitMax; don't think we need this anymore? 
         NumericVector abundance_sp; // abundances of every species i at index i, kept to save on computation
@@ -63,7 +64,7 @@ class localCommCpp {
         // constructor takes species abundances and species traits and decollapses
         // them into a vector of individuals
         localCommCpp(NumericVector abundance_, NumericVector traits_, int Smax_,
-                     NumericVector pi_): abundance_sp(abundance_), traits_sp(traits_)
+                     NumericVector pi_): abundance_sp(abundance_), traits_sp(traits_), Smax(Smax_), pi(pi_)
         {
             // init abundance, species, traits vectors
             abundance_indv = NumericVector(10000);  
@@ -72,11 +73,8 @@ class localCommCpp {
             
             // init Imax
             Imax = 0; 
-            // init Smax
-            Smax = Smax_; 
             
             Rcout << "started sp decollapse" << "\n";
-
             // for every species
             for(int s = 0; s < abundance_.length(); s++)
             {
@@ -96,14 +94,20 @@ class localCommCpp {
                 Imax += 1;
               }
             }
-            pi = pi_;
+            
+            // init J, which is the same as Imax at init 
+            J = Imax;
+            
+            // trim abundance, species, traits vectors to J 
+            abundance_indv = abundance_indv[Rcpp::Range(0,J-1)];
+            species_ids = species_ids[Rcpp::Range(0,J-1)];
+            traits = traits[Rcpp::Range(0,J-1)];
             
             Rcout << "init traitdiffs" << "\n";
-            
             // init traitdiffs as outer product of traits 
             //arma::mat tr = as<arma::mat>(traits_);
             //traitdiffs = arma::sp_mat(tr*tr);
-            traitdiffs = arma::sp_mat(10000,10000);
+            traitdiffs = arma::mat(J,J);
             
             Rcout << "diffs dims " << arma::size(traitdiffs) << "\n";
             Rcout << "started traitdiffs calc" << "\n";
@@ -124,73 +128,81 @@ class localCommCpp {
             //abundance_sp = abundance_;
         }
         
-        // birth is called on individual i 
-        void birth(int i)
+        // birth is called on indv i, the new indv REPLACING the index at r
+        void birth(int i, int r)
         {
             // add individual 
-            abundance_indv[Imax] = 1;
+            abundance_indv[r] = 1;
+          
             // indv gets the species and trait of the indv that gave birth to it 
-            species_ids[Imax] = species_ids[i];
-            traits[Imax] = traits[i]; // should traits vary randomly when birth is called? 
+            species_ids[r] = species_ids[i];
+            traits[r] = traits[i]; // soon traits should vary randomly when birth is called
+            
+            // update species abundances 
+            abundance_sp[species_ids[i]] += 1;
             
             // update traitdiffs
-            arma::vec v = traits * -1 + traits[Imax];
+            arma::vec v = (traits * -1) + traits[r];
             
-            traitdiffs.row(Imax) = v.t(); 
+            traitdiffs.row(r) = v.t(); 
             
-            //traitdiffs(Imax,) = traits[Imax] - traits;
-            
+            // increment Imax
             Imax += 1; 
         }
         
         // death is called on individual i 
         void death(int i)
         {
+            // change binary abundance from 1 to 0
             abundance_indv[i] = 0;
-            // decrement species abundances 
+          
+            // decrement abundance of that species
             abundance_sp[species_ids[i]] -= 1; 
         }
         
-        // speciation is called on species s
-        void speciation(int s, roleParamsCpp p)
+        // speciation is called on species s, the new individual REPLACING the index at r
+        void speciation(int s, int r, roleParamsCpp p)
         {
             // calculate random trait deviation by sigma
             float tdev = R::rnorm(0, p.values.trait_sigma);
             
-            // add abundance and trait for new individual of species
-            abundance_indv[Imax] = 1;
-            traits[Imax] = traits_sp[Smax] + tdev; 
+            // add abundance, species id and trait for new individual of species
+            abundance_indv[r] = 1;
+            species_ids[r] = s; 
+            traits[r] = traits_sp[Smax] + tdev; 
             
             // update traitdiffs
             //traitdiffs(Imax,_) = traits[Imax] - traits;
-            arma::rowvec v = traits * -1 + traits[Imax];
-            traitdiffs.row(Imax) = v; 
+            arma::rowvec v = traits * -1 + traits[r];
+            traitdiffs.row(r) = v; 
             
             // add abundance and trait for new species
             abundance_sp[Smax] = 1;
+            
+            // TODO calculate new species trait here as a function of individual traits
             traits_sp[Smax] = traits_sp[s] + tdev; 
-            // NOTE - may have to update species trait means whenever birth occurs if keeping this 
             
             // increment num indv and sp
             Imax += 1; 
             Smax += 1;
-            
-            // NOTE - should speciation dev be of mean trait? or of a random individual in the species instead? 
         }
         
         // immigration is called on species s 
-        void immigration(int s, metaCommCpp m)
+        void immigration(int s, int r, metaCommCpp m)
         {
           // add indv of species s
-          abundance_indv[Imax] = 1;
-          species_ids[Imax] = s;
-          traits[Imax] = m.traits[s];
+          abundance_indv[r] = 1;
+          species_ids[r] = s;
+          traits[r] = m.traits[s];
+          
+          // update species abundances 
+          abundance_sp[species_ids[s]] += 1;
           
           // update traitdiffs
-          //traitdiffs(Imax,_) = traits[Imax] - traits;
-          arma::rowvec v = traits * -1 + traits[Imax];
-          traitdiffs.row(Imax) = v; 
+          arma::rowvec v = traits * -1 + traits[s];
+          traitdiffs.row(r) = v; 
           
+          // increment Imax
           Imax += 1; 
         }
 
