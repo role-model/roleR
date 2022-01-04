@@ -36,6 +36,7 @@ public:
     double alpha;
     double trait_z; // the optimal trait for an environment 
     double sigma_e; // determines how quickly fitness decays with the distance to the optimum
+    double sigma_c; 
 
     //empty constructor
     paramValuesCpp(){
@@ -48,6 +49,9 @@ public:
         extinction_meta = 0.8;
         speciation_meta = 1;
         trait_sigma = 0.1;
+        sigma_e = 0.1;
+        sigma_c = 0.1; 
+        trait_z = 0.5;
     }
 
     // //full constructor - may want to use this in the future

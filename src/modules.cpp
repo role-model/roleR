@@ -17,6 +17,7 @@ RCPP_MODULE(commCpp) {
     
         .field("abundance_indv", &localCommCpp::abundance_indv)
         .field("species_ids", &localCommCpp::species_ids)
+        .field("traits", &localCommCpp::traits)
         .field("Imax", &localCommCpp::Imax)
         .field("Smax", &localCommCpp::Smax)
         .field("pi", &localCommCpp::pi)

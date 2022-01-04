@@ -89,8 +89,8 @@ initSim <- function(params = NULL) {
     # init local species traits
     traits_l <- numeric(100)
     # extract trait for starting species from meta
-    traits_l[i] <- which(meta$traits[meta$traits[,1]] == i)
-    
+    traits_l[i] <- meta$traits[which(meta$traits[meta$traits[,1]] == i),2]
+
     # TODO - add simulation of genetic abundance 
     pi_l <- rep(1:Smax_)
     
