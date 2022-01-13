@@ -9,24 +9,21 @@ using namespace arma;
 // [[Rcpp::depends(RcppArmadillo)]]
 
 //' @name metaCommCpp
-//' @title a C++ class to specify the meta community
-//' @field new Constructor
-//' @param abundance a numeric vector of relative abundances for each species
-//' @param traits matrix of traits; the first column specifies the species index
-//' (i.e. the index of that species in the \code{abundance} vector) and the
-//' subsequent columns specify the trait values
-//' @param Smax a single integer specifying the total number of species ever
+//' @title a class to specify the meta community
+//' @param abundance a \code{numeric vector} of relative abundances for each species
+//' @param traits a \code{numeric vector} of traits for each species
+//' @param Smax a single \code{integer} specifying the total number of species ever
 //' recorded in the local community (both locally extinct and extant)
 
 class metaCommCpp {
     private:
     public:
         NumericVector abundance;
-        NumericMatrix traits;
+        NumericVector traits;
         int Smax;
   
         //constructor
-        metaCommCpp(NumericVector abundance_, NumericMatrix traits_,int Smax_)
+        metaCommCpp(NumericVector abundance_, NumericVector traits_,int Smax_)
         {
           abundance = abundance_; 
           traits = traits_;
@@ -35,8 +32,7 @@ class metaCommCpp {
 };
 
 //' @name localCommCpp
-//' @title a C++ class to specify the local community
-//' @field new Constructor
+//' @title a class to specify the local community
 //' @param abundance_binary a numeric vector specifying the binary abundance (alive or dead) 
 //' of each individual
 //' @param traits a numeric vector of trait values for each individual
@@ -60,6 +56,8 @@ class localCommCpp {
         //int traitMax; don't think we need this anymore? 
         NumericVector abundance_sp; // abundances of every species i at index i, kept to save on computation
         NumericVector traits_sp; // traits of every species i at index i, kept to save on computation
+        
+        bool print;
         
         // constructor takes species abundances and species traits and decollapses
         // them into a vector of individuals
@@ -138,8 +136,10 @@ class localCommCpp {
             species_ids[r] = species_ids[i];
             traits[r] = traits[i]; // soon traits should vary randomly when birth is called
             
-            // update species abundances 
-            abundance_sp[species_ids[i]] += 1;
+            // increment the abundance of the species holding the indv that gave birth
+            abundance_sp[species_ids[i]] = abundance_sp[species_ids[i]] + 1;
+            
+            if(print){Rcout << "incrementing species " << species_ids[i] << "\n";}
             
             // update traitdiffs
             arma::vec v = (traits * -1) + traits[r];
@@ -156,8 +156,8 @@ class localCommCpp {
             // change binary abundance from 1 to 0
             abundance_indv[i] = 0;
           
-            // decrement abundance of that species
-            abundance_sp[species_ids[i]] -= 1; 
+            // decrement the abundance of the species holding the indv that gave birth
+            abundance_sp[species_ids[i]] = abundance_sp[species_ids[i]] - 1;
         }
         
         // speciation is called on species s, the new individual REPLACING the index at r
@@ -195,8 +195,10 @@ class localCommCpp {
           species_ids[r] = s;
           traits[r] = m.traits[s];
           
-          // update species abundances 
-          abundance_sp[species_ids[s]] += 1;
+          // increment the abundance of the species holding the indv that gave birth
+          abundance_sp[s] = abundance_sp[s] + 1;
+          
+          if(print){Rcout << "incrementing species " << s << "\n";}
           
           // update traitdiffs
           arma::rowvec v = traits * -1 + traits[s];

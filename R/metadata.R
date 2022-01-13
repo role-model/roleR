@@ -1,6 +1,10 @@
 
-# returns a dataframe containing metadata extracted from sim 
-createMetadata <- function(sim)
+#' @description returns a dataframe containing metadata extracted from sim, a roleModelCpp object
+#' @param sim a roleModelCpp object representing a simulation 
+#' @export
+#' 
+
+extractMetadata <- function(sim)
 {
   # get param values from sim 
   values <- c(sim$params$values$dispersal_prob, sim$params$values$extinction_meta, 
@@ -24,12 +28,18 @@ createMetadata <- function(sim)
   return(out)
 }
 
-# extracts a params 
+#' @description extracts a paramValuesCpp object from a metadata object - use to
+#' easily transfer parameters from saved metadata to a new model simulation 
+#' @param metadata a dataframe containing metadata extracted from a model using 
+#' extractMetadata - TODO make this a strict object later
+#' @export
+#' 
+# extracts a paramValuesCpp object from a metadata object
 extractParams <- function(metadata) 
 {
   out <- new(paramValuesCpp) 
   m <- as.numeric(metadata[,1])
-  #ultimately these need to either be distributions or doubles
+  # ultimately these need to either be distributions or doubles
   # probably convert params to store as NumericVectors of distributions in paramValuesCpp 
   
   out$dispersal_prob = m[1]
@@ -44,9 +54,8 @@ extractParams <- function(metadata)
   return(out) 
 }
 
-# paramter value = inverse gamma 
-# expression, text, parse etc to
-# maybe executable code? 
+# notes
+# allow saving expression, text, executable code to parse to distributions of params etc
 # how to capture priors in metadata
 # optional field - user specified description of project 
 # keyword field - based on description 

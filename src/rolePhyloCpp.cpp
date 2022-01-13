@@ -4,6 +4,15 @@
 
 using namespace Rcpp;
 
+//' @name rolePhyloCpp
+//' @title a C++ class to specify the model phylogeny
+//' @param n an \code{integer} containing the number of tips in the phylogeny
+//' @param e a two-column \code{numeric matrix} containing all ancestor-child pairs
+//' @param l a \code{numeric vector} of edge lengths (in units of time steps = 1/J' generations)
+//' @param alive a \code{logical vector} indicating whether tips are extant or not
+//' @param tipNames a \code{string vector} of tip names
+//' @param scale a \code{numeric} containing time scale translation to years
+
 class rolePhyloCpp {
     public:
         int n;
@@ -32,6 +41,7 @@ class rolePhyloCpp {
 
         void speciation(int i)
         {
+            bool print = false; 
             //number of tips
             //n <- x@n
 
@@ -48,7 +58,8 @@ class rolePhyloCpp {
                 }
             }
             
-            Rcout << "found unrealized edge";
+            if(print){Rcout << "found unrealized edge \n";}
+            
             //index of where to add new edge
             //j <- which(x@e[, 2] == i)
             int j = -1;
@@ -60,7 +71,7 @@ class rolePhyloCpp {
                 }
             }
             
-            Rcout << "found index of where to add new edge";
+            if(print){Rcout << "found index of where to add new edge \n";}
 
             // add one to internal node indices
             //e[e > n] <- e[e > n] + 1
@@ -72,40 +83,40 @@ class rolePhyloCpp {
                 }
             }
             
-            Rcout << "added one to internal node indices";
+            if(print){Rcout << "added one to internal node indices \n";}
             
             // add new node
             int newNode = 2 * n + 1; // index of new node
             e(1 + eNew, 1) = newNode;
             //e[(0:1) + eNew, 1] = newNode; // add internal node
             
-            Rcout << "added new node";
+            if(print){Rcout << "added new node \n";}
             
             e(eNew, 2) = e(j, 2); // add old tip
             
-            Rcout << "added old tip";
+            if(print){Rcout << "added old tip \n";}
             
             e(eNew + 1, 2) = n + 1; // add new tip
 
-            Rcout << "added new tip";
+            if(print){Rcout << "added new tip \n";}
             
             e(j, 2) = newNode;
             
-            Rcout << "added something";
+            if(print){Rcout << "added something \n";}
             
             // augment edge lengths
             l[0 + eNew] = 0; // add new edges (adding 2 edges?)
             l[1 + eNew] = 0;
             //x@l[x@e[, 2] <= n + 1] <- x@l[x@e[, 2] <= n + 1] + 1 // increase tip length
             
-            Rcout << "augmented edge lengths";
+            if(print){Rcout << "augmented edge lengths \n";}
             
             // over-write other slots of `x` with new info
             alive[n-1] = TRUE;
             tipNames[n-1] = "new";
             n += 1;
             
-            Rcout << "overwrote other slots of x with new info";
+            if(print){Rcout << "overwrote other slots of x with new info \n";}
         }
 
         void immigration()

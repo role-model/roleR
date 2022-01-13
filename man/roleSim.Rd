@@ -4,10 +4,11 @@
 \alias{roleSim}
 \title{RoLE model simulation}
 \usage{
-roleSim(params, init = NULL, nstep = NULL, nsim = 1)
+roleSim(params = NULL, init = NULL, nstep = 100, nsim = 1)
 }
 \arguments{
-\item{params}{list of parameters}
+\item{params}{list of parameters; if left unspecified a default set of "plausible"
+parameter values is used}
 
 \item{init}{an optional initial condition specified as a \code{roleModelCpp}
 object}
@@ -18,7 +19,7 @@ parameter}
 
 \item{nsim}{number of simulations to run}
 
-\item{nout}{frequency of intermediate results output}
+\item{nout}{frequency of intermediate results output (not yet implemented)}
 }
 \description{
 Simulate communities under the RoLE model. The key distinction

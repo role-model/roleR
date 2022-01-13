@@ -15,14 +15,16 @@ using namespace Rcpp;
 //' @field individuals_local the number of individuals in the local community
 //' @field dispersal_prob the probability of dispersal from the metacommunity to the local community
 //' @field speciation_local the rate of speciation in the localcommunity
-//' @field env_sigma
-//' @field comp_sigma
+//' @field env_sigma the intensity of selection due to environmental filtering - determines how quickly fitness decays with the distance to the optimum
+//' @field comp_sigma the intensity of selection due to competitive filtering
 //' @field mu
 //' @field alpha
-//'
+//' @field trait_z the optimal trait for an environment 
+
 class paramValuesCpp {
 public:
     double speciation_meta;
+    NumericVector speciation_meta_pd; 
     double extinction_meta;
     double trait_sigma;
     double species_meta;
@@ -34,11 +36,17 @@ public:
     double comp_sigma;
     double mu;
     double alpha;
-    double trait_z; // the optimal trait for an environment 
-    double sigma_e; // determines how quickly fitness decays with the distance to the optimum
+    double trait_z;
+    double sigma_e;
     double sigma_c; 
 
     //empty constructor
+    // NOTE - considerations around providing probability distribution
+    // when you create a paramValuesCpp it defaults
+    // when a param is used, sample from distribution if it exists
+    // function getParamValue(valuename) checks if a distribution is present and samples if it is
+    // honestly, end goal should be users can supply a time series of distributions of parameters 
+    
     paramValuesCpp(){
         //empty constructor assigns defaults
         species_meta = 15;
@@ -53,7 +61,6 @@ public:
         sigma_c = 0.1; 
         trait_z = 0.5;
     }
-
     // //full constructor - may want to use this in the future
     // paramValuesCpp(double sm, double em, double ts, double spm,double im, double il, double dp, double sl, double es, double cs, double m, double a)
     //     : speciation_meta(sm), extinction_meta(em), trait_sigma(ts), species_meta(spm),

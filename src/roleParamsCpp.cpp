@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+//' @name roleParamsCpp
+//' @title a C++ class holding the model parameter values as a paramValuesCpp object plus some additional metadata
+//' @param values a paramValuesCpp object containing the parameter values proper 
+//' @param runType the type of model run, either "sim" or "fit"
+
 class roleParamsCpp {
 public:
     paramValuesCpp values;

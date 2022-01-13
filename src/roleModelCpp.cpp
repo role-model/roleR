@@ -2,6 +2,7 @@
 #include "commCpp.cpp"
 #include "rolePhyloCpp.cpp"
 #include "roleParamsCpp.cpp"
+#include <string>
 #pragma once
 
 using namespace Rcpp;
@@ -21,6 +22,7 @@ class roleModelCpp {
         metaCommCpp metaComm;
         rolePhyloCpp phylo;
         roleParamsCpp params;
+        bool print; 
 
         // constructor
         roleModelCpp(localCommCpp local_, metaCommCpp meta_, rolePhyloCpp phy_,
@@ -35,35 +37,25 @@ class roleModelCpp {
             // sample an individual for birth randomly
             NumericVector probs = localComm.abundance_indv;
             IntegerVector i = Rcpp::sample(localComm.J, 1, false, probs);
-            
-            // print contents of NumericVector
-            //for(int i=0; i<probs.length(); i++){
-            //    Rprintf("the value of v[%i] : %f \n", i, probs[i]);
-            //}
 
             // make i from 0 to J - 1 (previously 1 to J)
             i[0] -= 1;
 
             // call birth on an individual
-            //localComm.birth(i[0]);
             localComm.birth(i[0], dead_index);
         }
 
         int death()
         {
-            // trait_z is the optimal trait for an environment 
-            // sigma_e determines how quickly fitness decays with the distance to the optimum
-            // NOTE - allow trait_z to vary as a time series later
+            // NOTE - calculate vector once and each time individual is replaced then update index 
+            // TODO - allow trait_z to vary as a time series later
             
-            // probs of death due to environmental filtering
+            // compute probs of death due to environmental filtering
             NumericVector f_probs = 1 - exp(-1/params.values.sigma_e * pow(localComm.traits - params.values.trait_z, 2));
-            //calculate vector once and each time individual is replaced then update index 
-              
+
+            // WIP alternate version for each individual without traitdiffs 
             // init c_probs
             //NumericVector c_probs = NumericVector(localComm.J);
-            
-            // WIP for each individual
-            // does not use traitdiffs matrix currently
             // for(int i = 0; i < localComm.Imax; i++)
             // {
             //   float sum = 0; 
@@ -76,39 +68,24 @@ class roleModelCpp {
             //   c_probs[i] = (1/localComm.Imax) * sum; 
             // }
 
-            // calculate probs of death due to competitive filtering
+            // compute probs of death due to competitive filtering
             NumericVector c_probs = as<NumericVector>(wrap(1/localComm.J * arma::sum(exp((-1/params.values.sigma_c) * arma::pow(localComm.traitdiffs, 2)),0)));
             
-            
-            Rcout << "fprobs size: " << f_probs.size() << "\n";
-            
-            // print probs
-            for(int i=0; i<f_probs.length(); i++){
-              Rprintf("the value of v[%i] : %f \n", i, f_probs[i]);
-            }
-            
-            Rcout << "cprobs size: " << c_probs.size() << "\n";
-            
-            // print probs
-            for(int i=0; i<c_probs.length(); i++){
-              Rprintf("the value of v[%i] : %f \n", i, c_probs[i]);
-            }
+            // prints size of vector, contents, and local J value to compare 
+            if(print){printVector(f_probs, "f_probs");}
+            if(print){printVector(c_probs, "c_probs");}
             
             // probs is sum of f_probs and c_probs 
             NumericVector probs = f_probs + c_probs; 
             
-            Rcout << "probs size: " << probs.size() << "\n";
-            Rcout << "J size : " << localComm.J << "\n";
-            
-            // print probs
-            for(int i=0; i<probs.length(); i++){
-               Rprintf("the value of v[%i] : %f \n", i, probs[i]);
-            }
+            if(print){printVector(probs, "sum probs");}
             
             IntegerVector i = Rcpp::sample(localComm.J, 1, false, probs);
             
             // make i from 0 to J - 1 (previously 1 to J)
             i[0] -= 1;
+            
+            if(print){Rprintf("chosen index : ", i[0]);}
             
             // call death on individual
             localComm.death(i[0]);
@@ -116,6 +93,7 @@ class roleModelCpp {
             // if death of indv led to extinction of species, call death on rolePhylo
             if(localComm.abundance_sp[localComm.species_ids[i[0]]] <= 0)
             {
+                if(print){Rprintf("extinction occured, calling phylodeath");}
                 phylo.death(i[0]);
             }
             
@@ -125,27 +103,19 @@ class roleModelCpp {
 
         void speciation(int dead_index)
         {
-            // note: `Smax` from `@localComm` and `@metaComm` and `n` from `@phylo` are
+            // NOTE - `Smax` from `@localComm` and `@metaComm` and `n` from `@phylo` are
             // all enforced to be equal, so we can sample from any but we have to
             // weight the probabilities by abundances and immigration
-
+          
             // dispersal prob
             double dp = params.values.dispersal_prob;
 
-            // normalized abundances at meta and local levels
-            // mp has length equal to the number of species in the metacomm
-            NumericVector mp = metaComm.abundance[Rcpp::Range(0,localComm.Smax-1)]; //Smax - 1
+            // compute normalized abundances at meta and local levels
+            // NOTE - mp has length equal to the number of species in the metacomm
+            NumericVector mp = metaComm.abundance[Rcpp::Range(0,localComm.Smax-1)];
             mp = mp / sum(mp);
             
-            // prob of selecting a parent for speciation depends on abundance 
-            // metacomm abundance weighted by dispersal prob + local comm abundance weighted by birth
-            
-            //CHANGE - how to do this? decollapse metacomm abundance? cant really do that 
-            // collapse individual vector?
-            // lp has length equal to the number of species in the localcom
-            // EZ - save species abundances, should be easy enough 
-            NumericVector sa = NumericVector(localComm.Smax); 
-   
+            //NumericVector sa = NumericVector(localComm.Smax); 
             //for(int s = 0; s < localComm.Smax; s++)
             //{
             // NumericVector indices = match(localComm.species_ids, s);
@@ -153,55 +123,71 @@ class roleModelCpp {
             //  sa[s] = match(localComm.species_ids
             //}
             
-            NumericVector lp = localComm.abundance_sp[Rcpp::Range(0,localComm.Smax-1)]; //Smax - 1
+            // prob of selecting a parent for speciation depends on abundance 
+            // metacomm abundance weighted by dispersal prob + local comm abundance weighted by birth
+            // NOTE -  can come up with negative probs now, is this intended behavior? 
+            NumericVector lp = localComm.abundance_sp[Rcpp::Range(0,localComm.Smax-1)]; 
             lp = lp / sum(lp);
             
-            NumericVector pp = dp * mp + (1 - dp) * lp;
+            NumericVector probs = dp * mp + (1 - dp) * lp;
+            
+            // remove negative probabilities
+            probs = (abs(probs)+probs)/2;
             
             // vector of phylo parents
             // this is not the case because includes extinct edges 
             //NumericVector v = phylo.e(_, 0); 
             
-            //Rcout << "vect: " << v << "\n";
-            Rcout << "probs size: " << pp.size() << "\n";
-            Rcout << "phylo n size : " << phylo.n << "\n";
+            if(print){printVector(probs, "speciation probs");}
             
             // index of parent
-            IntegerVector i = sample(phylo.n, 1, false, pp);
-            
+            IntegerVector i = sample(phylo.n, 1, false, probs);
+        
             // make i from 0 to phylo.n - 1 (previously 1 to phylo.n)
             i[0] -= 1;
             
+            if(print){Rprintf("chosen index : ", i[0]);}
+            
             // call speciation on individual index to replace dead indv with
             // first member of new species
+            if(print){Rprintf("calling localComm speciation");}
             localComm.speciation(i[0], dead_index, params);
             
             // add a tip to the phylogeny
+            if(print){Rprintf("calling phylo speciation");}
             phylo.speciation(i[0]);
         }
 
         void immigration(int dead_index)
         {
+            if(print){Rcout << "metacomm Smax size: " << metaComm.Smax << "\n";}
             // Smax was not changing - I think I fixed this 
-            Rcout << "Smax: " << metaComm.Smax << "\n";
         
             //sample a species for birth relative to local abundance
             //0 vs 1 start indices may cause problems
-            
-            NumericVector probs = metaComm.abundance[Rcpp::Range(0,params.values.species_meta-1)];//metaComm.Smax-1
+            NumericVector probs = metaComm.abundance[Rcpp::Range(0,params.values.species_meta-1)];
           
-            Rcout << "probs size: " << probs.size() << "\n";
-            Rcout << "Smax n size : " << metaComm.Smax << "\n";
+            if(print){Rcout << "imm from meta probs size: " << probs.size() << "\n";}
             
             IntegerVector i = sample(params.values.species_meta, 1, false, probs);
             
             // make i from 0 to Smax - 1 (previously 1 to Smax)
             i[0] -= 1;
             
-            //Rcout << "i: " << i[0] << "\n";
+            if(print){Rcout << "chosen index : " << i[0] << "\n";}
             
             // call immigration on species i
             localComm.immigration(i[0], dead_index, metaComm);
+        }
+        
+        void printVector(NumericVector v, std::string name)
+        {
+          Rcout << name << " size: " << v.size() << "\n";
+          Rcout << "local J size : " << localComm.J << "\n";
+          
+          for(int i=0; i<v.length(); i++){
+              Rprintf("v[%i] : %f ", i, v[i],",");
+          }
         }
 };
 

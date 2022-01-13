@@ -3,8 +3,20 @@ library(roleR)
 library(Rcpp)
 
 sim <- initSim()
+sim
+sim$print = FALSE
+sim$local$print = FALSE
+iterSim(sim,10000,print=FALSE)
 
-sim <- iterSim(sim,1000)
 
-meme <- matrix(0, nrow = 10000,ncol= 10000)
-View(meme)
+sim$local$species_ids
+sim$local$abundance_sp
+View(sim$local$traitdiffs)
+
+# traitdiffs and abundance_sp not updating properly 
+
+sim <- iterSim(sim,1,true)
+sim$local$species_ids
+
+# install.packages("devtools")
+devtools::install_github("rdinnager/slimr")

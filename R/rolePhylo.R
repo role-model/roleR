@@ -3,8 +3,7 @@
 #'
 #' @slot n number of tips
 #' @slot e edge matrix; two columns give ancestor, child pair
-#' @slot l numeric vector of edge lengths (in units of time steps = 1/J
-#' generations)
+#' @slot l numeric vector of edge lengths (in units of time steps = 1/J generations)
 #' @slot alive vector indicating whether tips are extant or not
 #' @slot tipNames vector of tip names
 #' @slot scale time scale translation to years

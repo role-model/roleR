@@ -6,30 +6,50 @@
 #' periodic output of results for visualization and exploration.
 #' \code{roleSimPlay} is intended primarily for the accompanying Shiny App. R
 #'
-#'
-#' @param params list of parameters
+#' @param params list of parameters; if left unspecified a default set of "plausible"
+#' parameter values is used 
 #' @param init an optional initial condition specified as a \code{roleModelCpp}
 #' object
 #' @param nstep number of simulation steps to run; if \code{prop_equilib} is
 #' specified in the \code{params} list, \code{nstep} will over-ride that
 #' parameter
 #' @param nsim number of simulations to run
-#' @param nout frequency of intermediate results output
+#' @param nout frequency of intermediate results output (not yet implemented)
 #'
 #' @details Stub
 #'
 #' @rdname roleSim
 #' @export
 
-roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
+roleSim <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
 
+    #if params ia null, initialize a default set of "plausible" values
+    if(is.null(params)){
+      vals <- new(paramValuesCpp)
+      params <- new(roleParamsCpp,vals,"sim", 1)
+    }
+  
     # initialize simulation
     if(is.null(init)) {
         init <- initSim(params)
     }
+    
+    # loop over sims
+    for(i in 1:nsim)
+    {
+      if(i == 1){
+        out <- list(iterSimCpp(init, nstep))
+      }
+      else{
+        list[[i]] = iterSimCpp(init, nstep)
+      }
+    }
+    
+    # return list of sims
+    return(out)
+}
 
-    # loop over steps
-    iterSimCpp(init, nstep)
+roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
 }
 
 # ----
@@ -37,7 +57,7 @@ roleSim <- function(params, init = NULL, nstep = NULL, nsim = 1) {
 #' object
 #' @param params a roleParamsCpp object containing the model parameters - if null, defaults are set
 
-initSim <- function(params = NULL) {
+.initSim <- function(params = NULL) {
 
     # if no roleParamsCpp object provided
     if(is.null(params))
@@ -91,17 +111,42 @@ initSim <- function(params = NULL) {
     # extract trait for starting species from meta
     traits_l[i] <- meta$traits[which(meta$traits[meta$traits[,1]] == i),2]
 
-    # TODO - add simulation of genetic abundance 
-    pi_l <- rep(1:Smax_)
+    # TODO WIP - add simulation of genetic abundance using slimr
+    #slimr_output_nucleotides(name = "seqs", subpops = FALSE)
+    library(slimr)
+    slim_script(
+      slim_block(initialize(),
+                 {
+                   ## set the overall mutation rate
+                   initializeMutationRate(1e-7); 
+                   ## m1 mutation type: neutral
+                   initializeMutationType("m1", 0.5, "f", 0.0);
+                   ## g1 genomic element type: uses m1 for all mutations
+                   initializeGenomicElementType("g1", m1, 1.0);
+                   ## uniform chromosome of length 100 kb
+                   initializeGenomicElement(g1, 0, 99999);
+                   ## uniform recombination along the chromosome
+                   initializeRecombinationRate(1e-8);
+                 }),
+      slim_block(1,
+                 {
+                   sim.addSubpop("p1", 500);
+                 }),
+      slim_block(10000,
+                 {
+                   sim.simulationFinished();
+                 })
+    ) -> s_script
+
+    results <- slim_run(s_script)
     
-    # create traitdiffs in R (doing so in C++ crashes RStudio apparently)
-    # traitdiffs <- outer(traits_l, traits_l, FUN="*")
+    # soon set pi to be simulated sequences, and update outside of C++ over time
+    pi_l <- rep(1:Smax_)
     
     # create localCommCpp object
     local <- new(localCommCpp, abundance_l, traits_l, Smax_,pi_l)
 
     # convert ape phylo to rolePhylo
-    #phy <- as(phy, "rolePhylo")
     phy <- apeToRolePhylo(phy)
 
     # convert rolePhylo to rolePhyloCpp
@@ -138,7 +183,7 @@ initSim <- function(params = NULL) {
     return(thisSAD / sum(thisSAD))
 }
 
-rolePhyloToCpp <- function(phylo){
+.rolePhyloToCpp <- function(phylo){
     n <- phylo@n
 
     e <- phylo@e
@@ -150,7 +195,7 @@ rolePhyloToCpp <- function(phylo){
     return(out)
 }
 
-apeToRolePhylo <- function(phylo){
+.apeToRolePhylo <- function(phylo){
 
     # extract number of times
     n <- ape::Ntip(phylo)
@@ -182,7 +227,7 @@ apeToRolePhylo <- function(phylo){
                      tipNames = tipNames, scale = scale))
 }
 
-apeToPhyloCpp <- function(phylo){
+.apeToPhyloCpp <- function(phylo){
     n <- ape::Ntip(phylo)
 
     e <- phylo$edge

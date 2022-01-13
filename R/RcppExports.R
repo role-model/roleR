@@ -2,19 +2,15 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @name metaCommCpp
-#' @title a C++ class to specify the meta community
-#' @field new Constructor
-#' @param abundance a numeric vector of relative abundances for each species
-#' @param traits matrix of traits; the first column specifies the species index
-#' (i.e. the index of that species in the \code{abundance} vector) and the
-#' subsequent columns specify the trait values
-#' @param Smax a single integer specifying the total number of species ever
+#' @title a class to specify the meta community
+#' @param abundance a \code{numeric vector} of relative abundances for each species
+#' @param traits a \code{numeric vector} of traits for each species
+#' @param Smax a single \code{integer} specifying the total number of species ever
 #' recorded in the local community (both locally extinct and extant)
 NULL
 
 #' @name localCommCpp
-#' @title a C++ class to specify the local community
-#' @field new Constructor
+#' @title a class to specify the local community
 #' @param abundance_binary a numeric vector specifying the binary abundance (alive or dead) 
 #' of each individual
 #' @param traits a numeric vector of trait values for each individual
@@ -23,9 +19,11 @@ NULL
 #' @param pi a numeric vector of genetic diversities for each species
 NULL
 
-#' @name iterSimCpp
-#' @title a C++ function to iterate the RoLE model through nstep steps of simulation
-#' @param model the entire C++ model, an object of class roleModelCpp
-#' @param nstep the number of steps to iterate
+#' @name iterSim
+#' @title a function to iterate the RoLE model through \code{nstep} steps of simulation
+#' @param an object of class \code{roleModelCpp} to iterate 
+#' @param nstep an \code{integer} of the number of steps to iterate
+#' @param print a \code{bool} specifying whether to print the step outcomes
+#' 
 NULL
 

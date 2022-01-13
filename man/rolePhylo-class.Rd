@@ -16,8 +16,7 @@ evolved through simulation
 
 \item{\code{e}}{edge matrix; two columns give ancestor, child pair}
 
-\item{\code{l}}{numeric vector of edge lengths (in units of time steps = 1/J
-generations)}
+\item{\code{l}}{numeric vector of edge lengths (in units of time steps = 1/J generations)}
 
 \item{\code{alive}}{vector indicating whether tips are extant or not}
 

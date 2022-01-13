@@ -24,6 +24,7 @@ RCPP_MODULE(commCpp) {
         .field("traitdiffs", &localCommCpp::traitdiffs)
         .field("abundance_sp", &localCommCpp::abundance_sp)
         .field("traits_sp", &localCommCpp::traits_sp)
+        .field("print", &localCommCpp::print)
     
         .method("birth", &localCommCpp::birth)
         .method("death", &localCommCpp::death)
@@ -61,6 +62,7 @@ RCPP_MODULE(modelCpp) {
     .method("death", &roleModelCpp::death)
     .method("speciation", &roleModelCpp::speciation)
     .method("immigration", &roleModelCpp::immigration)
+    .field("print", &roleModelCpp::print)
     ;
 }
 
