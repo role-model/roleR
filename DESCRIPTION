@@ -32,6 +32,5 @@ Collate:
     'roleModel.R'
     'roleR-package.R'
     'roleSim.R'
-    'roleSimOld.R'
     'roleSimPlots.R'
     'speciation.R'
