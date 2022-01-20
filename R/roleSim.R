@@ -31,7 +31,7 @@ roleSim <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
   
     # initialize simulation
     if(is.null(init)) {
-        init <- initSim(params)
+        init <- .initSim(params)
     }
     
     # loop over sims
