@@ -8,11 +8,12 @@ Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
 Description: A simulation-based model the captures many processes across ecology and evolution and jointly predicts multi-dimensional biodiversity data.
 License: GPL (>= 2)
 Depends: R (>= 3.2)
-Imports: Rcpp (>= 1.0.4), TreeSim, ape, pika
+Imports: Rcpp (>= 1.0.4), TreeSim, ape, pika, slimr
 Suggests:
     testthat, 
     hillR
 Remotes:
-    ajrominger/pika
+    ajrominger/pika, 
+    bodkan/slimr
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.2
