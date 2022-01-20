@@ -22,12 +22,6 @@
 #' @export
 
 roleSim <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
-
-    #if params ia null, initialize a default set of "plausible" values
-    if(is.null(params)){
-      vals <- new(paramValuesCpp)
-      params <- new(roleParamsCpp,vals,"sim", 1)
-    }
   
     # initialize simulation
     if(is.null(init)) {
@@ -59,7 +53,7 @@ roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
 
 .initSim <- function(params = NULL) {
 
-    # if no roleParamsCpp object provided
+    # if params ia null, initialize a default set of "plausible" values
     if(is.null(params))
     {
         #create empty paramValuesCpp object
