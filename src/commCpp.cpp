@@ -47,22 +47,23 @@ class localCommCpp {
         NumericVector species_ids; // the species num that each individual belongs to
         NumericVector traits; // trait values 
         int J; // constant number of individuals in the community
-        int Imax; // max number of individuals in the community
+        int Imax; // max number of individuals in the community maybe - NOTE might be a holdover
         int Smax; // max number of species in community, index used to create new species ids 
-        NumericVector pi; // genetic diversities of species - unsure how this plays into new structure
   
         arma::mat traitdiffs; // a matrix that is the outer product of traits*traits 
                                   // calculated at object creation then altered rather than recalculated
+                                  
         //int traitMax; don't think we need this anymore? 
         NumericVector abundance_sp; // abundances of every species i at index i, kept to save on computation
         NumericVector traits_sp; // traits of every species i at index i, kept to save on computation
+        NumericVector pi_sp; // genetic diversities of species - unsure how this plays into new structure
         
         bool print;
         
         // constructor takes species abundances and species traits and decollapses
         // them into a vector of individuals
         localCommCpp(NumericVector abundance_, NumericVector traits_, int Smax_,
-                     NumericVector pi_): abundance_sp(abundance_), traits_sp(traits_), Smax(Smax_), pi(pi_)
+                     NumericVector pi_): abundance_sp(abundance_), traits_sp(traits_), Smax(Smax_), pi_sp(pi_)
         {
             // init abundance, species, traits vectors
             abundance_indv = NumericVector(10000);  
@@ -72,7 +73,7 @@ class localCommCpp {
             // init Imax
             Imax = 0; 
             
-            Rcout << "started sp decollapse" << "\n";
+            if(print){Rcout << "started sp decollapse" << "\n";}
             // for every species
             for(int s = 0; s < abundance_.length(); s++)
             {
@@ -134,6 +135,9 @@ class localCommCpp {
           
             // indv gets the species and trait of the indv that gave birth to it 
             species_ids[r] = species_ids[i];
+            //traits[r] = traits[i] + rnorm(0,1)
+            //rnorm(0, sqrt(sigma_bm / (1 / speciation + 1/extinction) / J)
+                    
             traits[r] = traits[i]; // soon traits should vary randomly when birth is called
             
             // increment the abundance of the species holding the indv that gave birth
@@ -145,6 +149,7 @@ class localCommCpp {
             arma::vec v = (traits * -1) + traits[r];
             
             traitdiffs.row(r) = v.t(); 
+            //traitdiffs.col(r) = v.t(); 
             
             // increment Imax
             Imax += 1; 
@@ -158,18 +163,22 @@ class localCommCpp {
           
             // decrement the abundance of the species holding the indv that gave birth
             abundance_sp[species_ids[i]] = abundance_sp[species_ids[i]] - 1;
+            
+            // TODO - adjust traits as well
         }
         
-        // speciation is called on species s, the new individual REPLACING the index at r
+        // speciation is called on species s (the species UNDERGOING speciation), the new individual REPLACING the index at r
+        // new species is placed at Smax 
         void speciation(int s, int r, roleParamsCpp p)
         {
             // calculate random trait deviation by sigma
             float tdev = R::rnorm(0, p.values.trait_sigma);
+            //tdev is also scaled by branch length, same scaling but just not divided by J 
             
             // add abundance, species id and trait for new individual of species
             abundance_indv[r] = 1;
-            species_ids[r] = s; 
-            traits[r] = traits_sp[Smax] + tdev; 
+            species_ids[r] = Smax; 
+            traits[r] = traits_sp[s] + tdev; 
             
             // update traitdiffs
             //traitdiffs(Imax,_) = traits[Imax] - traits;
@@ -182,8 +191,7 @@ class localCommCpp {
             // TODO calculate new species trait here as a function of individual traits
             traits_sp[Smax] = traits_sp[s] + tdev; 
             
-            // increment num indv and sp
-            Imax += 1; 
+            // increment num species 
             Smax += 1;
         }
         

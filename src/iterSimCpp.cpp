@@ -10,13 +10,19 @@ using namespace Rcpp;
 //' @param an object of class \code{roleModelCpp} to iterate 
 //' @param nstep an \code{integer} of the number of steps to iterate
 //' @param print a \code{bool} specifying whether to print the step outcomes
-//' 
-// NOTE - doesn't appear to make a deep copy, keep this in mind 
-roleModelCpp iterSim(roleModelCpp model,int nstep, bool print) {
-  
-    roleModelCpp out = model;
-    for(int i = 0; i < nstep; i++) {
 
+roleModelCpp iterSim(roleModelCpp model,int nstep, int timesteps, bool print) {
+  
+    roleModelCpp out = model.copy();
+    for(int i = 0; i < nstep; i++) {
+        
+        // if reached steps per save
+        if(i % timesteps == 0)
+        { 
+          // add a deep copy of the simulation as it stands before the next step to the time series
+          out.timeseries.push_back(out.copy());
+        }
+        
         // death always occurs
         if(print){Rcout << "start death event" << "\n";}
         int dead_index = out.death();
@@ -24,8 +30,8 @@ roleModelCpp iterSim(roleModelCpp model,int nstep, bool print) {
         
         //if speciation occurs based on local speciation param
         if(R::runif(0,1) <= model.params.values.speciation_local){
-            if(print){Rcout << "start speciation event: chance was" <<
-              model.params.values.speciation_local << "\n";}
+            //if(print){Rcout << "start speciation event: chance was" <<
+            //model.params.values.speciation_local << "\n";}
             out.speciation(dead_index);
             if(print){Rcout << "end speciation event" << "\n";}
         }

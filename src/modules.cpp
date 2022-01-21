@@ -58,10 +58,12 @@ RCPP_MODULE(modelCpp) {
     .field("meta", &roleModelCpp::metaComm)
     .field("phylo", &roleModelCpp::phylo)
     .field("params", &roleModelCpp::params)
+    .field("timeseries", &roleModelCpp::timeseries)
     .method("birth", &roleModelCpp::birth)
     .method("death", &roleModelCpp::death)
     .method("speciation", &roleModelCpp::speciation)
     .method("immigration", &roleModelCpp::immigration)
+    .method("copy", &roleModelCpp::copy)
     .field("print", &roleModelCpp::print)
     ;
 }

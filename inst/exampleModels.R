@@ -1,12 +1,16 @@
 # exampleModels contains examples of created sim models
 library(roleR)
-library(Rcpp)
-
 sim <- initSim()
-sim
+sim2 <- sim$copy()
+sim2$death()
+
+
+sim$local$abundance_indv
+sim2$local$abundance_indv
+
 sim$print = FALSE
 sim$local$print = FALSE
-iterSim(sim,10000,print=FALSE)
+iterSim(sim,nsteps=100,50,print=FALSE)
 
 
 sim$local$species_ids
@@ -18,5 +22,4 @@ View(sim$local$traitdiffs)
 sim <- iterSim(sim,1,true)
 sim$local$species_ids
 
-# install.packages("devtools")
-devtools::install_github("rdinnager/slimr")
+20%%20

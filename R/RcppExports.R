@@ -24,6 +24,5 @@ NULL
 #' @param an object of class \code{roleModelCpp} to iterate 
 #' @param nstep an \code{integer} of the number of steps to iterate
 #' @param print a \code{bool} specifying whether to print the step outcomes
-#' 
 NULL
 

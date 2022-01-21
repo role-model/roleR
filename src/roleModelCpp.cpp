@@ -8,13 +8,13 @@
 using namespace Rcpp;
 
 //' @name roleModelCpp
-//' @title a C++ class to specify the entire RoLE model
+//' @title a class to specify the entire RoLE model
 //' @field new Constructor
 //' @field localComm the local community, an object of class localCommCpp
 //' @field metaComm the metacommunity, an object of class metaCommCpp
 //' @field phylo the phylogeny of the metacommunity, an object of class rolePhyloCpp
 //' @field params the parameters for the model, an object of class roleParamsCpp
-//'
+//' @field timeseries a list of past simulation states 
 
 class roleModelCpp {
     public:
@@ -22,8 +22,11 @@ class roleModelCpp {
         metaCommCpp metaComm;
         rolePhyloCpp phylo;
         roleParamsCpp params;
+        std::list<roleModelCpp> timeseries;
+        int timediff; 
+        int iterations; 
         bool print; 
-
+        
         // constructor
         roleModelCpp(localCommCpp local_, metaCommCpp meta_, rolePhyloCpp phy_,
                      roleParamsCpp params_) : localComm(local_), metaComm(meta_),
@@ -69,7 +72,8 @@ class roleModelCpp {
             // }
 
             // compute probs of death due to competitive filtering
-            NumericVector c_probs = as<NumericVector>(wrap(1/localComm.J * arma::sum(exp((-1/params.values.sigma_c) * arma::pow(localComm.traitdiffs, 2)),0)));
+            NumericVector c_probs = as<NumericVector>(wrap(1/localComm.J * 
+              arma::sum(exp((-1/params.values.sigma_c) * arma::pow(localComm.traitdiffs, 2)),0)));
             
             // prints size of vector, contents, and local J value to compare 
             if(print){printVector(f_probs, "f_probs");}
@@ -178,6 +182,27 @@ class roleModelCpp {
             
             // call immigration on species i
             localComm.immigration(i[0], dead_index, metaComm);
+        }
+        
+        // create a deep copy of this object
+        roleModelCpp copy()
+        {
+          localCommCpp l = localCommCpp(localComm.abundance_sp,localComm.traits_sp,localComm.Smax,localComm.pi);
+          metaCommCpp m = metaCommCpp(metaComm.abundance,metaComm.traits,metaComm.Smax);
+          rolePhyloCpp ph = rolePhyloCpp(phylo.n,phylo.e,phylo.l,phylo.alive,phylo.tipNames,phylo.scale);
+          roleModelCpp out = roleModelCpp(l,m,ph,params);
+          return out; 
+        }
+        
+        // return a timeseries
+        void getTimeseries(NumericVector v, std::string name)
+        {
+          Rcout << name << " size: " << v.size() << "\n";
+          Rcout << "local J size : " << localComm.J << "\n";
+          
+          for(int i=0; i<v.length(); i++){
+            Rprintf("v[%i] : %f ", i, v[i],",");
+          }
         }
         
         void printVector(NumericVector v, std::string name)

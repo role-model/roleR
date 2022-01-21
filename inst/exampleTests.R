@@ -1,15 +1,3 @@
-# install pika
-install.packages("devtools")
-library(devtools)
-install_github("ajrominger/pika")
-install.packages("RcppArmadillo")
-
-# clean and rebuild package first
-# Build -> Clean and Rebuild
-
-# run this if "moving to final location" errors appear on build
-Sys.setenv(R_INSTALL_STAGED = FALSE)
-
 # make sure you have the current version of R and Rtools 
 library("roleR")
 
@@ -83,18 +71,5 @@ library(microbenchmark)
 sim <- initSim()
 microbenchmark(iterSim(sim, 100))
 microbenchmark(iterSim(sim,10))
-
-#todo
-# start working on environmental filtering
-# start working on competitive filtering
-#big todo
-# add metadata exports
-# add fitting to real data
-# add intraspecific speciation 
-
-
-#qs for group
-# should the Cpp functions take indices starting at 1 or 0? I'm leaning towards 1, partially so they are compatible with tests and whatnot
-# should localcomm, metacomm, phylocomm, etc be accessible to user? what methods should be exposed to user
 
 RcppArmadillo.package.skeleton()

@@ -21,30 +21,33 @@
 #' @rdname roleSim
 #' @export
 
-roleSim <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
-
-    #if params ia null, initialize a default set of "plausible" values
-    if(is.null(params)){
+roleSim <- function(params = NULL, init = NULL, runType = "sim", nstep = 100, series_timestep = NULL, nsim = 1, print = FALSE) {
+  
+    if(is.null(params)){ # if no params specified, initialize a default set of "plausible" values
       vals <- new(paramValuesCpp)
       params <- new(roleParamsCpp,vals,"sim", 1)
     }
-  
-    # initialize simulation
-    if(is.null(init)) {
+    
+    # NOTE - currently if starting with an existing sim, the params of that sim are used and not the new params
+    if(is.null(init)) { # if no init sim to start with, initialize a new sim with params
         init <- initSim(params)
+        init$print <- print 
     }
     
-    # loop over sims
+    if(is.null(series_timestep)){ # set time series to not be saved if series_timestep = NULL 
+      series_timestep = nstep + 1; 
+    }
+  
+    # create nsim sims 
     for(i in 1:nsim)
     {
       if(i == 1){
-        out <- list(iterSimCpp(init, nstep))
+        out <- list(iterSim(init, nstep, series_timestep, print)) # create a list of sims if first
       }
       else{
-        list[[i]] = iterSimCpp(init, nstep)
+        list[[i]] = iterSim(init, nstep, series_timestep, print) # else add the next sim to the list 
       }
     }
-    
     # return list of sims
     return(out)
 }
@@ -57,7 +60,7 @@ roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
 #' object
 #' @param params a roleParamsCpp object containing the model parameters - if null, defaults are set
 
-.initSim <- function(params = NULL) {
+initSim <- function(params = NULL) {
 
     # if no roleParamsCpp object provided
     if(is.null(params))
@@ -78,7 +81,7 @@ roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
     # simulate metacommunity SAD
     abundance_m <- .lseriesFromSN(params$values$species_meta,
                                 params$values$individuals_meta)
-
+    
     # initalize meta comm traits:
     # first column is species ID, second column is trait value
     # Smax rows
@@ -110,41 +113,12 @@ roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
     traits_l <- numeric(100)
     # extract trait for starting species from meta
     traits_l[i] <- meta$traits[which(meta$traits[meta$traits[,1]] == i),2]
-
-    # TODO WIP - add simulation of genetic abundance using slimr
-    #slimr_output_nucleotides(name = "seqs", subpops = FALSE)
-    library(slimr)
-    slim_script(
-      slim_block(initialize(),
-                 {
-                   ## set the overall mutation rate
-                   initializeMutationRate(1e-7); 
-                   ## m1 mutation type: neutral
-                   initializeMutationType("m1", 0.5, "f", 0.0);
-                   ## g1 genomic element type: uses m1 for all mutations
-                   initializeGenomicElementType("g1", m1, 1.0);
-                   ## uniform chromosome of length 100 kb
-                   initializeGenomicElement(g1, 0, 99999);
-                   ## uniform recombination along the chromosome
-                   initializeRecombinationRate(1e-8);
-                 }),
-      slim_block(1,
-                 {
-                   sim.addSubpop("p1", 500);
-                 }),
-      slim_block(10000,
-                 {
-                   sim.simulationFinished();
-                 })
-    ) -> s_script
-
-    results <- slim_run(s_script)
     
     # soon set pi to be simulated sequences, and update outside of C++ over time
     pi_l <- rep(1:Smax_)
     
     # create localCommCpp object
-    local <- new(localCommCpp, abundance_l, traits_l, Smax_,pi_l)
+    local <- new(localCommCpp, abundance_l, traits_l, Smax_, pi_l)
 
     # convert ape phylo to rolePhylo
     phy <- apeToRolePhylo(phy)
@@ -239,4 +213,18 @@ roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
     scale <- 1;
     out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
     return(out)
+}
+
+.roleParametersToRoleParamsCpp <- function(roleParameters){
+  n <- ape::Ntip(phylo)
+  
+  e <- phylo$edge
+  l <- phylo$edge.length
+  tipNames <- phylo$tip.label
+  tipAge <- ape::node.depth.edgelength(phylo)[1:n]
+  alive <- rep(TRUE,n)
+  alive[tipAge < max(tipAge)] <- FALSE;
+  scale <- 1;
+  out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
+  return(out)
 }

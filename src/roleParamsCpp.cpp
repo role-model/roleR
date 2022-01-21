@@ -2,6 +2,7 @@
 
 #include <RcppArmadillo.h>
 #include "paramValuesCpp.cpp"
+#include <map> 
 
 using namespace Rcpp;
 
@@ -12,8 +13,10 @@ using namespace Rcpp;
 
 class roleParamsCpp {
 public:
-    paramValuesCpp values;
+    paramValuesCpp values; // rename as current values
+    std::map <std::string,double> vals; 
     std::string runType;
+    
     //placeholder for priors, which contain distributions from which to draw parameters
     int pr;
 
