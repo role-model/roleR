@@ -47,7 +47,6 @@ class localCommCpp {
         NumericVector species_ids; // the species num that each individual belongs to
         NumericVector traits; // trait values 
         int J; // constant number of individuals in the community
-        int Imax; // max number of individuals in the community maybe - NOTE might be a holdover
         int Smax; // max number of species in community, index used to create new species ids 
   
         arma::mat traitdiffs; // a matrix that is the outer product of traits*traits 
@@ -71,7 +70,7 @@ class localCommCpp {
             traits = NumericVector(10000); 
             
             // init Imax
-            Imax = 0; 
+            J = 0; 
             
             if(print){Rcout << "started sp decollapse" << "\n";}
             // for every species
@@ -81,21 +80,18 @@ class localCommCpp {
               for(int i = 0; i < abundance_[s]; i++)
               {
                 // add that individual to vector of individuals
-                abundance_indv[Imax] = 1;
+                abundance_indv[J] = 1;
 
                 // add species id
-                species_ids[Imax] = s;
+                species_ids[J] = s;
 
                 // add trait value
-                traits[Imax] = traits_[i]; //maybe deviate indv traits from sp randomly later?
+                traits[J] = traits_[i]; //maybe deviate indv traits from sp randomly later?
 
                 // increment Imax
-                Imax += 1;
+                J += 1;
               }
             }
-            
-            // init J, which is the same as Imax at init 
-            J = Imax;
             
             // trim abundance, species, traits vectors to J 
             abundance_indv = abundance_indv[Rcpp::Range(0,J-1)];
@@ -150,9 +146,6 @@ class localCommCpp {
             
             traitdiffs.row(r) = v.t(); 
             //traitdiffs.col(r) = v.t(); 
-            
-            // increment Imax
-            Imax += 1; 
         }
         
         // death is called on individual i 
@@ -211,9 +204,6 @@ class localCommCpp {
           // update traitdiffs
           arma::rowvec v = traits * -1 + traits[s];
           traitdiffs.row(r) = v; 
-          
-          // increment Imax
-          Imax += 1; 
         }
 
 };

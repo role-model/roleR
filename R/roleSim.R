@@ -21,12 +21,21 @@
 #' @rdname roleSim
 #' @export
 
-roleSim <- function(params = NULL, init = NULL, runType = "sim", nstep = 100, series_timestep = NULL, nsim = 1, print = FALSE) {
+roleSim <- function(params = NULL, init = NULL, runType = "sim", niter = 100, nsim = 1, print = FALSE) {
   
-    if(is.null(params)){ # if no params specified, initialize a default set of "plausible" values
+    # if params specified, get niter and nsim from params
+    if(!is.null(params)){
+      nsim <- params@nsim
+      niter <- params@niter
+    }
+  
+    else{ # else params is unspecified so create a set of default parameters
       vals <- new(paramValuesCpp)
       params <- new(roleParamsCpp,vals,"sim", 1)
     }
+    
+    # convert params and init to C++ objects
+    params <- toCpp(params)
     
     # NOTE - currently if starting with an existing sim, the params of that sim are used and not the new params
     if(is.null(init)) { # if no init sim to start with, initialize a new sim with params
@@ -34,18 +43,14 @@ roleSim <- function(params = NULL, init = NULL, runType = "sim", nstep = 100, se
         init$print <- print 
     }
     
-    if(is.null(series_timestep)){ # set time series to not be saved if series_timestep = NULL 
-      series_timestep = nstep + 1; 
-    }
-  
     # create nsim sims 
     for(i in 1:nsim)
     {
       if(i == 1){
-        out <- list(iterSim(init, nstep, series_timestep, print)) # create a list of sims if first
+        out <- list(iterSim(init, niter, niter_timestep, print)) # create a list of sims if first
       }
       else{
-        list[[i]] = iterSim(init, nstep, series_timestep, print) # else add the next sim to the list 
+        list[[i]] = iterSim(init, niter, niter_timestep, print) # else add the next sim to the list 
       }
     }
     # return list of sims

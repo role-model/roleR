@@ -9,30 +9,78 @@
 
 #' @export
 
-roleParameters <- setClass('roleParameters',
-         slots = c(params = 'list',
-                   timeseries = 'list'),
+roleParams <- setClass('roleParams',
 
-         prototype=list(
-           params = list(species_meta = 15,
-                            individuals_meta = 500,
-                            individuals_local = 100,
-                            dispersal_prob = 0.5,
-                            speciation_local = 0.1,
-                            extinction_meta = 0.8,
-                            speciation_meta = 1,
-                            trait_sigma = 0.1),
-           timeseries = list(species_meta = NULL,
-                            individuals_meta = NULL,
-                            individuals_local = NULL,
-                            dispersal_prob = NULL,
-                            speciation_local = NULL,
-                            extinction_meta = NULL,
-                            speciation_meta = NULL,
-                            trait_sigma = NULL)
-          ),
+         slots = c(
+           nsim = "numeric", 
+           niter = "numeric",
+           niter_timestep = "numeric",
+           params = "list"
+         ), 
          
          validity=function(object)
          {
            return(TRUE)
          })
+
+# method defined as a constructor for roleParams
+roleParams <- function(nsim, niter, niter_timestep = NULL) {
+  params <- vector(mode = "list", length = nsim)
+  for(i in 1:nsim)
+  {
+    p <- data.frame(matrix(ncol = 10, nrow = niter))
+    colnames(p) <- c("speciation_meta", "extinction_meta", "trait_sigma", "species_meta", "individuals_meta",
+                      "individuals_local", "dispersal_prob", "speciation_local")
+    params[[i]] <- p
+  }
+  return(new("roleParams", nsim=nsim, niter=niter,params=params,niter_timestep=niter_timestep))
+}
+
+# sets a parameter of roleParams
+setMethod("setParam", signature(x="roleParams"),
+          function(x,param_name,value,sim_num) {
+            
+            # if no sim_num provided, apply to all sims
+            # bad code but don't understand how to better do this in S4 
+            if(is.null(sim_num))
+            {
+              for(i in 1:x@nsim)
+              {
+                if(length(value) == 1){ # if only one value specified, set all iterations
+                  x@params[i]$param_name <- rep(value,x@niter)
+                }
+                else {
+                  x@params[i]$param_name <- value
+                }  
+              }
+            }
+            
+            # else apply only to the target sim_num
+            else
+            {
+              if(length(value) == 1){ # if only one value specified, set all iterations
+                x@params[[sim_num]][,param_name] <- rep(value,x@niter)
+              }
+              else {
+                x@params[[sim_num]][,param_name] <- value
+              }  
+            }
+          }
+)
+
+# method adding default params
+setGeneric('addDefaultParams', function(x, ...) standardGeneric('addDefaultParams'), signature = 'x')
+setMethod("addDefaultParams", signature(x="roleParams"),
+          function(x) {
+            #setParam(x, )
+            
+          }
+)
+
+# sets a parameter of roleParams
+setGeneric('toCpp', function(x) standardGeneric('toCpp'), signature = 'x')
+setMethod("toCpp", signature(x="roleParams"),
+          function(x) {
+            
+          }
+)
