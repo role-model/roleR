@@ -2,6 +2,7 @@
 #include "commCpp.cpp"
 #include "rolePhyloCpp.cpp"
 #include "roleParamsCpp.cpp"
+#include "roleDataCpp.cpp" 
 #include <string>
 #pragma once
 
@@ -22,9 +23,10 @@ class roleModelCpp {
         metaCommCpp metaComm;
         rolePhyloCpp phylo;
         roleParamsCpp params;
-        std::list<roleModelCpp> timeseries;
-        int timediff; 
-        int iterations; 
+        std::list<roleDataCpp> timeseries;
+        NumericVector stats; 
+        int niter; 
+        int niter_timeseries; 
         bool print; 
         
         // constructor
@@ -184,13 +186,30 @@ class roleModelCpp {
             localComm.immigration(i[0], dead_index, metaComm);
         }
         
-        // create a deep copy of this object
-        roleModelCpp copy()
+        // save summary statistics
+        void computeStatistics()
         {
-          localCommCpp l = localCommCpp(localComm.abundance_sp,localComm.traits_sp,localComm.Smax,localComm.pi);
+          
+          double shannon_entropy = 0;
+          NumericVector abundance_sp_relative = localComm.abundance_sp / max(localComm.abundance_sp);
+          for(int i = 0; i < abundance_sp_relative.length(); i++)
+          {
+            shannon_entropy += abundance_sp_relative[i] * log(abundance_sp_relative[i]);
+          }
+          shannon_entropy = -1 * shannon_entropy; 
+          
+          //get only branch lengths of alive in meta
+          double faith_pd = sum(phylo.l);
+          stats = NumericVector::create(Named("faith_pd",faith_pd), Named("y")=2 , _["z"]=3);
+        }
+        
+        // create a deep copy of this object's data for timeseries
+        roleDataCpp copyData(int i)
+        {
+          localCommCpp l = localCommCpp(localComm.abundance_sp,localComm.traits_sp,localComm.Smax,localComm.pi_sp);
           metaCommCpp m = metaCommCpp(metaComm.abundance,metaComm.traits,metaComm.Smax);
           rolePhyloCpp ph = rolePhyloCpp(phylo.n,phylo.e,phylo.l,phylo.alive,phylo.tipNames,phylo.scale);
-          roleModelCpp out = roleModelCpp(l,m,ph,params);
+          roleDataCpp out = roleDataCpp(l,m,ph,i);
           return out; 
         }
         
