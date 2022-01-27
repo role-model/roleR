@@ -54,7 +54,6 @@ computeHillNumbers <- function(simrun, param)
     h <- hill_func(comm = t(data.frame(s$local$abundance_sp)), # alpha_diversity_phy
                    traits = t(data.frame(s$local$traits_sp)), q = 0)
     simrun$stats[alpha_diversity_phylo] <- h 
-    
   }
 }
 
