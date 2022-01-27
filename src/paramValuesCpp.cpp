@@ -23,17 +23,16 @@ using namespace Rcpp;
 
 class paramValuesCpp {
 public:
+    double individuals_local;
+    double speciation_local;
+    double individuals_meta;
+    double species_meta;
     double speciation_meta;
-    NumericVector speciation_meta_pd; 
     double extinction_meta;
     double trait_sigma;
-    double species_meta;
-    double individuals_meta;
-    double individuals_local;
-    double dispersal_prob;
-    double speciation_local;
     double env_sigma;
     double comp_sigma;
+    double dispersal_prob;
     double mu;
     double alpha;
     double trait_z;
