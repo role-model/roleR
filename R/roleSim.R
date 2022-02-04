@@ -1,12 +1,25 @@
+#' @title An S4 class containing multiple model runs, each contained in a separate roleModel object, and
+#' functions to perform on multiple model runs at once
+#'
+#' @slot modelRuns a list of roleModel objects, each containing its own current state and 
+#' a timeseries of past states 
+#' @slot params
+#'
+#' @export
+
+setClass('roleSim',
+         slots = c(modelRuns = 'list',
+                   params = 'roleParams'))
+
 #' @title RoLE model simulation
 #'
-#' @description Simulate communities under the RoLE model. The key distinction
+#' @description Simulate communities under the RoLE model, The key distinction
 #' between the two functions is that \code{roleSim} is optimized to run many
 #' simulations, while \code{roleSimPlay} is meant to run one simulation with
 #' periodic output of results for visualization and exploration.
-#' \code{roleSimPlay} is intended primarily for the accompanying Shiny App. R
+#' \code{roleSimPlay} is intended primarily for the accompanying R Shiny App
 #'
-#' @param params list of parameters; if left unspecified a default set of "plausible"
+#' @param params a \code{roleParams} object - if left unspecified a default set of "plausible"
 #' parameter values is used 
 #' @param init an optional initial condition specified as a \code{roleModelCpp}
 #' object
@@ -15,46 +28,56 @@
 #' parameter
 #' @param nsim number of simulations to run
 #' @param nout frequency of intermediate results output (not yet implemented)
-#'
+#' 
+#' @return if nruns is 1, returns a roleModel object, otherwise returns a roleSim 
+#' object containing nrun models
+#' 
 #' @details Stub
 #'
 #' @rdname roleSim
 #' @export
 
-roleSim <- function(params = NULL, init = NULL, runType = "sim", niter = 100, nsim = 1, print = FALSE) {
+roleSim <- function(params = NULL, startModel = NULL, initType = "oceanic_island", niter = 100, nruns = 1, niter_timestep = 50, print = FALSE) {
   
-    # if params specified, get niter and nsim from params
+    # if params specified, get niter and nruns from params
     if(!is.null(params)){
-      nsim <- params@nsim
+      nruns <- params@nruns
       niter <- params@niter
     }
   
     else{ # else params is unspecified so create a set of default parameters
-      vals <- new(paramValuesCpp)
-      params <- new(roleParamsCpp,vals,"sim", 1)
+      params <- roleParams(nruns,niter,niter_timestep)
     }
-    
+  
     # convert params and init to C++ objects
     params <- toCpp(params)
     
     # NOTE - currently if starting with an existing sim, the params of that sim are used and not the new params
-    if(is.null(init)) { # if no init sim to start with, initialize a new sim with params
-        init <- initSim(params)
-        init$print <- print 
+    if(is.null(startModel)) { # if no init sim to start with, initialize a new sim with params
+      init <- initSim(params)
+      init$print <- print 
+    }
+    else{
+      # convert model to C++ model
+      init <- roleModelToCpp(startModel)
     }
     
-    # create nsim sims 
+    # initialize list to hold finished model runs
+    out <- list()
+    # do nrun model runs 
     for(i in 1:nsim)
     {
-      if(i == 1){
-        out <- list(iterSim(init, niter, niter_timestep, print)) # create a list of sims if first
-      }
-      else{
-        list[[i]] = iterSim(init, niter, niter_timestep, print) # else add the next sim to the list 
-      }
+      # set params for new run
+      init$params <- params@values[[1]]
+      
+      # iterate over the simulation and return the output
+      out[[i]] <- iterSim(init, niter, niter_timestep, print) # else add the next sim to the list 
     }
+
     # return list of sims
     return(out)
+    
+    #TODO - next step is getting initSim to work with the new params and moving stuff from comm
 }
 
 roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
@@ -65,7 +88,7 @@ roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
 #' object
 #' @param params a roleParamsCpp object containing the model parameters - if null, defaults are set
 
-initSim <- function(params = NULL) {
+initSim <- function(params = NULL, type) {
 
     # if no roleParamsCpp object provided
     if(is.null(params))
@@ -104,18 +127,24 @@ initSim <- function(params = NULL) {
     # argument in params  specifying abundance initalization model
     # save sampling index and use to assign to correct species of local abundances,
     # and the appropriate trait from the metacomm pool and add to trait matrix
-
-    # index of the species that will initially have all abundance
-    i <- sample(params$values$species_meta, 1, prob = meta$abundance)
-
-    # passing all abundance to that species
-    abundance_l[i] <- params$values$individuals_local
-
+    
+    if(type == "oceanic_island"){
+      # index of the species that will initially have all abundance
+      i <- sample(params$values$species_meta, 1, prob = meta$abundance)
+      # passing all abundance to that species
+      abundance_l[i] <- params$values$individuals_local
+    }
+    
+    else if(type == "bridge_island"){
+      abundance_l <- sample(params$values$species_meta, prob = meta$abundance)
+    }
+    
     # counter keeping track of max number of possible species in local comm
     Smax_ <- params$values$species_meta
-
+    
     # init local species traits
     traits_l <- numeric(100)
+    
     # extract trait for starting species from meta
     traits_l[i] <- meta$traits[which(meta$traits[meta$traits[,1]] == i),2]
     
