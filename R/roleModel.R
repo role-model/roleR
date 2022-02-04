@@ -1,54 +1,34 @@
-# This contains R wrappers for roleModel and containing C++ objects
 
-setClass('localComm',
-         slots = c(abundanceIndv = 'localComm',
-                   metaComm = 'metaComm',
-                   phylo = 'rolePhylo',
-                   params = 'roleParams'))
-
-localComm <- function(local, meta, phy, p) {
-  new('localComm',
-      localComm = local,
-      metaComm = meta,
-      phylo = phy,
-      params = p)s
+roleModelFromCpp <- function(modelCpp) {
+  localComm <- localComm(modelCpp$local$abundance_indv,modelCpp$local$species_ids,
+                         modelCpp$local$traits,modelCpp$local$abundance_sp,
+                         modelCpp$local$traits_sp,modelCpp$local$pi)
+  return(new('roleModel',
+             localComm = localComm))
 }
-
 
 #' @title An S4 class to specify the entire RoLE model
 #'
-#' @slot localComm an object of class \code{localComm}
-#' @slot metaComm an object of class \code{metaComm}
-#' @slot phylo an object of class \code{rolePhylo}
-#' @slot params an object of calss \code{roleParams}
-#'
+#' @slot timeseries an object of class \code{list} of roleData objects
+#' @slot params a named list of numeric vectors containing params
+#' 
 #' @export
-#' @include comm.R roleParams.R rolePhylo.R
-
 
 setClass('roleModel',
-         slots = c(localComm = 'localComm',
-                   metaComm = 'metaComm',
-                   phylo = 'rolePhylo',
-                   params = 'roleParams'))
-
+         slots = c(timeseries = 'list',params = 'list'))
 
 #' @title Create a RoLE model object
 #'
-#' @param localComm an object of class \code{localComm}
-#' @param metaComm an object of class \code{metaComm}
-#' @param phylo an object of class \code{rolePhylo}
-#' @param params an object of class \code{roleParams}
+#' @param modelCpp a roleModelCpp object 
 #'
 #' @return an object of class \code{roleModel}
 #'
 #' @export
 
-
-roleModel <- function(local, meta, phy, p) {
-  new('roleModel',
-      localComm = local,
-      metaComm = meta,
-      phylo = phy,
-      params = p)
+roleModel <- function(modelCpp) {
+  localComm <- localComm(modelCpp$local$abundance_indv,modelCpp$local$species_ids,
+                         modelCpp$local$traits,modelCpp$local$abundance_sp,
+                         modelCpp$local$traits_sp,modelCpp$local$pi)
+  return(new('roleModel',
+             localComm = localComm))
 }
