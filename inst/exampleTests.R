@@ -72,4 +72,34 @@ sim <- initSim()
 microbenchmark(iterSim(sim, 100))
 microbenchmark(iterSim(sim,10))
 
-RcppArmadillo.package.skeleton()
+saveRDS(r, file = "model.Rd")
+read <- readRDS("model.Rd")
+read@localComm@abundanceS
+
+fileConn<-file("output.txt")
+writeLines(c("Hello","World"), fileConn)
+close(fileConn)
+
+#  examples of created sim model use cases (OLD)
+library(roleR)
+sim <- initSim()
+sim2 <- sim$copy()
+sim2$death()
+
+
+sim$local$abundance_indv
+sim2$local$abundance_indv
+
+sim$print = FALSE
+sim$local$print = FALSE
+iterSim(sim,nsteps=100,50,print=FALSE)
+
+
+sim$local$species_ids
+sim$local$abundance_sp
+View(sim$local$traitdiffs)
+
+# traitdiffs and abundance_sp not updating properly 
+sim <- iterSim(sim,1,true)
+sim$local$species_ids
+

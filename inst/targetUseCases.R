@@ -15,7 +15,6 @@ plot(sim$local$abundance_sp) # plot species abundances
 # create a simulation specifying distributions of parameters 
 # --------------
 
-
 p <- roleParams(nsim=100,niter=1000)
 
 
