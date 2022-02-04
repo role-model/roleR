@@ -31,31 +31,39 @@ class metaCommCpp {
         }
 };
 
+// public vars should be @field
+// constructor params should be @params
+
 //' @name localCommCpp
 //' @title a class to specify the local community
-//' @param abundance_binary a numeric vector specifying the binary abundance (alive or dead) 
+//' @field abundance_indv a numeric vector of 0s and 1s specifying the binary abundance (alive or dead) 
 //' of each individual
-//' @param traits a numeric vector of trait values for each individual
-//' @param Imax a float specifying the total number of individuals ever
-//' recorded in the local community (both locally extinct and extant)
-//' @param pi a numeric vector of genetic diversities for each species
+//' @field species_ids a numeric vector specifying species of each individual as
+//' an index found in the species vectors 
+//' @field traits a numeric vector of trait values for each individual
+//' @field J constant number of individuals in the community
+//' @field Smax max number of species in community, index used to create new species ids 
+//' @field traitdiffs a matrix that is the outer product of traits*traits - 
+//' calculated at object creation then altered rather than recalculated
+//' @field abundance_sp abundances of every species i at index i, kept to save on computation
+//' @field traits_sp traits of every species i at index i, kept to save on computation
+//' @field pi_sp genetic diversities of species - unsure how this plays into new structure
+//' @field print a bool specifying whether to print outputs related to class functions 
 
 class localCommCpp {
     private:
     public:
-        NumericVector abundance_indv; // a vector of 0s and 1s specifying alive or dead individuals
-        NumericVector species_ids; // the species num that each individual belongs to
-        NumericVector traits; // trait values 
-        int J; // constant number of individuals in the community
-        int Smax; // max number of species in community, index used to create new species ids 
+        NumericVector abundance_indv; 
+        NumericVector species_ids;
+        NumericVector traits; 
+        int J;
+        int Smax; 
   
-        arma::mat traitdiffs; // a matrix that is the outer product of traits*traits 
-                                  // calculated at object creation then altered rather than recalculated
+        arma::mat traitdiffs;
                                   
-        //int traitMax; don't think we need this anymore? 
-        NumericVector abundance_sp; // abundances of every species i at index i, kept to save on computation
-        NumericVector traits_sp; // traits of every species i at index i, kept to save on computation
-        NumericVector pi_sp; // genetic diversities of species - unsure how this plays into new structure
+        NumericVector abundance_sp;
+        NumericVector traits_sp;
+        NumericVector pi_sp;
         
         bool print;
         
@@ -65,19 +73,20 @@ class localCommCpp {
                      NumericVector pi_): abundance_sp(abundance_), traits_sp(traits_), Smax(Smax_), pi_sp(pi_)
         {
             // init abundance, species, traits vectors
-            abundance_indv = NumericVector(10000);  
+            abundance_indv = NumericVector(10000); // fix this being 10000 
             species_ids = NumericVector(10000);
             traits = NumericVector(10000); 
-            
+  
             // init Imax
             J = 0; 
             
             if(print){Rcout << "started sp decollapse" << "\n";}
+      
             // for every species
-            for(int s = 0; s < abundance_.length(); s++)
+            for(int s = 0; s < abundance_sp.length(); s++)
             {
               // for every individual in species
-              for(int i = 0; i < abundance_[s]; i++)
+              for(int i = 0; i < abundance_sp[s]; i++)
               {
                 // add that individual to vector of individuals
                 abundance_indv[J] = 1;
@@ -160,12 +169,13 @@ class localCommCpp {
             // TODO - adjust traits as well
         }
         
-        // speciation is called on species s (the species UNDERGOING speciation), the new individual REPLACING the index at r
+        // speciation is called on species s (the species UNDERGOING speciation), 
+        //   the new individual REPLACING the index at r
         // new species is placed at Smax 
-        void speciation(int s, int r, roleParamsCpp p)
+        void speciation(int s, int r, double trait_sigma)
         {
             // calculate random trait deviation by sigma
-            float tdev = R::rnorm(0, p.values.trait_sigma);
+            float tdev = R::rnorm(0, trait_sigma);
             //tdev is also scaled by branch length, same scaling but just not divided by J 
             
             // add abundance, species id and trait for new individual of species

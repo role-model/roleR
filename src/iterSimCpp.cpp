@@ -19,6 +19,7 @@ void iterSim(roleModelCpp model,int niter, int niter_timeseries, bool print) {
         // if reached steps per save
         if(i % niter_timeseries == 0)
         { 
+          model.computeStatistics();
           // add a deep copy of the simulation as it stands before the next step to the time series
           model.timeseries.push_back(model.copyData(i));
         }

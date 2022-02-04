@@ -22,16 +22,16 @@ class roleModelCpp {
         localCommCpp localComm;
         metaCommCpp metaComm;
         rolePhyloCpp phylo;
-        roleParamsCpp params;
+        List params; 
+        //std::map<std::string, NumericVector> params; 
         std::list<roleDataCpp> timeseries;
         NumericVector stats; 
-        int niter; 
-        int niter_timeseries; 
+        int iter;  
+        //int niter_save; 
         bool print; 
         
         // constructor
-        roleModelCpp(localCommCpp local_, metaCommCpp meta_, rolePhyloCpp phy_,
-                     roleParamsCpp params_) : localComm(local_), metaComm(meta_),
+        roleModelCpp(localCommCpp local_, metaCommCpp meta_, rolePhyloCpp phy_, List params_) : localComm(local_), metaComm(meta_),
                      phylo(phy_), params(params_)
         {
         }
@@ -53,10 +53,13 @@ class roleModelCpp {
         int death()
         {
             // NOTE - calculate vector once and each time individual is replaced then update index 
-            // TODO - allow trait_z to vary as a time series later
+            
+            // get params from params List
+            NumericVector env_sigma = params["env_sigma"];
+            NumericVector trait_z = params["trait_z"];
             
             // compute probs of death due to environmental filtering
-            NumericVector f_probs = 1 - exp(-1/params.values.sigma_e * pow(localComm.traits - params.values.trait_z, 2));
+            NumericVector f_probs = 1 - exp(-1/env_sigma[iter] * pow(localComm.traits - trait_z[iter], 2));
 
             // WIP alternate version for each individual without traitdiffs 
             // init c_probs
@@ -72,10 +75,13 @@ class roleModelCpp {
             //   
             //   c_probs[i] = (1/localComm.Imax) * sum; 
             // }
-
+            
+            // get params from params List
+            NumericVector comp_sigma = params["comp_sigma"];
+            
             // compute probs of death due to competitive filtering
             NumericVector c_probs = as<NumericVector>(wrap(1/localComm.J * 
-              arma::sum(exp((-1/params.values.sigma_c) * arma::pow(localComm.traitdiffs, 2)),0)));
+            arma::sum(exp((-1/comp_sigma[iter]) * arma::pow(localComm.traitdiffs, 2)),0)));
             
             // prints size of vector, contents, and local J value to compare 
             if(print){printVector(f_probs, "f_probs");}
@@ -113,11 +119,11 @@ class roleModelCpp {
             // all enforced to be equal, so we can sample from any but we have to
             // weight the probabilities by abundances and immigration
           
-            // dispersal prob
-            double dp = params.values.dispersal_prob;
+            // get param from params List
+            NumericVector dispersal_prob = params["dispersal_prob"];
+            double dp = dispersal_prob[iter];
 
-            // compute normalized abundances at meta and local levels
-            // NOTE - mp has length equal to the number of species in the metacomm
+            // compute normalized abundances at meta and local levels - mp has length equal to the number of species in the metacomm
             NumericVector mp = metaComm.abundance[Rcpp::Range(0,localComm.Smax-1)];
             mp = mp / sum(mp);
             
@@ -128,9 +134,8 @@ class roleModelCpp {
             
             //  sa[s] = match(localComm.species_ids
             //}
-            
-            // prob of selecting a parent for speciation depends on abundance 
-            // metacomm abundance weighted by dispersal prob + local comm abundance weighted by birth
+          
+            // prob of selecting a parent for speciation is metacomm abundance weighted by dispersal prob + local comm abundance weighted by birth
             // NOTE -  can come up with negative probs now, is this intended behavior? 
             NumericVector lp = localComm.abundance_sp[Rcpp::Range(0,localComm.Smax-1)]; 
             lp = lp / sum(lp);
@@ -139,10 +144,6 @@ class roleModelCpp {
             
             // remove negative probabilities
             probs = (abs(probs)+probs)/2;
-            
-            // vector of phylo parents
-            // this is not the case because includes extinct edges 
-            //NumericVector v = phylo.e(_, 0); 
             
             if(print){printVector(probs, "speciation probs");}
             
@@ -154,10 +155,12 @@ class roleModelCpp {
             
             if(print){Rprintf("chosen index : ", i[0]);}
             
-            // call speciation on individual index to replace dead indv with
-            // first member of new species
+            // get param from params List to feed into localComm speciation
+            NumericVector trait_sigma = params["trait_sigma"];
+            
+            // call speciation on individual index to replace dead indv with first member of new species
             if(print){Rprintf("calling localComm speciation");}
-            localComm.speciation(i[0], dead_index, params);
+            localComm.speciation(i[0], dead_index, trait_sigma[iter]);
             
             // add a tip to the phylogeny
             if(print){Rprintf("calling phylo speciation");}
@@ -168,14 +171,13 @@ class roleModelCpp {
         {
             if(print){Rcout << "metacomm Smax size: " << metaComm.Smax << "\n";}
             // Smax was not changing - I think I fixed this 
-        
+            
             //sample a species for birth relative to local abundance
-            //0 vs 1 start indices may cause problems
-            NumericVector probs = metaComm.abundance[Rcpp::Range(0,params.values.species_meta-1)];
+            NumericVector probs = metaComm.abundance[Rcpp::Range(0,metaComm.abundance.length() - 1)];
           
             if(print){Rcout << "imm from meta probs size: " << probs.size() << "\n";}
             
-            IntegerVector i = sample(params.values.species_meta, 1, false, probs);
+            IntegerVector i = sample(metaComm.abundance.length() - 1, 1, false, probs);
             
             // make i from 0 to Smax - 1 (previously 1 to Smax)
             i[0] -= 1;
@@ -186,6 +188,7 @@ class roleModelCpp {
             localComm.immigration(i[0], dead_index, metaComm);
         }
         
+        //NOTE - unused for now, we are doing this in R 
         // save summary statistics
         void computeStatistics()
         {
@@ -209,10 +212,12 @@ class roleModelCpp {
           localCommCpp l = localCommCpp(localComm.abundance_sp,localComm.traits_sp,localComm.Smax,localComm.pi_sp);
           metaCommCpp m = metaCommCpp(metaComm.abundance,metaComm.traits,metaComm.Smax);
           rolePhyloCpp ph = rolePhyloCpp(phylo.n,phylo.e,phylo.l,phylo.alive,phylo.tipNames,phylo.scale);
+          // compute stats
           roleDataCpp out = roleDataCpp(l,m,ph,i);
           return out; 
         }
         
+        //NOTE - unused for now, we are doing this in R 
         // return a timeseries
         void getTimeseries(NumericVector v, std::string name)
         {
