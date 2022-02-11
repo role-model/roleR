@@ -1,18 +1,29 @@
 library(roleR)
 
 # --------------
-# create a simulation with default parameters and metadata 
+# create a simulation with default parameters and metadata, get various values
 # --------------
 sim <- roleSim() # same as sim <-roleSim(params = NULL, init = NULL, nstep = 100, series_timestep = NULL, nsim = 1, print = FALSE) 
 
-# look at some values 
-sim$local$Imax #the max number of individuals in the local community
-plot(getApePhylo(sim)) # plot the ape phylogeny
-plot(sim$local$abundance_sp) # plot species abundances 
+# look at the total number of species that have existed in the model
+getEndState(sim@modelRuns[1])@localComm@Smax
+
+# add Hill numbers to all runs in the sim 
+addHillStats(sim)
+
+# get the trait diversity value of the 30th iter 
+sim@modelRuns[1]@timeseries[30]@stats["trait_diversity"]
+
+# get the model phylogeny
+library(ape)
+endPhylo <- getEndState(sim@modelRuns[1])@phylo
+plot(as(endPhylo, ape::rphylo)) # plot the ape phylogeny
+
+getTimeseries
 
 
 # --------------
-# create a simulation specifying distributions of parameters 
+# create a simulation specifying parameters that vary over the iterations
 # --------------
 
 p <- roleParams(nsim=100,niter=1000)
@@ -57,4 +68,7 @@ series <- eq(1:1000) / 1000000 * 0.6
 params@timeseries$speciation_local <- series
 
 
+# --------------
+# create a simulation specifying parameter priors 
+# --------------
 
