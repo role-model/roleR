@@ -1,9 +1,9 @@
-#' @title An S4 class containing multiple model runs, each contained in a separate roleModel object, and
-#' functions to perform on multiple model runs at once
+#' @title An S4 class containing multiple model runs and the params used to generate them
 #'
 #' @slot modelRuns a list of roleModel objects, each containing its own current state and 
 #' a timeseries of past states 
-#' @slot params
+#' @slot params a roleParams object
+#' @slot rootSim 
 #'
 #' @export
 
@@ -11,7 +11,8 @@ setClass('roleSim',
          slots = c(modelRuns = 'list',
                    params = 'roleParams'))
 
-#' @title RoLE model simulation
+# NOTE - should we require users to specify a params object, and thus avoid needing niter, nruns, niter_timestep as params of roleSim? 
+#' @title Run a RoLE model simulation and return a roleSim object
 #'
 #' @description Simulate communities under the RoLE model, The key distinction
 #' between the two functions is that \code{roleSim} is optimized to run many
@@ -21,66 +22,52 @@ setClass('roleSim',
 #'
 #' @param params a \code{roleParams} object - if left unspecified a default set of "plausible"
 #' parameter values is used 
-#' @param init an optional initial condition specified as a \code{roleModelCpp}
-#' object
-#' @param nstep number of simulation steps to run; if \code{prop_equilib} is
-#' specified in the \code{params} list, \code{nstep} will over-ride that
-#' parameter
-#' @param nsim number of simulations to run
-#' @param nout frequency of intermediate results output (not yet implemented)
+#' @param startModel a roleModel object - if unspecified is built from scratch using params and initType
+#' @param initType a string specifying the type of model to create if starting from scratch without a startModel -
+#' either "oceanic_island" or "bridge_island"
+#' @param print a bool specifying whether to print some information as the model runs
 #' 
-#' @return if nruns is 1, returns a roleModel object, otherwise returns a roleSim 
-#' object containing nrun models
+#' @example 
+#' params <- roleParams(niter = 5000,defaults=TRUE) 
+#' sim <- roleSim(params)
 #' 
-#' @details Stub
+#' sim <- roleSim(params, startModel = sim@runs[1])
+#' 
+#' @return a roleSim object
 #'
 #' @rdname roleSim
 #' @export
 
-roleSim <- function(params = NULL, startModel = NULL, initType = "oceanic_island", niter = 100, nruns = 1, niter_timestep = 50, print = FALSE) {
+roleSim <- function(params, startModel = NULL, initType = "oceanic_island", print = FALSE) {
   
-    # if params specified, get niter and nruns from params
-    if(!is.null(params)){
-      nruns <- params@nruns
-      niter <- params@niter
-    }
-  
-    else{ # else params is unspecified so create a set of default parameters
-      params <- roleParams(nruns,niter,niter_timestep)
-    }
-  
-    # convert params and init to C++ objects
-    params <- toCpp(params)
+    nruns <- params@nruns
+    niter <- params@niter
+    niter_timestep <- params@niter_timestep
     
-    # NOTE - currently if starting with an existing sim, the params of that sim are used and not the new params
-    if(is.null(startModel)) { # if no init sim to start with, initialize a new sim with params
-      init <- initSim(params)
-      init$print <- print 
-    }
-    else{
-      # convert model to C++ model
-      init <- roleModelToCpp(startModel)
-    }
+    # prepare params for C++ loop by stretching 1-length values to niter and sampling from provided priors 
+    cparams <- stretchAndSampleParams(params)
+    
+    # initialize a C++ roleModelCpp starting condition
+    init <- initSim(cparams,initType) 
     
     # initialize list to hold finished model runs
-    out <- list()
+    runs <- list()
+    
     # do nrun model runs 
-    for(i in 1:nsim)
+    for(i in 1:nruns)
     {
-      # set params for new run
-      init$params <- params@values[[1]]
+      # set the named list of param values
+      init@params <- cparams@values[[1]]
       
       # iterate over the simulation and return the output
-      out[[i]] <- iterSim(init, niter, niter_timestep, print) # else add the next sim to the list 
+      runs[[i]] <- roleModelFromCpp(iterSim(init, niter, niter_timestep, print)) # else add the next sim to the list 
     }
-
-    # return list of sims
-    return(out)
     
-    #TODO - next step is getting initSim to work with the new params and moving stuff from comm
+    # return list of sims
+    return(new("roleSim", runs, params))
 }
 
-roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
+roleSimPlay <- function() {
 }
 
 # ----
@@ -88,71 +75,58 @@ roleSimPlay <- function(params = NULL, init = NULL, nstep = 100, nsim = 1) {
 #' object
 #' @param params a roleParamsCpp object containing the model parameters - if null, defaults are set
 
-initSim <- function(params = NULL, type) {
-
-    # if no roleParamsCpp object provided
-    if(is.null(params))
-    {
-        #create empty paramValuesCpp object
-        #empty constructor includes a plausible default set of values
-        vals <- new(paramValuesCpp)
-
-        #create roleParamsCpp object from values
-        params <- new(roleParamsCpp,vals,"sim", 1)
-    }
-
+initSim <- function(params, type) {
+    
+    # some testing lines
+    #params <- roleParams(nrun=1,niter=100,niter_timestep=10,defaults=TRUE)
+    #params <- setDefaultParams(params)
+    
     # simulate phylogeny
-    phy <- TreeSim::sim.bd.taxa(params$values$species_meta, numbsim = 1,
-                                lambda = params$values$speciation_meta,
-                                mu = params$values$extinction_meta, complete = FALSE)[[1]]
+    phy <- TreeSim::sim.bd.taxa(params@values[[1]][["species_meta"]], numbsim = 1,
+                                lambda = params@values[[1]][["speciation_meta"]],
+                                mu = params@values[[1]][["extinction_meta"]], complete = FALSE)[[1]]
 
     # simulate metacommunity SAD
-    abundance_m <- .lseriesFromSN(params$values$species_meta,
-                                params$values$individuals_meta)
+    abundance_m <- lseriesFromSN(params@values[[1]][["species_meta"]],
+                                  params@values[[1]][["individuals_meta"]])
     
     # initalize meta comm traits:
     # first column is species ID, second column is trait value
     # Smax rows
-    traits_m <- cbind(1:params$values$species_meta,
-                         ape::rTraitCont(phy, sigma = params$values$trait_sigma))
+    traits_m <- cbind(1:params@values[[1]][["species_meta"]],
+                         ape::rTraitCont(phy, sigma = params@values[[1]][["trait_sigma"]]))
 
     # create metaCommCpp object
-    meta <- new(metaCommCpp, abundance_m, traits_m, params$values$species_meta)
-
-    # vector of 0 abundances
-    abundance_l <- rep(0, params$values$species_meta * 100)
-
-    # initialize local species abundances with one species having all individuals
-    # eventually may want different ways of initializing abundances based on Harmon paper
-    # argument in params  specifying abundance initalization model
-    # save sampling index and use to assign to correct species of local abundances,
-    # and the appropriate trait from the metacomm pool and add to trait matrix
+    meta <- new(metaCommCpp, abundance_m, traits_m, params@values[[1]][["species_meta"]])
+  
     
+    # initialize vector of 0 species abundances
+    abundance_l_sp <- rep(0, params@values[[1]][["species_meta"]])
+    
+    # oceanic island model assigns all abundance to one species
     if(type == "oceanic_island"){
       # index of the species that will initially have all abundance
-      i <- sample(params$values$species_meta, 1, prob = meta$abundance)
+      i <- sample(params@values[[1]][["species_meta"]], 1, prob = meta$abundance)
       # passing all abundance to that species
-      abundance_l[i] <- params$values$individuals_local
+      abundance_l_sp[i] <- params@values[[1]][["individuals_local"]]
     }
-    
+    # bridge island model assigns abundances to all species proportional to species abundance
     else if(type == "bridge_island"){
-      abundance_l <- sample(params$values$species_meta, prob = meta$abundance)
+      # vector of species
+      abundance_l_sp <- sample(params@values[[1]][["species_meta"]], prob = meta$abundance)
     }
     
     # counter keeping track of max number of possible species in local comm
-    Smax_ <- params$values$species_meta
-    
+    Smax_ <- params@values[[1]][["species_meta"]]
+
     # init local species traits
-    traits_l <- numeric(100)
+    traits_l_sp <- traits_m
     
-    # extract trait for starting species from meta
-    traits_l[i] <- meta$traits[which(meta$traits[meta$traits[,1]] == i),2]
-    
-    # soon set pi to be simulated sequences, and update outside of C++ over time
+    # soon set pi to be simulated sequences
     pi_l <- rep(1:Smax_)
     
     # create localCommCpp object
-    local <- new(localCommCpp, abundance_l, traits_l, Smax_, pi_l)
+    local <- new(localCommCpp, abundance_l_sp, traits_l_sp, Smax_, pi_l)
 
     # convert ape phylo to rolePhylo
     phy <- apeToRolePhylo(phy)
@@ -171,7 +145,7 @@ initSim <- function(params = NULL, type) {
 #' @param S number of species
 #' @param N number of individuals
 
-.lseriesFromSN <- function(S, N) {
+lseriesFromSN <- function(S, N) {
     # solve for alpha paramter
     asol <- uniroot(interval = c(.Machine$double.eps^0.25,
                                  .Machine$integer.max),
@@ -191,19 +165,7 @@ initSim <- function(params = NULL, type) {
     return(thisSAD / sum(thisSAD))
 }
 
-.rolePhyloToCpp <- function(phylo){
-    n <- phylo@n
-
-    e <- phylo@e
-    l <- phylo@l
-    alive <- phylo@alive
-    tipNames <- phylo@tipNames
-    scale <- phylo@scale
-    out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
-    return(out)
-}
-
-.apeToRolePhylo <- function(phylo){
+apeToRolePhylo <- function(phylo){
 
     # extract number of times
     n <- ape::Ntip(phylo)
@@ -235,7 +197,7 @@ initSim <- function(params = NULL, type) {
                      tipNames = tipNames, scale = scale))
 }
 
-.apeToPhyloCpp <- function(phylo){
+apeToPhyloCpp <- function(phylo){
     n <- ape::Ntip(phylo)
 
     e <- phylo$edge
@@ -249,16 +211,26 @@ initSim <- function(params = NULL, type) {
     return(out)
 }
 
-.roleParametersToRoleParamsCpp <- function(roleParameters){
-  n <- ape::Ntip(phylo)
-  
-  e <- phylo$edge
-  l <- phylo$edge.length
-  tipNames <- phylo$tip.label
-  tipAge <- ape::node.depth.edgelength(phylo)[1:n]
-  alive <- rep(TRUE,n)
-  alive[tipAge < max(tipAge)] <- FALSE;
-  scale <- 1;
-  out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
-  return(out)
+#' @title Write a ROLE sim object to a serialized R file for transfer, sharing, 
+#' or to use with Docker. File contents can only be read within R. 
+#'
+#' @param model object of class \code{roleSim}
+#' @param dir the directory to write to i.e. "data/models" 
+#' @param fileName the name of the new file
+#' @param saveTxt specifies whether to save a .txt describing some sim information
+#' for viewing outside of R}
+#'
+#' @export
+
+writeModel <- function(model, dir = NULL, fileName, saveTxt = TRUE)
+{
+  if(is.null(dir)){
+    dir = getwd()
+  }
+  saveRDS(model,paste0(dir,"/",fileName,".role"))
+  if(saveTxt){
+    con <- file(paste0(dir, "/", fileName, "_info", ".txt"))
+    writeLines(c("Info for ROLE model object","Created by Jacob Idec"), con)
+    close(con)
+  }
 }

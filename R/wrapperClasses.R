@@ -28,7 +28,7 @@ localComm <- function(abundanceIndv, speciesIDsIndv, traitsIndv,
       traitsIndv = traitsIndv,
       abundanceSp = abundanceSp,
       traitsSp = traitsSp,
-      sequencesSp = sequencesSp))
+      gdiversitiesSp = gdiversitiesSp))
 }
 
 #' @title An S4 class to specify a meta community within a ROLE model 
@@ -82,7 +82,29 @@ setClass('rolePhylo',
 
 rolePhylo <- function(ntips, edges, lengths, alive, tipNames, scale) {
   new('rolePhylo',
-      ntips = ntips, e = e, l = l, alive = alive, tipNames = tipNames, scale = scale)
+      ntips = ntips, edges = edges, lengths = lengths, alive = alive, tipNames = tipNames, scale = scale)
+}
+
+rolePhyloToCpp <- function(phylo){
+  n <- phylo@ntips
+  e <- phylo@edges
+  l <- phylo@lengths
+  alive <- phylo@alive
+  tipNames <- phylo@tipNames
+  scale <- phylo@scale
+  out <- new(rolePhyloCpp,n,e,l,alive,tipNames,scale)
+  return(out)
+}
+
+rolePhyloFromCpp <- function(phyloCpp){
+  n <- phylo$n
+  e <- phylo$e
+  l <- phylo$l
+  alive <- phylo$alive
+  tipNames <- phylo$tipNames
+  scale <- phylo$scale
+  out <- rolePhylo(n,e,l,alive,tipNames,scale)
+  return(out)
 }
 
 #' @title An S4 class to role model data for timeseries
@@ -107,4 +129,22 @@ roleData <- function(localComm,metaComm,phylo) {
       localComm = localComm,
       metaComm = metaComm,
       phylo = phylo))
+}
+
+roleDataFromCpp <- function(dataCpp) {
+  local <- localComm(modelCpp$localComm$abundance_indv,modelCpp$localComm$species_ids,
+                     modelCpp$localComm$traits,modelCpp$localComm$abundance_sp,
+                     modelCpp$localComm$traits_sp,modelCpp$localComm$pi)
+  
+  meta <- metaComm(modelCpp$metaComm$abundance,modelCpp$metaComm$traits)
+  phylo <- rolePhyloFromCpp(dataCpp$phylo)
+  params <- modelCpp$params
+  stats <- modelCpp$stats 
+  
+  return(new('roleData',
+             localComm = local,
+             metaComm = meta,
+             phylo = phylo,
+             params = params,
+             stats = stats))
 }

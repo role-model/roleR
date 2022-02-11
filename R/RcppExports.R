@@ -3,20 +3,27 @@
 
 #' @name metaCommCpp
 #' @title a class to specify the meta community
-#' @param abundance a \code{numeric vector} of relative abundances for each species
-#' @param traits a \code{numeric vector} of traits for each species
-#' @param Smax a single \code{integer} specifying the total number of species ever
+#' @field abundance a \code{numeric vector} of relative abundances for each species
+#' @field traits a \code{numeric vector} of traits for each species
+#' @field Smax a single \code{integer} specifying the total number of species ever
 #' recorded in the local community (both locally extinct and extant)
 NULL
 
 #' @name localCommCpp
 #' @title a class to specify the local community
-#' @param abundance_binary a numeric vector specifying the binary abundance (alive or dead) 
+#' @field abundance_indv a numeric vector of 0s and 1s specifying the binary abundance (alive or dead) 
 #' of each individual
-#' @param traits a numeric vector of trait values for each individual
-#' @param Imax a float specifying the total number of individuals ever
-#' recorded in the local community (both locally extinct and extant)
-#' @param pi a numeric vector of genetic diversities for each species
+#' @field species_ids a numeric vector specifying species of each individual as
+#' an index found in the species vectors 
+#' @field traits a numeric vector of trait values for each individual
+#' @field J constant number of individuals in the community
+#' @field Smax max number of species in community, index used to create new species ids 
+#' @field traitdiffs a matrix that is the outer product of traits*traits - 
+#' calculated at object creation then altered rather than recalculated
+#' @field abundance_sp abundances of every species i at index i, kept to save on computation
+#' @field traits_sp traits of every species i at index i, kept to save on computation
+#' @field pi_sp genetic diversities of species - unsure how this plays into new structure
+#' @field print a bool specifying whether to print outputs related to class functions 
 NULL
 
 #' @name iterSim
