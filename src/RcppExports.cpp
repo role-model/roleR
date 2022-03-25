@@ -16,16 +16,14 @@ RcppExport SEXP _rcpp_module_boot_iterSimCpp();
 RcppExport SEXP _rcpp_module_boot_commCpp();
 RcppExport SEXP _rcpp_module_boot_phyloCpp();
 RcppExport SEXP _rcpp_module_boot_modelCpp();
-RcppExport SEXP _rcpp_module_boot_paramsCpp();
-RcppExport SEXP _rcpp_module_boot_paramValuesCpp();
+RcppExport SEXP _rcpp_module_boot_dataCpp();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_rcpp_module_boot_iterSimCpp", (DL_FUNC) &_rcpp_module_boot_iterSimCpp, 0},
     {"_rcpp_module_boot_commCpp", (DL_FUNC) &_rcpp_module_boot_commCpp, 0},
     {"_rcpp_module_boot_phyloCpp", (DL_FUNC) &_rcpp_module_boot_phyloCpp, 0},
     {"_rcpp_module_boot_modelCpp", (DL_FUNC) &_rcpp_module_boot_modelCpp, 0},
-    {"_rcpp_module_boot_paramsCpp", (DL_FUNC) &_rcpp_module_boot_paramsCpp, 0},
-    {"_rcpp_module_boot_paramValuesCpp", (DL_FUNC) &_rcpp_module_boot_paramValuesCpp, 0},
+    {"_rcpp_module_boot_dataCpp", (DL_FUNC) &_rcpp_module_boot_dataCpp, 0},
     {NULL, NULL, 0}
 };
 

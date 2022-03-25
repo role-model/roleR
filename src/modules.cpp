@@ -6,21 +6,19 @@ using namespace Rcpp;
 
 RCPP_MODULE(commCpp) {
     class_<metaCommCpp>("metaCommCpp")
-        .constructor<NumericVector,NumericMatrix,int>()
-    
+        .constructor<NumericVector,NumericMatrix>()
         .field("abundance", &metaCommCpp::abundance)
         .field("traits", &metaCommCpp::traits)
-        .field("Smax", &metaCommCpp::Smax)
     ;
     class_<localCommCpp>("localCommCpp")
-        .constructor<NumericVector,NumericVector,int,NumericVector>()
+        .constructor<NumericVector,NumericVector,NumericVector,int>()
     
         .field("abundance_indv", &localCommCpp::abundance_indv)
         .field("species_ids", &localCommCpp::species_ids)
         .field("traits", &localCommCpp::traits)
-        .field("Imax", &localCommCpp::Imax)
-        .field("Smax", &localCommCpp::Smax)
-        .field("pi", &localCommCpp::pi)
+        .field("J", &localCommCpp::J)
+        .field("S_index", &localCommCpp::S_index)
+        .field("pi_sp", &localCommCpp::pi_sp)
         .field("traitdiffs", &localCommCpp::traitdiffs)
         .field("abundance_sp", &localCommCpp::abundance_sp)
         .field("traits_sp", &localCommCpp::traits_sp)
@@ -37,11 +35,13 @@ RCPP_MODULE(commCpp) {
 
 RCPP_MODULE(phyloCpp) {
     class_<rolePhyloCpp>("rolePhyloCpp")
-    .constructor<int,NumericMatrix,NumericVector,LogicalVector,StringVector,long>()
+    .constructor<int,NumericMatrix,NumericVector,LogicalVector,StringVector,double>()
     .field("alive", &rolePhyloCpp::alive)
     .field("n", &rolePhyloCpp::n)
     .field("e", &rolePhyloCpp::e)
     .field("l", &rolePhyloCpp::l)
+    .field("tipNames", &rolePhyloCpp::tipNames)
+    .field("scale", &rolePhyloCpp::scale)
     .method("birth", &rolePhyloCpp::birth)
     .method("death", &rolePhyloCpp::death)
     .method("speciation", &rolePhyloCpp::speciation)
@@ -53,44 +53,33 @@ RCPP_MODULE(phyloCpp) {
 
 RCPP_MODULE(modelCpp) {
     class_<roleModelCpp>("roleModelCpp")
-    .constructor<localCommCpp,metaCommCpp,rolePhyloCpp,roleParamsCpp>()
-    .field("local", &roleModelCpp::localComm)
-    .field("meta", &roleModelCpp::metaComm)
+    .constructor<localCommCpp,metaCommCpp,rolePhyloCpp,List>()
+    .field("local", &roleModelCpp::local)
+    .field("meta", &roleModelCpp::meta)
     .field("phylo", &roleModelCpp::phylo)
     .field("params", &roleModelCpp::params)
+    .field("print", &roleModelCpp::print)
+    .field("print_vectors", &roleModelCpp::print_vectors)
     .field("timeseries", &roleModelCpp::timeseries)
     .method("birth", &roleModelCpp::birth)
     .method("death", &roleModelCpp::death)
     .method("speciation", &roleModelCpp::speciation)
     .method("immigration", &roleModelCpp::immigration)
-    .method("copy", &roleModelCpp::copy)
-    .field("print", &roleModelCpp::print)
+    .method("copyData", &roleModelCpp::copyData)
     ;
 }
 
-#include "roleParamsCpp.cpp"
 
-RCPP_MODULE(paramsCpp) {
-    class_<roleParamsCpp>("roleParamsCpp")
-    .constructor<paramValuesCpp,std::string,int>()
-    .field("values", &roleParamsCpp::values)
-    ;
+#include "roleDataCpp.cpp"
+
+RCPP_MODULE(dataCpp) {
+  class_<roleDataCpp>("roleDataCpp")
+  .constructor<localCommCpp,metaCommCpp,rolePhyloCpp>()
+  .field("local", &roleDataCpp::local)
+  .field("meta", &roleDataCpp::meta)
+  .field("phylo", &roleDataCpp::phylo)
+  .field("stats", &roleDataCpp::stats)
+  .field("iter_num", &roleDataCpp::iter_num)
+  ;
 }
 
-#include "paramValuesCpp.cpp"
-
-RCPP_MODULE(paramValuesCpp) {
-    class_<paramValuesCpp>("paramValuesCpp")
-    .constructor()
-    .field("speciation_meta", &paramValuesCpp::speciation_meta)
-    .field("extinction_meta", &paramValuesCpp::extinction_meta)
-    .field("trait_sigma", &paramValuesCpp::extinction_meta)
-    .field("species_meta", &paramValuesCpp::species_meta)
-    .field("individuals_meta", &paramValuesCpp::individuals_meta)
-    .field("individuals_local", &paramValuesCpp::individuals_local)
-    .field("dispersal_prob", &paramValuesCpp::dispersal_prob)
-    .field("speciation_local", &paramValuesCpp::speciation_local)
-    .field("dispersal_prob", &paramValuesCpp::dispersal_prob)
-    //.constructor<double, double, double, double,double, double, double, double, double, double, double, double>()
-    ;
-}

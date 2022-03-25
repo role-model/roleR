@@ -20,11 +20,11 @@ class rolePhyloCpp {
         NumericVector l;
         LogicalVector alive;
         StringVector tipNames;
-        long scale;
+        double scale;
 
         //constructor
         rolePhyloCpp(int n_, NumericMatrix e_,NumericVector l_,
-                  LogicalVector alive_,StringVector tipNames_,long scale_)
+                  LogicalVector alive_,StringVector tipNames_,double scale_)
                 : n(n_), e(e_), l(l_), alive(alive_), tipNames(tipNames_), scale(scale_)
         {
         }
@@ -41,18 +41,14 @@ class rolePhyloCpp {
 
         void speciation(int i)
         {
-            bool print = false; 
-            //number of tips
-            //n <- x@n
+            bool print = true; 
 
-            //index of where unrealized edges in edge matrix start
-            //eNew <- min(which(x@e[, 1] == -1))
-
+            // find index of where unrealized edges in edge matrix start
+            // eNew <- min(which(e[, 1] == -1))
             int eNew = -1;
             for (int k = 0; k < n - 1; k++) {
                 if (e(k,1) == -1)
                 {
-                    
                     eNew = k;
                     break;
                 }
@@ -61,7 +57,7 @@ class rolePhyloCpp {
             if(print){Rcout << "found unrealized edge \n";}
             
             //index of where to add new edge
-            //j <- which(x@e[, 2] == i)
+            // j <- which(e[, 2] == i)
             int j = -1;
             for (int k = 0; k < n; k++) {
                 if (e(k,2) == i)
@@ -76,11 +72,13 @@ class rolePhyloCpp {
             // add one to internal node indices
             //e[e > n] <- e[e > n] + 1
 
-            for (int k = 0; k < n; k++) {
-                if (k > n)
+            for (int r = 0; r < e.nrow() - 1; r++) {
+              for(int c = 0; c < e.ncol() - 1; c++){
+                if(e(r,c) > n)
                 {
-                    e(k,1) += 1;
+                  e(r,c) += 1;
                 }
+              }
             }
             
             if(print){Rcout << "added one to internal node indices \n";}
@@ -112,8 +110,9 @@ class rolePhyloCpp {
             if(print){Rcout << "augmented edge lengths \n";}
             
             // over-write other slots of `x` with new info
-            alive[n-1] = TRUE;
-            tipNames[n-1] = "new";
+            alive.push_back(true);
+            tipNames.push_back("new");
+     
             n += 1;
             
             if(print){Rcout << "overwrote other slots of x with new info \n";}
