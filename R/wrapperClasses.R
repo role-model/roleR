@@ -9,7 +9,7 @@
 #' @slot traitsIndv a numeric vector of trait values for each individual
 #' @slot abundanceSp abundances of every species i held at index i
 #' @slot traitsSp traits of every species i held at index i
-#' @slot sequencesSp genetic diversities of species
+#' @slot gdiversitiesSp genetic diversities of species
 #' @export
 
 setClass('localComm',
@@ -18,10 +18,10 @@ setClass('localComm',
                    traitsIndv = 'numeric',
                    abundanceSp = 'numeric',
                    traitsSp = 'numeric',
-                   sequencesSp = 'numeric'))
+                   gdiversitiesSp = 'numeric'))
 # constructor 
 localComm <- function(abundanceIndv, speciesIDsIndv, traitsIndv, 
-                      abundanceSp, traitsSp,sequencesSp) {
+                      abundanceSp, traitsSp,gdiversitiesSp) {
   return(new('localComm',
       abundanceIndv = abundanceIndv,
       speciesIDsIndv = speciesIDsIndv,
@@ -39,7 +39,7 @@ localComm <- function(abundanceIndv, speciesIDsIndv, traitsIndv,
 
 setClass('metaComm',
          slots = c(abundanceSp = 'numeric',
-                   traitsSp = 'numeric'))
+                   traitsSp = 'matrix'))
 # constructor
 metaComm <- function(abundanceSp,traitsSp,Smax) {
   return(new('metaComm',
@@ -65,7 +65,42 @@ setClass('rolePhylo',
                    lengths = 'numeric',
                    alive = 'logical',
                    tipNames = 'character',
-                   scale = 'numeric'))
+                   scale = 'numeric'), 
+         validity=function(object)
+         {
+           checks <- c()
+           
+           if(length(object@alive) < length(object@tipNames)) {
+             checks <- c(checks, 'not all named tips are represented in @alive')
+           }
+           
+           if(length(object@alive) < object@ntips) {
+             checks <- c(checks,
+                         'fewer tips specified in @alive than indicated by @n')
+           }
+           
+           if(length(object@tipNames) < object@ntips) {
+             checks <- c(checks,
+                         'fewer tips specified in @tipNames than indicated by @n')
+           }
+           
+           if(nrow(object@edges) < 2 * (object@ntips - 1)) {
+             checks <- c(checks,
+                         'edge matrix does not contain sufficient rows for number of tips')
+           }
+           
+           if(nrow(object@edges) != length(object@lengths)) {
+             checks <- c(checks,
+                         'unequal number of edges in @e and edge lengths in @l')
+           }
+           
+           # if any issues, return them, otherwise all OK
+           if(length(checks) > 0) {
+             return(checks)
+           } else {
+             return(TRUE)
+           }
+         })
 
 
 #' @title Specify a RoLE model phylogeny
@@ -96,7 +131,7 @@ rolePhyloToCpp <- function(phylo){
   return(out)
 }
 
-rolePhyloFromCpp <- function(phyloCpp){
+rolePhyloFromCpp <- function(phylo){
   n <- phylo$n
   e <- phylo$e
   l <- phylo$l
@@ -106,6 +141,8 @@ rolePhyloFromCpp <- function(phyloCpp){
   out <- rolePhylo(n,e,l,alive,tipNames,scale)
   return(out)
 }
+
+
 
 #' @title An S4 class to role model data for timeseries
 #' @slot localComm an object of class \code{localComm}
@@ -121,30 +158,27 @@ setClass('roleData',
          slots = c(localComm = 'localComm',
                    metaComm = 'metaComm',
                    phylo = 'rolePhylo',
-                   stats = 'data.frame'))
+                   stats = 'data.frame',
+                   iterNum = 'integer'))
 
 # constructor
-roleData <- function(localComm,metaComm,phylo) {
+roleData <- function(localComm,metaComm,phylo,iterNum) {
   return(new('roleData',
       localComm = localComm,
       metaComm = metaComm,
-      phylo = phylo))
+      phylo = phylo,
+      iterNum = iterNum))
 }
 
-roleDataFromCpp <- function(dataCpp) {
-  local <- localComm(modelCpp$localComm$abundance_indv,modelCpp$localComm$species_ids,
-                     modelCpp$localComm$traits,modelCpp$localComm$abundance_sp,
-                     modelCpp$localComm$traits_sp,modelCpp$localComm$pi)
+roleDataFromCpp <- function(data) {
+  local <- localComm(data$local$abundance_indv,data$local$species_ids,
+                     data$local$traits,data$local$abundance_sp,
+                     data$local$traits_sp,data$local$pi_sp)
   
-  meta <- metaComm(modelCpp$metaComm$abundance,modelCpp$metaComm$traits)
-  phylo <- rolePhyloFromCpp(dataCpp$phylo)
-  params <- modelCpp$params
-  stats <- modelCpp$stats 
+  meta <- metaComm(data$meta$abundance,data$meta$traits)
+  phylo <- rolePhyloFromCpp(data$phylo)
+  stats <- data$stats 
+  iterNum <- data$iter_num
   
-  return(new('roleData',
-             localComm = local,
-             metaComm = meta,
-             phylo = phylo,
-             params = params,
-             stats = stats))
+  return(roleData(local,meta,phylo,iterNum))
 }

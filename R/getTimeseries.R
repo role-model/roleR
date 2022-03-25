@@ -15,9 +15,14 @@ setGeneric('getTimeseries', function(x, ...) standardGeneric('getTimeseries'), s
 setMethod("getTimeseries", signature(x="roleModel"),
           function(x,type,valueName,entropyN) {
             
+            x <- dummyModel(R=FALSE,run=TRUE)
+            
+            type <- "model_value"
+            valueName <- "abundance_local"
+              
             if(type == "summary_stat")
             {
-              niter <- x@params[["niter"]]
+              niter <- length(x@paramValues[["speciation_local"]])
               out <- list()
               for(i in 1:niter)
               {
@@ -30,31 +35,37 @@ setMethod("getTimeseries", signature(x="roleModel"),
             
             else if(type == "model_value")
             {
-              niter <- x@params[["niter"]]
-              
+              #niter <- x@paramValues[["niter"]]
+            
+              niter <- length(x@paramValues[["speciation_local"]])
+              niter <- 1
+              x@paramValues[["speciation_local"]]
               all_values_ts <- list()
               
               # due to how it's organized, the best way to access by name is by coercing 
               # everything into a named list then getting the name
+              View(x@timeseries[1][[1]])
               for(i in 1:niter)
               {
-                all_values_ts[["abundanceIndv"]][[i]] <- x@timeseries[i]@localComm@abundanceIndv 
-                all_values_ts[["speciesIDsIndv"]][[i]] <- x@timeseries[i]@localComm@speciesIDsIndv
-                all_values_ts[["traitsIndv"]][[i]] <- x@timeseries[i]@localComm@traitsIndv
-                all_values_ts[["abundanceSp"]][[i]]  <- x@timeseries[i]@localComm@abundanceSp
-                all_values_ts[["traitsSp"]][[i]] <- x@timeseries[i]@localComm@traitsSp
-                all_values_ts[["sequencesSp"]][[i]] <- x@timeseries[i]@localComm@sequencesSp
+                all_values_ts[["abundanceIndv"]][[i]] <- x@timeseries[i][[1]]@localComm@abundanceIndv 
+                all_values_ts[["speciesIDsIndv"]][[i]] <- x@timeseries[i][[1]]@localComm@speciesIDsIndv
+                all_values_ts[["traitsIndv"]][[i]] <- x@timeseries[i][[1]]@localComm@traitsIndv
+                all_values_ts[["abundanceSp"]][[i]]  <- x@timeseries[i][[1]]@localComm@abundanceSp
+                all_values_ts[["traitsSp"]][[i]] <- x@timeseries[i][[1]]@localComm@traitsSp
+                #all_values_ts[["sequencesSp"]][[i]] <- x@timeseries[i][[1]]@localComm@sequencesSp
                 
-                all_values_ts[["metaAbundanceSp"]][[i]] <- x@timeseries[i]@metaComm@abundanceSp
-                all_values_ts[["metaTraitsSp"]][[i]] <- x@timeseries[i]@metaComm@traitsSp
+                all_values_ts[["metaAbundanceSp"]][[i]] <- x@timeseries[i][[1]]@metaComm@abundanceSp
+                all_values_ts[["metaTraitsSp"]][[i]] <- x@timeseries[i][[1]]@metaComm@traitsSp
                 
-                all_values_ts[["ntips"]][[i]] <- x@timeseries[i]@phylo@ntips
-                all_values_ts[["edges"]][[i]] <- x@timeseries[i]@phylo@ntips
-                all_values_ts[["lengths"]][[i]] <- x@timeseries[i]@phylo@ntips
-                all_values_ts[["alive"]][[i]] <- x@timeseries[i]@phylo@ntips
+                all_values_ts[["ntips"]][[i]] <- x@timeseries[i][[1]]@phylo@ntips
+                all_values_ts[["edges"]][[i]] <- x@timeseries[i][[1]]@phylo@ntips
+                all_values_ts[["lengths"]][[i]] <- x@timeseries[i][[1]]@phylo@ntips
+                all_values_ts[["alive"]][[i]] <- x@timeseries[i][[1]]@phylo@ntips
                 
-                all_values <- rbind(x@timeseries[i])
+                #all_values <- rbind(x@timeseries[i])
               }
+              all_values_ts
+              all_values_ts[["abundanceIndv"]]
               
               return(all_values_ts[[valueName]])
             }

@@ -7,10 +7,11 @@
 #'
 #' @slot nruns an integer specifying the number of runs (number of roleModels) to simulate -  defaults to 1 
 #' @slot niter an integer specifying the number of iterations per model run 
-#' @slot niter_timestep an integer specifying the frequency at which step states for each model are saved in the model timeseries 
+#' @slot niterTimestep an integer specifying the frequency at which step states for each model are saved in the model timeseries 
 #' i.e. a value of 5 means save every 5 iteration steps
 #' @slot values an array of named lists of parameter values
 #' @slot priors priors to draw values from when the model starts - any priors specified OVERRIDE their params contained in values
+#' @slot iterfuncs functions to draw values from which take an iteration step and return a value
 #' 
 #' @export
 
@@ -18,9 +19,11 @@ roleParams <- setClass('roleParams',
          slots = c(
            nruns = "numeric", 
            niter = "numeric",
-           niter_timestep = "numeric",
+           niterTimestep = "numeric",
            values = "array",
-           priors = "array"
+           priors = "array",
+           iterfuncs = "array",
+           meta = "character"
          ), 
          
          validity=function(object)
@@ -56,16 +59,25 @@ roleParams <- setClass('roleParams',
 #'
 #' @param nruns an integer specifying the number of runs (number of roleModels) to simulate -  defaults to 1 
 #' @param niter an integer specifying the number of iterations per model run 
-#' @param niter_timestep an integer specifying the frequency at which step states for each model are saved in the model timeseries 
+#' @param niterTimestep an integer specifying the frequency at which step states for each model are saved in the model timeseries 
 #' i.e. a value of 5 means save every 5 iteration steps
 #' @param defaults a bool specifying whether to initially assign default values to params 
+#' @param individuals_local a value or set of values to assign to params
 #'
 #' @examples 
 #' params <- roleParams(nruns = 3,niter = 10000, niter_timestep = 25)
 #' 
 #' @export
 
-roleParams <- function(nruns, niter, niter_timestep = NULL,defaults=FALSE) {
+roleParams <- function(nruns, niter, niterTimestep=10,defaults=TRUE,
+                       
+                       individuals_local=NA,individuals_meta=NA, 
+                       species_meta=NA,speciation_local=NA,
+                       speciation_meta=NA, extinction_meta=NA,
+                       trait_sigma=NA,env_sigma = NA,
+                       comp_sigma=NA,dispersal_prob=NA,
+                       mutation_rate = NA, equilib_escape=NA,
+                       genesim_savesteps=NA,num_basepairs=NA){
 
   values <- array(list(),nruns)
   
@@ -73,27 +85,28 @@ roleParams <- function(nruns, niter, niter_timestep = NULL,defaults=FALSE) {
   # could also set default values but I dunno
   for(i in 1:nruns)
   {
-    values[[i]][["individuals_local"]] <- c(0)
-    values[[i]][["individuals_meta"]] <- c(0)
-    values[[i]][["species_meta"]] <- c(0)
-    values[[i]][["speciation_local"]] <- c(0)
-    values[[i]][["speciation_meta"]] <- c(0)
-    values[[i]][["extinction_meta"]] <- c(0)
-    values[[i]][["trait_sigma"]] <- c(0)
-    values[[i]][["env_sigma"]] <- c(0)
-    values[[i]][["comp_sigma"]] <- c(0)
-    values[[i]][["dispersal_prob"]] <- c(0)
-    values[[i]][["mutation_rate"]] <- c(0)
-    values[[i]][["equilib_escape"]] <- c(0)
-    values[[i]][["genesim_savesteps"]] <- c(0)
+    values[[i]][["individuals_local"]] <- individuals_local
+    values[[i]][["individuals_meta"]] <- individuals_meta
+    values[[i]][["species_meta"]] <- species_meta
+    values[[i]][["speciation_local"]] <- speciation_local
+    values[[i]][["speciation_meta"]] <- speciation_meta
+    values[[i]][["extinction_meta"]] <- extinction_meta
+    values[[i]][["trait_sigma"]] <- trait_sigma
+    values[[i]][["env_sigma"]] <- env_sigma
+    values[[i]][["comp_sigma"]] <- comp_sigma
+    values[[i]][["dispersal_prob"]] <- dispersal_prob
+    values[[i]][["mutation_rate"]] <- mutation_rate
+    values[[i]][["equilib_escape"]] <- equilib_escape
+    values[[i]][["genesim_savesteps"]] <- genesim_savesteps
+    values[[i]][["num_basepairs"]] <- num_basepairs
   }
   
-  if(is.null(niter_timestep)){
-    niter_timestep = 10}
+  if(is.null(niterTimestep)){
+    niterTimestep = 10}
 
-  params <- new("roleParams", nruns=nruns, niter=niter,values=values,niter_timestep=niter_timestep)
+  params <- new("roleParams", nruns=nruns, niter=niter,values=values,niterTimestep=niterTimestep)
   if(defaults){
-    setDefaultParams(params)}
+    params <- setDefaultParams(params)}
   
   return(params)
 }
@@ -197,9 +210,9 @@ setMethod("setDefaultParams", signature(x="roleParams"),
             x <- setParam(x,"speciation_local",0.1)
             x <- setParam(x,"extinction_meta",0.1)
             x <- setParam(x,"speciation_meta",0.1)
-            x <- setParam(x,"trait_sigma",100)
-            x <- setParam(x,"sigma_e",0.1)
-            x <- setParam(x,"sigma_c",0.1)
+            x <- setParam(x,"trait_sigma",0.5)
+            x <- setParam(x,"env_sigma",0.1)
+            x <- setParam(x,"comp_sigma",0.1)
             x <- setParam(x,"trait_z",0.5)
             x <- setParam(x,"genesim_nstep",10)
             return(x)
@@ -209,8 +222,6 @@ setMethod("setDefaultParams", signature(x="roleParams"),
 # prep the params to be read into C++ - use prior distributions if they are set, and stretch 1 value params across all iters
 # NOTE -  only used in roleSim method so will ultimately be dotted and inaccessible to user
 stretchAndSampleParams <- function(params) {
-  
-  out <- params
   
   # if priors specified, sample params using priors
   # if 1 set of priors specified
@@ -223,12 +234,12 @@ stretchAndSampleParams <- function(params) {
       funName <- names(runPriors)[j]
       fun <- runPriors[[funName]]
       # get values using fun with n = niter, and assign to out params
-      out@values[[i]][[param_name]] <- fun(n=params@niter)
+      params@values[[i]][[param_name]] <- fun(n=params@niter)
     }
   }
   
   # TODO - if multiple sets of priors specified for each model run  
-  else{
+  else if(length(params@priors) > 1){
     for(i in 1:length(params@priors))
     {
     }
@@ -242,10 +253,10 @@ stretchAndSampleParams <- function(params) {
     for(p in 1:length(params@values[[1]]))
     {
       if(length(params@values[[r]][[p]]) == 1){
-        out@values[[r]][[p]] <- rep(1,out@niter)
+        params@values[[r]][[p]] <- rep(params@values[[r]][[p]],params@niter)
       }
     }
   }
   
-  return(out)
+  return(params)
 }

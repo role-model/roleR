@@ -38,17 +38,24 @@ setClass('roleSim',
 #' @rdname roleSim
 #' @export
 
+roleSimPlay <- function()
+{
+  for(t in timesteps)
+  {
+    iterSim()
+    # write sim 
+  }
+}
+
+
 roleSim <- function(params, startModel = NULL, initType = "oceanic_island", print = FALSE) {
   
     nruns <- params@nruns
     niter <- params@niter
-    niter_timestep <- params@niter_timestep
+    niter_timestep <- params@niterTimestep
     
     # prepare params for C++ loop by stretching 1-length values to niter and sampling from provided priors 
     cparams <- stretchAndSampleParams(params)
-    
-    # initialize a C++ roleModelCpp starting condition
-    init <- initSim(cparams,initType) 
     
     # initialize list to hold finished model runs
     runs <- list()
@@ -56,8 +63,14 @@ roleSim <- function(params, startModel = NULL, initType = "oceanic_island", prin
     # do nrun model runs 
     for(i in 1:nruns)
     {
-      # set the named list of param values
-      init@params <- cparams@values[[1]]
+      i <- 1
+      # get the params for the run 
+      parlist <- cparams@values[[i]] 
+      
+      # initialize a C++ roleModelCpp starting condition
+      init <- initSim(parlist,initType, niter) 
+      
+      init$print <- print
       
       # iterate over the simulation and return the output
       runs[[i]] <- roleModelFromCpp(iterSim(init, niter, niter_timestep, print)) # else add the next sim to the list 
@@ -73,69 +86,68 @@ roleSimPlay <- function() {
 # ----
 #' @description function to initialize role simulation, returns a `roleModelCpp`
 #' object
-#' @param params a roleParamsCpp object containing the model parameters - if null, defaults are set
+#' @param params a named List of parameters 
 
-initSim <- function(params, type) {
+initSim <- function(parlist, type, niter) {
     
+    # set aug length
+    naug <- niter  
+  
     # some testing lines
-    #params <- roleParams(nrun=1,niter=100,niter_timestep=10,defaults=TRUE)
-    #params <- setDefaultParams(params)
-    
-    # simulate phylogeny
-    phy <- TreeSim::sim.bd.taxa(params@values[[1]][["species_meta"]], numbsim = 1,
-                                lambda = params@values[[1]][["speciation_meta"]],
-                                mu = params@values[[1]][["extinction_meta"]], complete = FALSE)[[1]]
+    params <- roleParams(nrun=1,niter=100,niterTimestep=10,defaults=TRUE)
 
+    # simulate phylogeny
+    phy <- TreeSim::sim.bd.taxa(parlist[["species_meta"]][1], numbsim = 1,
+                                lambda = parlist[["speciation_meta"]][1],
+                                mu = parlist[["extinction_meta"]][1], complete = FALSE)[[1]]
+    
     # simulate metacommunity SAD
-    abundance_m <- lseriesFromSN(params@values[[1]][["species_meta"]],
-                                  params@values[[1]][["individuals_meta"]])
+    abundance_m <- lseriesFromSN(parlist[["species_meta"]][1],
+                                  parlist[["individuals_meta"]][1])
     
     # initalize meta comm traits:
     # first column is species ID, second column is trait value
     # Smax rows
-    traits_m <- cbind(1:params@values[[1]][["species_meta"]],
-                         ape::rTraitCont(phy, sigma = params@values[[1]][["trait_sigma"]]))
-
+    # talk over with andy - why is rTraitCont producing values in the thousands and negative thousands? 
+    traits_m <- cbind(1:parlist[["species_meta"]][1],
+                         ape::rTraitCont(phy, sigma = parlist[["trait_sigma"]][1]))
     # create metaCommCpp object
-    meta <- new(metaCommCpp, abundance_m, traits_m, params@values[[1]][["species_meta"]])
-  
+    meta <- new(metaCommCpp, abundance_m, traits_m)
     
     # initialize vector of 0 species abundances
-    abundance_l_sp <- rep(0, params@values[[1]][["species_meta"]])
+    abundance_l_sp <- rep(0, parlist[["species_meta"]][1])
     
     # oceanic island model assigns all abundance to one species
     if(type == "oceanic_island"){
       # index of the species that will initially have all abundance
-      i <- sample(params@values[[1]][["species_meta"]], 1, prob = meta$abundance)
+      i <- sample(parlist[["species_meta"]][1], 1, prob = meta$abundance)
       # passing all abundance to that species
-      abundance_l_sp[i] <- params@values[[1]][["individuals_local"]]
+      abundance_l_sp[i] <- parlist[["individuals_local"]][1]
     }
     # bridge island model assigns abundances to all species proportional to species abundance
     else if(type == "bridge_island"){
       # vector of species
-      abundance_l_sp <- sample(params@values[[1]][["species_meta"]], prob = meta$abundance)
+      abundance_l_sp <- sample(parlist[["species_meta"]][1], prob = meta$abundance)
     }
     
-    # counter keeping track of max number of possible species in local comm
-    Smax_ <- params@values[[1]][["species_meta"]]
 
     # init local species traits
     traits_l_sp <- traits_m
     
-    # soon set pi to be simulated sequences
-    pi_l <- rep(1:Smax_)
+    # soon set pi to be simulated sequences (of length equal to the number of species in the metacomm)
+    pi_l <- rep(1:parlist[["species_meta"]][1])
     
     # create localCommCpp object
-    local <- new(localCommCpp, abundance_l_sp, traits_l_sp, Smax_, pi_l)
+    local <- new(localCommCpp, abundance_l_sp, traits_l_sp, pi_l, naug)
 
     # convert ape phylo to rolePhylo
     phy <- apeToRolePhylo(phy)
-
+  
     # convert rolePhylo to rolePhyloCpp
     phy <- rolePhyloToCpp(phy)
-
+    
     # create roleModelCpp object of local comm, meta comm, phylogeny, and params
-    out <- new(roleModelCpp,local,meta,phy,params)
+    out <- new(roleModelCpp,local,meta,phy,parlist)
 
     return(out)
 }
@@ -166,6 +178,31 @@ lseriesFromSN <- function(S, N) {
 }
 
 apeToRolePhylo <- function(phylo){
+  
+  # extract number of times
+  n <- ape::Ntip(phylo)
+  
+  # extract edge matrix and edge lengths
+  e <- phylo$edge
+  l <- phylo$edge.length
+  
+  # extract tip labels
+  tipNames <- phylo$tip.label
+  
+  # calculate alive or not
+  tipAge <- ape::node.depth.edgelength(phylo)[1:n]
+  
+  alive <- rep(TRUE, n)
+  alive[tipAge < max(tipAge)] <- FALSE
+  
+  # set default scale
+  scale <- 1
+  
+  return(rolePhylo(n = n, e = e, l = l, alive = alive,
+                   tipNames = tipNames, scale = scale))
+}
+
+apeToRolePhyloOld <- function(phylo){
 
     # extract number of times
     n <- ape::Ntip(phylo)
@@ -233,4 +270,16 @@ writeModel <- function(model, dir = NULL, fileName, saveTxt = TRUE)
     writeLines(c("Info for ROLE model object","Created by Jacob Idec"), con)
     close(con)
   }
+}
+
+dummySim <- function()
+{
+  params <- roleParams(nrun=1,niter=1000,niterTimestep=10,defaults=TRUE)
+  cparams <- stretchAndSampleParams(params)
+  parlist <- cparams@values[[1]]
+  model <- initSim(parlist,type="bridge_island",niter=1000)
+  runs <- list(model) 
+  
+  # return list of sims
+  return(new("roleSim", runs=runs, params=params))
 }

@@ -23,7 +23,7 @@ roleModelFromCpp <- function(modelCpp) {
   
   for(i in 1:length(modelCpp$timeseries))
   {
-    append(ts,roleDataFromCpp(modelCpp$timeseries(i)))
+    ts <- append(ts,roleDataFromCpp(modelCpp$timeseries[[i]]))
   }
   
   return(new('roleModel',
@@ -37,4 +37,31 @@ roleModelToCpp <- function(model) {
                          modelCpp$local$traits_sp,modelCpp$local$pi)
   return(new('roleModel',
              localComm = localComm))
+}
+
+# create a model from scratch with default params, exclusively for testing purposes
+dummyModel <- function(R=TRUE, run=FALSE){
+  
+  params <- roleParams(nrun=1,niter=1000,niterTimestep=100,defaults=TRUE)
+  cparams <- stretchAndSampleParams(params)
+  parlist <- cparams@values[[1]]
+  model <- initSim(parlist,type="bridge_island",niter=1000)
+
+  model$print <- FALSE
+  model$local$print <- FALSE
+
+  if(run){
+    iterSim(model,params@niter,params@niterTimestep,FALSE)
+    model
+    model$
+    model$timeseries[[1]]
+    model$local
+    model$timeseries
+    test <- model$timeseries
+    
+  }
+  if(R){
+    model <- roleModelFromCpp(model)
+  }
+  return(model)
 }

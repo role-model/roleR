@@ -3,7 +3,7 @@
 
 #' @name metaCommCpp
 #' @title a class to specify the meta community
-#' @field abundance a \code{numeric vector} of relative abundances for each species
+#' @field abundance a \code{numeric vector} of relative abundances for each species - stays static 
 #' @field traits a \code{numeric vector} of traits for each species
 #' @field Smax a single \code{integer} specifying the total number of species ever
 #' recorded in the local community (both locally extinct and extant)
