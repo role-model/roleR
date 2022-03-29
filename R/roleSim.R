@@ -259,15 +259,20 @@ apeToPhyloCpp <- function(phylo){
 #'
 #' @export
 
-writeModel <- function(model, dir = NULL, fileName, saveTxt = TRUE)
+writeSim <- function(sim, dir = NULL, fileName, saveTxt = TRUE)
 {
   if(is.null(dir)){
     dir = getwd()
   }
-  saveRDS(model,paste0(dir,"/",fileName,".role"))
+  saveRDS(sim,paste0(dir,"/",fileName,".role"))
   if(saveTxt){
     con <- file(paste0(dir, "/", fileName, "_info", ".txt"))
-    writeLines(c("Info for ROLE model object","Created by Jacob Idec"), con)
+    title_line = "Metadata for RoLE sim R object - load into R using readRDS(file_location_and_name)"
+    info_line = paste("Contains", sim@params@nruns, "runs of", sim@params@niter, "iterations")
+    author_line = paste("Author:", sim@params@meta[1])
+    date_line = paste("Date:", sim@params@meta[2])
+    desc_line = paste("Description:", sim@params@meta[3])
+    writeLines(c(title_line,info_line,author_line,date_line,desc_line,), con)
     close(con)
   }
 }
@@ -281,5 +286,5 @@ dummySim <- function()
   runs <- list(model) 
   
   # return list of sims
-  return(new("roleSim", runs=runs, params=params))
+  return(new("roleSim", modelRuns=runs, params=params))
 }

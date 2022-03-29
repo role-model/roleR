@@ -21,12 +21,12 @@ void iterSim(roleModelCpp model,int niter, int niter_timestep, bool print) {
         // if reached steps per save
         if((i % niter_timestep) == 0)
         { 
-          //Rcout << "copying timestep data" << "\n";
+          Rcout << "copying timestep data" << "\n";
           //model.computeStatistics();
           // add a deep copy of the simulation as it stands before the next step to the time series
           if(print){Rcout << "copying timestep data" << "\n";}
           //model.timeseries.push_back(model.copyData(i),std::to_string(i)); 
-          //model.timeseries.push_back(model.copyData(i)); 
+          model.timeseries.push_back(model.copyData(i)); 
         }
         
         // set the iter of the model

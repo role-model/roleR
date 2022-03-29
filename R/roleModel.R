@@ -20,7 +20,7 @@ roleModel <- function(timeseries,paramValues,niter)
 roleModelFromCpp <- function(modelCpp) {
   
   ts <- list() 
-  
+
   for(i in 1:length(modelCpp$timeseries))
   {
     ts <- append(ts,roleDataFromCpp(modelCpp$timeseries[[i]]))
@@ -52,13 +52,6 @@ dummyModel <- function(R=TRUE, run=FALSE){
 
   if(run){
     iterSim(model,params@niter,params@niterTimestep,FALSE)
-    model
-    model$
-    model$timeseries[[1]]
-    model$local
-    model$timeseries
-    test <- model$timeseries
-    
   }
   if(R){
     model <- roleModelFromCpp(model)

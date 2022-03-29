@@ -19,7 +19,7 @@
 
 setGeneric('getStateData', function(x, ...) standardGeneric('getStateData'), signature = 'x')
 setMethod("getStateData", signature(x="roleSim"),
-          function(x,runNum,iter,iterAsPercentile) {
+          function(x,runNum=1,iter,iterAsPercentile=TRUE) {
             # iterNum / niter_timestep gets the index within the timeseries of the iterNum specified
             if(!iterAsPercentile){
               return(x@modelRuns[runNum]@timeseries[iter/x@params@niter_timestep])

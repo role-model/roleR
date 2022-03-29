@@ -8,11 +8,13 @@ params <- roleParams(nruns=10,niter=1000)
 sim <- roleSim(params)
 
 # look at the total number of species that have existed in the model
-state <- getStateData(sim,iter=1,iterAsPercentile=TRUE) # get the end state (100th percentile of iters) of the first run 
-state <- getStateData(sim,runNum=2,iter=0.5,iterAsPercentile=TRUE) # get the mid state (50th percentile of iters) of the second run 
+state <- getStateData(sim,iter=1) # get the end state (100th percentile of iters) of the first run 
+state <- getStateData(sim,runNum=2,iter=0.5) # get the mid state (50th percentile of iters) of the second run 
 
 # add Hill numbers to all runs in the sim 
 addHillStats(sim)
+# simulate and add species genetic diversities to the sim and all time steps
+simulateSpeciesGeneticDiv(sim)
 
 # get the trait diversity value
 state@stats["trait_diversity"]
@@ -53,7 +55,7 @@ p <- setPrior(p, param_name="speciation_local",priorFunc=list(unif_prior,unif_pr
 p <- setIterFunc()
 
 # --------------
-# OLD BELOW
+# OLD CODE BELOW
 
 # set different time varying parameters for each sim_num 
 # set different static params for each sim num 
@@ -62,7 +64,6 @@ p <- setIterFunc()
 # a single function
 # or a list of values 
 # or a list of functions
-p <- 
 
 v <- runif(p@niter,min=0,max=0.3) # sample values from a unif distribution
 setParam(p,param_name="speciation_meta",value=v,sim_num=1) # set values for sim run #1 
@@ -91,19 +92,8 @@ params <- roleParameters()
 
 params@timeseries$dispersal_prob <- runif(10000,min=0,max=1) # dispersal_prob is now randomly sampled from a uniform distribution
 
-# timeseries is a sequence
-# distribution is in parallel (10000 randomly initialized communitii) could be for one param 
-# combinations replicate many or for different param combinations replicate once
-# create a function for exponential increase of a parameter from 0 to 0.6
-# parallel timeseries 
-
 eq <- function(x){x*x}
 curve(eq, from=0, to=1, , xlab="x", ylab="y") #plot it 
 series <- eq(1:1000) / 1000000 * 0.6 
 params@timeseries$speciation_local <- series
-
-
-# --------------
-# create a simulation specifying parameter priors 
-# --------------
 

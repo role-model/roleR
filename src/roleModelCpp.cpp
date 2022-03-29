@@ -201,12 +201,13 @@ class roleModelCpp {
         roleDataCpp copyData(int i)
         {
           if(print){Rcout << "copying local" << "\n";}
-          localCommCpp l = localCommCpp(local.abundance_sp,local.traits_sp,local.pi_sp,
-                                        local.abundance_indv,local.traits);
+          localCommCpp l = localCommCpp(clone(local.abundance_sp),clone(local.traits_sp),clone(local.pi_sp),
+                                        clone(local.abundance_indv),clone(local.traits));
           if(print){Rcout << "copying meta" << "\n";}
-          metaCommCpp m = metaCommCpp(meta.abundance,meta.traits);
+          metaCommCpp m = metaCommCpp(clone(meta.abundance),clone(meta.traits));
           if(print){Rcout << "copying phylo" << "\n";}
-          rolePhyloCpp ph = rolePhyloCpp(phylo.n,phylo.e,phylo.l,phylo.alive,phylo.tipNames,phylo.scale);
+          rolePhyloCpp ph = rolePhyloCpp(int(phylo.n),clone(phylo.e),clone(phylo.l),
+                                         clone(phylo.alive),clone(phylo.tipNames),double(phylo.scale));
           // compute stats
           if(print){Rcout << "creating data" << "\n";}
           roleDataCpp out = roleDataCpp(l,m,ph);
