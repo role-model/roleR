@@ -11,7 +11,6 @@ prepRebuild <- function()
   invisible(.rs.restartR())
   
   # delete version in R library
-  unlink("C:/Users/hiest/Documents/R/win-library/4.1/roleR", recursive = TRUE)
-  utils::browseURL("C:/Users/hiest/Documents/R/win-library/4.1/roleR")
-  
+  unlink("C:/Users/OWNER/Documents/R/win-library/4.1/roleR", recursive = TRUE)
+  utils::browseURL("C:/OWNER/hiest/Documents/R/win-library/4.1/roleR")
 }

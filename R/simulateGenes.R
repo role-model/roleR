@@ -8,22 +8,22 @@ installGeneSimReqs <- function()
                 channel="conda-forge")
 }
 
-#sim <- dummySim()
+# <- dummyrole()
 #run <- dummyModel(R=TRUE)
 #params <- roleParams(nrun=1,niter=1000,niterTimestep=10,defaults=TRUE)
 #params@values[1][[1]]$mutation_rate <- 0.1
 #params@values[1][[1]]$num_basepairs <- 500
 
-simulateSpeciesGeneticDiv <- function(sim){
+roleulateSpeciesGeneticDiv <- function(role){
   
   library(reticulate)
   msprime <- import("msprime")
   
-  # get a model from sim
-  params <- sim@params
-  model <- sim@modelRuns[[1]]
-  niter <- sim@niter
-  niter_timestep <- sim@niter_timestep
+  # get a model from role experiment
+  params <- role@params
+  model <- role@modelRuns[[1]]
+  niter <- role@niter
+  niter_timestep <- role@niter_timestep
   num_basepairs <- params@values[1][[1]]$num_basepairs
 
   # get the model timeseries for species abundances

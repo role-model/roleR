@@ -21,9 +21,11 @@ roleModelFromCpp <- function(modelCpp) {
   
   ts <- list() 
 
+  if(length(modelCpp$timeseries) > 0){
   for(i in 1:length(modelCpp$timeseries))
   {
     ts <- append(ts,roleDataFromCpp(modelCpp$timeseries[[i]]))
+  }
   }
   
   return(new('roleModel',

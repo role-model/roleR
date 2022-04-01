@@ -1,6 +1,6 @@
-#' @title An S4 class containing parameters for a roleSim
+#' @title An S4 class containing parameters for a roleExperiment
 #' 
-#' @details Values is an array of named lists, 1 for each roleModel run of roleSim. 
+#' @details Values is an array of named lists, 1 for each roleModel run of roleExperiment. 
 #' Each named list contains 12 numeric vectors (1 per parameter) with each vector being either a single value to be held constant across all
 #' iterations of the model run OR an niter length vector specifying the value of that parameter for each individual iteration
 #' of the model run 
@@ -220,7 +220,7 @@ setMethod("setDefaultParams", signature(x="roleParams"),
 )
 
 # prep the params to be read into C++ - use prior distributions if they are set, and stretch 1 value params across all iters
-# NOTE -  only used in roleSim method so will ultimately be dotted and inaccessible to user
+# NOTE -  only used in roleExperiment method so will ultimately be dotted and inaccessible to user
 stretchAndSampleParams <- function(params) {
   
   # if priors specified, sample params using priors
@@ -259,4 +259,22 @@ stretchAndSampleParams <- function(params) {
   }
   
   return(params)
+}
+
+writeRoleParams <- function(params, dir = NULL, fileName, saveTxt = TRUE)
+{
+  if(is.null(dir)){
+    dir = getwd()
+  }
+  saveRDS(params,paste0(dir,"/",fileName,".roleparams"))
+  if(saveTxt){
+    con <- file(paste0(dir, "/", fileName, ".roleparamsinfo", ".txt"))
+    title_line = "Info: helper metadata for RoLE params R object - load object into R using readRDS(file_location_and_name)"
+    info_line = paste("Contains", params@nruns, "runs of", params@niter, "iterations")
+    author_line = paste("Author:", params@meta[1])
+    date_line = paste("Date:", params@meta[2])
+    desc_line = paste("Description:", params@meta[3])
+    writeLines(c(title_line,info_line,author_line,date_line,desc_line), con)
+    close(con)
+  }
 }

@@ -1,8 +1,8 @@
 
 #' @title Get a timeseries of a summary statistic as a vector or matrix
 #'
-#' @param x a roleModel or roleSim object to get a stat from 
-#' @param runNum an integer specifying the run number if a roleSim object is used
+#' @param x a roleModel or roleExperiment object to get a stat from 
+#' @param runNum an integer specifying the run number if a roleExperiment object is used
 #' @param type a string specifying the type of value to get, either "summary_stat", or "model_value" 
 #' @param entropyN a integer specifying the Hill entropy to get a value for
 

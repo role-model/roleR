@@ -3,22 +3,21 @@
 #' @slot modelRuns a list of roleModel objects, each containing its own current state and 
 #' a timeseries of past states 
 #' @slot params a roleParams object
-#' @slot rootSim 
 #'
 #' @export
 
-setClass('roleSim',
+setClass('roleExperiment',
          slots = c(modelRuns = 'list',
                    params = 'roleParams'))
 
-# NOTE - should we require users to specify a params object, and thus avoid needing niter, nruns, niter_timestep as params of roleSim? 
-#' @title Run a RoLE model simulation and return a roleSim object
+# NOTE - should we require users to specify a params object, and thus avoid needing niter, nruns, niter_timestep as params of roleExperiment? 
+#' @title Run a RoLE model simulation and return a roleExperiment object
 #'
 #' @description Simulate communities under the RoLE model, The key distinction
-#' between the two functions is that \code{roleSim} is optimized to run many
-#' simulations, while \code{roleSimPlay} is meant to run one simulation with
+#' between the two functions is that \code{roleExperiment} is optimized to run many
+#' simulations, while \code{roleExperimentPlay} is meant to run one simulation with
 #' periodic output of results for visualization and exploration.
-#' \code{roleSimPlay} is intended primarily for the accompanying R Shiny App
+#' \code{roleExperimentPlay} is intended primarily for the accompanying R Shiny App
 #'
 #' @param params a \code{roleParams} object - if left unspecified a default set of "plausible"
 #' parameter values is used 
@@ -29,16 +28,16 @@ setClass('roleSim',
 #' 
 #' @example 
 #' params <- roleParams(niter = 5000,defaults=TRUE) 
-#' sim <- roleSim(params)
+#' role <- roleExperiment(params)
 #' 
-#' sim <- roleSim(params, startModel = sim@runs[1])
+#' role <- roleExperiment(params, startModel = role@runs[1])
 #' 
-#' @return a roleSim object
+#' @return a roleExperiment object
 #'
-#' @rdname roleSim
+#' @rdname roleExperiment
 #' @export
 
-roleSimPlay <- function()
+roleExperimentPlay <- function()
 {
   for(t in timesteps)
   {
@@ -48,7 +47,7 @@ roleSimPlay <- function()
 }
 
 
-roleSim <- function(params, startModel = NULL, initType = "oceanic_island", print = FALSE) {
+roleExperiment <- function(params, startModel = NULL, initType = "oceanic_island", print = FALSE) {
   
     nruns <- params@nruns
     niter <- params@niter
@@ -68,7 +67,7 @@ roleSim <- function(params, startModel = NULL, initType = "oceanic_island", prin
       parlist <- cparams@values[[i]] 
       
       # initialize a C++ roleModelCpp starting condition
-      init <- initSim(parlist,initType, niter) 
+      init <- initModel(parlist,initType, niter) 
       
       init$print <- print
       
@@ -77,10 +76,10 @@ roleSim <- function(params, startModel = NULL, initType = "oceanic_island", prin
     }
     
     # return list of sims
-    return(new("roleSim", runs, params))
+    return(new("roleExperiment", runs, params))
 }
 
-roleSimPlay <- function() {
+roleExperimentPlay <- function() {
 }
 
 # ----
@@ -88,7 +87,7 @@ roleSimPlay <- function() {
 #' object
 #' @param params a named List of parameters 
 
-initSim <- function(parlist, type, niter) {
+initModel <- function(parlist, type, niter) {
     
     # set aug length
     naug <- niter  
@@ -251,7 +250,7 @@ apeToPhyloCpp <- function(phylo){
 #' @title Write a ROLE sim object to a serialized R file for transfer, sharing, 
 #' or to use with Docker. File contents can only be read within R. 
 #'
-#' @param model object of class \code{roleSim}
+#' @param model object of class \code{roleExperiment}
 #' @param dir the directory to write to i.e. "data/models" 
 #' @param fileName the name of the new file
 #' @param saveTxt specifies whether to save a .txt describing some sim information
@@ -259,32 +258,41 @@ apeToPhyloCpp <- function(phylo){
 #'
 #' @export
 
-writeSim <- function(sim, dir = NULL, fileName, saveTxt = TRUE)
+writeRoleExperiment <- function(role, dir = NULL, fileName, saveTxt = TRUE)
 {
   if(is.null(dir)){
     dir = getwd()
   }
-  saveRDS(sim,paste0(dir,"/",fileName,".role"))
+  saveRDS(role,paste0(dir,"/",fileName,".roleexperiment"))
   if(saveTxt){
-    con <- file(paste0(dir, "/", fileName, "_info", ".txt"))
-    title_line = "Metadata for RoLE sim R object - load into R using readRDS(file_location_and_name)"
-    info_line = paste("Contains", sim@params@nruns, "runs of", sim@params@niter, "iterations")
-    author_line = paste("Author:", sim@params@meta[1])
-    date_line = paste("Date:", sim@params@meta[2])
-    desc_line = paste("Description:", sim@params@meta[3])
-    writeLines(c(title_line,info_line,author_line,date_line,desc_line,), con)
+    con <- file(paste0(dir, "/", fileName, ".roleexperimentinfo", ".txt"))
+    title_line = "Metadata for RoLE experiment R object - load into R using readRDS(file_location_and_name)"
+    info_line = paste("Contains", role@params@nruns, "runs of", role@params@niter, "iterations")
+    author_line = paste("Author:", role@params@meta[1])
+    date_line = paste("Date:", role@params@meta[2])
+    desc_line = paste("Description:", role@params@meta[3])
+    writeLines(c(title_line,info_line,author_line,date_line,desc_line), con)
     close(con)
   }
 }
 
-dummySim <- function()
+dummyExperiment <- function(run=FALSE)
 {
-  params <- roleParams(nrun=1,niter=1000,niterTimestep=10,defaults=TRUE)
+  params <- roleParams(nrun=1,niter=1000,niterTimestep=100,defaults=TRUE)
   cparams <- stretchAndSampleParams(params)
   parlist <- cparams@values[[1]]
-  model <- initSim(parlist,type="bridge_island",niter=1000)
+  model <- initModel(parlist,type="bridge_island",niter=1000)
+  
+  model$print <- FALSE
+  model$local$print <- FALSE
+  model$timeseries[[1]] <- model$copyData(1)
+  
+  if(run){
+    iterSim(model,params@niter,params@niterTimestep,FALSE)
+  }
+  model <- roleModelFromCpp(model)
   runs <- list(model) 
   
   # return list of sims
-  return(new("roleSim", modelRuns=runs, params=params))
+  return(new("roleExperiment", modelRuns=runs, params=params))
 }
