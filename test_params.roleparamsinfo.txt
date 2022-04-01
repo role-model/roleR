@@ -1,5 +1,0 @@
-Info: helper metadata for RoLE params R object - load object into R using readRDS(file_location_and_name)
-Contains 1 runs of 1000 iterations
-Author: NA
-Date: NA
-Description: NA
