@@ -66,6 +66,7 @@ class localCommCpp {
         localCommCpp(NumericVector abundance_, NumericVector traits_, NumericVector pi_, int aug_length): 
           abundance_sp(abundance_), traits_sp(traits_), pi_sp(pi_)
         {
+            print = false;
             // init S_index
             S_index = abundance_.length() - 1;
   

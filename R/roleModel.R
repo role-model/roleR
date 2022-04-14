@@ -41,13 +41,15 @@ roleModelToCpp <- function(model) {
              localComm = localComm))
 }
 
+# niters = 100
 # create a model from scratch with default params, exclusively for testing purposes
-dummyModel <- function(R=TRUE, run=FALSE){
+dummyModel <- function(R=TRUE, run=FALSE,fill_ts=FALSE,niters=100,return_experiment=FALSE){
   
-  params <- roleParams(nrun=1,niter=1000,niterTimestep=100,defaults=TRUE)
+  params <- roleParams(nrun=1,niter=niters,niterTimestep=niters/10,defaults=TRUE)
   cparams <- stretchAndSampleParams(params)
   parlist <- cparams@values[[1]]
-  model <- initSim(parlist,type="bridge_island",niter=1000)
+  model <- initModel(parlist,type="bridge_island",niter=niters)
+  data_copy <- model$copyData()
 
   model$print <- FALSE
   model$local$print <- FALSE
@@ -55,8 +57,24 @@ dummyModel <- function(R=TRUE, run=FALSE){
   if(run){
     iterSim(model,params@niter,params@niterTimestep,FALSE)
   }
+  
+  if(fill_ts){
+    ts <- vector("list", niters/(niters/10))
+    for(i in 1:length(ts)){
+      ts[[i]] <- data_copy
+    }
+    model$timeseries <- ts
+  }
+  
   if(R){
     model <- roleModelFromCpp(model)
   }
-  return(model)
+  
+  if(return_experiment){
+    runs = list(model) 
+    return(new("roleExperiment", modelRuns=runs, params=params))
+  }
+  else{
+    return(model)
+  }
 }
