@@ -1,0 +1,26 @@
+---
+title: "roleR_intro"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{roleR_intro}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Setup
+
+```{r setup}
+library(roleR)
+```
+
+
+## Highlevel overview
+
+

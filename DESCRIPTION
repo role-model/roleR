@@ -10,10 +10,13 @@ License: GPL (>= 2)
 Depends: R (>= 3.2)
 Imports: Rcpp (>= 1.0.4), TreeSim, ape, pika
 Suggests:
-    testthat, 
-    hillR
+    testthat,
+    hillR,
+    knitr,
+    rmarkdown
 Remotes:
     ajrominger/pika, 
     bodkan/slimr
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.2
+VignetteBuilder: knitr
