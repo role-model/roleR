@@ -22,7 +22,7 @@ class roleModelCpp {
         metaCommCpp meta;
         rolePhyloCpp phylo;
         List params; 
-        //std::map<std::string, NumericVector> params; 
+        //std::vector<roleDataCpp> timeseries;
         List timeseries;
         //std::list<roleDataCpp> timeseries;
         NumericVector stats; 
@@ -30,14 +30,12 @@ class roleModelCpp {
         //int niter_save; 
         bool print; 
         bool print_vectors; 
+        //roleDataCpp timeseries[];
         
         // constructor
         roleModelCpp(localCommCpp local_, metaCommCpp meta_, rolePhyloCpp phy_, List params_) : local(local_), meta(meta_),
                      phylo(phy_), params(params_)
         {
-          //roleDataCpp init_data = copyData(0);
-          //timeseries.push_back(init_data);
-          timeseries = List();
         }
         
         // samples an individual and calls localComm.birth(individual), replacing the indv at dead_index
@@ -198,7 +196,7 @@ class roleModelCpp {
         }
         
         // create a deep copy of this object's data for timeseries
-        roleDataCpp copyData(int i)
+        roleDataCpp copyData()
         {
           if(print){Rcout << "copying local" << "\n";}
           localCommCpp l = localCommCpp(clone(local.abundance_sp),clone(local.traits_sp),clone(local.pi_sp),
@@ -211,10 +209,26 @@ class roleModelCpp {
           // compute stats
           if(print){Rcout << "creating data" << "\n";}
           roleDataCpp out = roleDataCpp(l,m,ph);
-          out.iter_num = i;
+          out.iter_num = iter;
           return out; 
         }
         
+        void addTimeseriesStep(int i)
+        {
+          timeseries[i] = copyData();
+        }
+        
+        void printTimeseries()
+        {
+          roleDataCpp temp = timeseries[0];
+          Rcout << temp.local.abundance_sp << "\n";
+          temp = timeseries[1];
+          Rcout << temp.local.abundance_sp << "\n";
+          temp = timeseries[2];
+          Rcout << temp.local.abundance_sp << "\n";
+          temp = timeseries[9];
+          Rcout << temp.local.abundance_sp << "\n";
+        }
         //NOTE - unused for now, we are doing this in R 
         // return a timeseries
         void getTimeseries(NumericVector v, std::string name)

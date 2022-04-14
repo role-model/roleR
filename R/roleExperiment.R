@@ -275,24 +275,3 @@ writeRoleExperiment <- function(role, dir = NULL, fileName, saveTxt = TRUE)
     close(con)
   }
 }
-
-dummyExperiment <- function(run=FALSE)
-{
-  params <- roleParams(nrun=1,niter=1000,niterTimestep=100,defaults=TRUE)
-  cparams <- stretchAndSampleParams(params)
-  parlist <- cparams@values[[1]]
-  model <- initModel(parlist,type="bridge_island",niter=1000)
-  
-  model$print <- FALSE
-  model$local$print <- FALSE
-  model$timeseries[[1]] <- model$copyData(1)
-  
-  if(run){
-    iterSim(model,params@niter,params@niterTimestep,FALSE)
-  }
-  model <- roleModelFromCpp(model)
-  runs <- list(model) 
-  
-  # return list of sims
-  return(new("roleExperiment", modelRuns=runs, params=params))
-}
