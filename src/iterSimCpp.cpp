@@ -11,7 +11,7 @@ using namespace Rcpp;
 //' @param nstep an \code{integer} of the number of steps to iterate
 //' @param print a \code{bool} specifying whether to print the step outcomes
 
-void iterSim(roleModelCpp model,int niter, int niter_timestep, bool print) {
+roleModelCpp iterSim(roleModelCpp model,int niter, int niter_timestep, bool print) {
 
     if(print){Rcout << "iter loop started" << "\n";}
     
@@ -73,9 +73,7 @@ void iterSim(roleModelCpp model,int niter, int niter_timestep, bool print) {
         }
     }
     
-    //roleDataCpp temp = model.timeseries[0];
-   // Rcout << temp.local.abundance_sp << "\n";
-    //model.printTimeseries();
+    return(model);
 }
 
 RCPP_MODULE(iterSimCpp) {
