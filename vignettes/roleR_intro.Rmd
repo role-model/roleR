@@ -23,4 +23,8 @@ library(roleR)
 
 ## Highlevel overview
 
+An object of class `roleExperiment` contains multiple different model runs and the parameters used to do those model runs.  The parameters are held in an object of class `roleParams` and the model runs are in a list, each element of which is an object of class `roleModel`.
+
+## Dive right in!
+
 
