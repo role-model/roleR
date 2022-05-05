@@ -95,10 +95,6 @@ setMethod("getTimeseries", signature(x="roleExperiment"),
             
             model <- x@modelRuns[[runNum]]
             
-<<<<<<< HEAD
             return(getTimeseries(model,type,valueName,entropyN))
-=======
-            return(getTimeseries(model,type,valueName))
->>>>>>> dd79b5a6e7ea95f00110261970426e9d0860c1dd
           }
 )
