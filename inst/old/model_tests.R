@@ -3,30 +3,36 @@
 library(roleR)
 p <- FALSE
 r <- dummyModel(R=FALSE,run=FALSE)
-rr <- dummyModel(R=TRUE,run=TRUE)
-p <- rolePhyloFromCpp(r$phylo)
-p@edges
-r$valid
-r$timeseries[[1]] <- r$copyData(0)
-r$print = p
-r$local$print = p
-start_time = Sys.time()
 
-r$phylo$tipNames
 for(i in 1:1000)
 {
   print(i)
   #iterate 1 time
-  iterSim(r,1000,100,FALSE)
-  r$local$abundance_sp
-  
-  p <- rolePhyloFromCpp(r$phylo)
-  validObject(p)
-  #d <- new(roleDataCpp,r$local,r$meta,r$phylo)
-  #d <- roleDataFromCpp(d)
-  #saveRDS(d,"test.roledata")
+  r <- iterSim(r,1,1,FALSE)
+  d <- new(roleDataCpp,r$local,r$meta,r$phylo)
+  d <- roleDataFromCpp(d)
+  saveRDS(d,"test_data.roledata")
+  Sys.sleep(0.4)
 }
-
+# for a while was going exactly to 497-499 
+library(pryr)
+mem_used()
+object.size(r)
+test <- readRDS("test_data.roledata")
+r$local$abundance_indv <- test@localComm@abundanceIndv
+r$local$species_ids <- test@localComm@speciesIDsIndv
+r$local$traits <- test@localComm@traitsIndv
+r$local$abundance_sp <- test@localComm@abundanceSp
+r$local$traits_sp <- test@localComm@traitsSp
+r$meta$abundance <- test@metaComm@abundanceSp
+r$meta$traits <- test@metaComm@traitsSp
+r$phylo$n <- test@phylo@ntips
+r$phylo$e <- test@phylo@edges
+r$phylo$l <- test@phylo@lengths
+r$phylo$alive <- test@phylo@alive
+r$phylo$tipNames <- test@phylo@tipNames
+r$phylo$scale <- test@phylo@scale
+  
 r$params$dispersal_prob
 validObject(p)
 print(Sys.time() - start_time)

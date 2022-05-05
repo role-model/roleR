@@ -12,15 +12,17 @@
 #' @export
 
 setGeneric('addHillStats', function(x, ...) standardGeneric('addHillStats'), signature = 'x')
-setMethod("addHillStats", signature(x="roleSim"),
+setMethod("addHillStats", signature(x="roleExperiment"),
           function(x,entrScales) {
             # for each run in sim runs
-            for(r in 1:length(x@runs))
+            for(r in 1:length(x@modelRuns))
             {
+              #r = 1
               # for each data object in the timeseries
-              for(d in 1:length(x@runs[r]@timeseries))
+              for(d in 1:length(x@modelRuns[[r]]@timeseries))
               {
-                data <- x@runs[r]@timeseries[d]
+                #d = 1
+                data <- x@modelRuns[[r]]@timeseries[[d]]
                 
                 # create df of 3 cols, first is type "trait" "phylo" "abundance"
                 # second is entropy scale, third is value
@@ -28,22 +30,28 @@ setMethod("addHillStats", signature(x="roleSim"),
                 
                 # abundance Hills
                 hill <- computeHill(data@localComm@abundanceSp,type="abundance",entropies = entrScales)
-                rows <- cbind(rep("abundance",3),entropies,hill)
+                rows <- cbind(rep("abundance",3),entrScales,hill)
                 stats <- rbind(stats, rows)
                 
                 # trait Hills
                 hill <- computeHill(data@localComm@abundanceSp,data@localComm@traitsSp,type="trait",entropies = entrScales)
-                rows <- cbind(rep("trait",3),entropies,hill)
+                rows <- cbind(rep("trait",3),entrScales,hill)
                 stats <- rbind(stats, rows)
               
                 # phylo Hills
-                hill <- computeHill(data@localComm@abundanceSp,data@localComm@phylo,type="phylo",entropies = entrScales)
-                rows <- cbind(rep("phylo",3),entropies,hill)
-                stats <- rbind(stats, rows)
+                # hill <- computeHill(data@localComm@abundanceSp,data@localComm@phylo,type="phylo",entropies = entrScales)
+                # rows <- cbind(rep("phylo",3),entropies,hill)
+                # stats <- rbind(stats, rows)
                 
-                x@runs[r]@timeseries[d]@stats <- stats
+                stats <- as.data.frame(stats)
+                stats <- stats[-1,]
+                colnames(stats) <- c("type","entropy","value")
+                
+                x@modelRuns[[r]]@timeseries[[d]]@stats <- stats
               }
             }
+            
+            return(x)
           }
 )
 setMethod("addHillStats", signature(x="roleModel"),
