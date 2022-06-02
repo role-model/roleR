@@ -1,5 +1,3 @@
-# wrapperClasses.R contains ple S4 object wrappers for roleModel constituents
-
 #' @title An S4 class to specify a local community within a ROLE model 
 #'
 #' @slot abundanceIndv a numeric vector of 0s and 1s specifying the binary abundance (alive or dead) 

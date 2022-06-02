@@ -17,3 +17,18 @@ Remotes:
     bodkan/slimr
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.2
+Collate:
+    'RcppExports.R'
+    'comm.R'
+    'fitRole.R'
+    'prepRebuild.R'
+    'rolePhylo.R'
+    'roleParams.R'
+    'roleData.R'
+    'roleModel.R'
+    'roleExperiment.R'
+    'simulateGenes.R'
+    'addHillStats.R'
+    'getStates.R'
+    'getTimeseries.R'
+    'zzz.R'

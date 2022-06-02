@@ -43,19 +43,30 @@ roleModelToCpp <- function(model) {
 
 # niters = 100
 # create a model from scratch with default params, exclusively for testing purposes
-dummyModel <- function(R=TRUE, run=FALSE,fill_ts=FALSE,niters=100,return_experiment=FALSE){
+# dummyModel example runs:
+# role <- dummyModel(run=TRUE,niters=1000,return_experiment=TRUE)
+dummyModel <- function(R=TRUE, run=FALSE,fill_ts=FALSE,niters=100,return_experiment=FALSE,print=FALSE,no_speciation=F,no_dispersal=F){
   
   params <- roleParams(nrun=1,niter=niters,niterTimestep=niters/10,defaults=TRUE)
+  if(no_speciation){
+    setParam(params,"speciation_local",0)
+    setParam(params,"speciaton_meta",0)
+  }
+  if(no_dispersal){
+    setParam(params,"dispersal_prob",0)
+  }
   cparams <- stretchAndSampleParams(params)
   parlist <- cparams@values[[1]]
   model <- initModel(parlist,type="bridge_island",niter=niters)
   data_copy <- model$copyData()
-
-  model$print <- FALSE
-  model$local$print <- FALSE
+  
+  if(print == FALSE){
+    model$print <- FALSE
+    model$local$print <- FALSE
+  }
 
   if(run){
-    iterSim(model,params@niter,params@niterTimestep,FALSE)
+    iterSim(model,params@niter,params@niterTimestep,print)
   }
   
   if(fill_ts){

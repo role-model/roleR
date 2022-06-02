@@ -82,4 +82,3 @@ RCPP_MODULE(dataCpp) {
   .field("iter_num", &roleDataCpp::iter_num)
   ;
 }
-

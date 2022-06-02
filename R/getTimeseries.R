@@ -24,6 +24,8 @@ setMethod("getTimeseries", signature(x="roleModel"),
             # get number of steps in timeseries
             nseries <- length(x@timeseries)
             all_values_ts <- list()
+            
+            # 
             if(type == "summary_stat")
             {
               unique_e <- unique(x@timeseries[[1]]@stats$entropy)

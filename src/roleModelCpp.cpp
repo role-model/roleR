@@ -3,6 +3,7 @@
 #include "rolePhyloCpp.cpp"
 #include "roleDataCpp.cpp" 
 #include <string>
+#include <array>
 #pragma once
 
 using namespace Rcpp;
@@ -24,7 +25,8 @@ class roleModelCpp {
         List params; 
         //std::vector<roleDataCpp> timeseries;
         List timeseries;
-        //std::list<roleDataCpp> timeseries;
+        // std::list<roleDataCpp> timeseries;
+        //std::array<roleDataCpp,10> timeseries;
         NumericVector stats; 
         int iter;  
         //int niter_save; 
@@ -36,6 +38,10 @@ class roleModelCpp {
         roleModelCpp(localCommCpp local_, metaCommCpp meta_, rolePhyloCpp phy_, List params_) : local(local_), meta(meta_),
                      phylo(phy_), params(params_)
         {
+          timeseries = List(10);
+          //timeseries = std::vector<roleDataCpp>(10);
+          //timeseries = roleDataCpp[10];
+          //timeseries = std::array<roleDataCpp,10>(); 
         }
         
         // samples an individual and calls localComm.birth(individual), replacing the indv at dead_index
@@ -215,7 +221,9 @@ class roleModelCpp {
         
         void addTimeseriesStep(int i)
         {
-          timeseries[i] = copyData();
+          if(print){Rcout << "adding timeseries step" << "\n";}
+          timeseries.push_back(copyData());
+          //timeseries[i] = copyData();
         }
         
         void printTimeseries()

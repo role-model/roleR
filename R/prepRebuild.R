@@ -14,3 +14,4 @@ prepRebuild <- function()
   unlink("C:/Users/OWNER/Documents/R/win-library/4.1/roleR", recursive = TRUE)
   utils::browseURL("C:/OWNER/hiest/Documents/R/win-library/4.1/roleR")
 }
+

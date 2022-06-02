@@ -16,10 +16,10 @@ roleModelCpp iterSim(roleModelCpp model,int niter, int niter_timestep, bool prin
     if(print){Rcout << "iter loop started" << "\n";}
     
     // must do a check somewhere to determine if niter is a multiple of niter_timestep
-    model.timeseries = Rcpp::List(niter/niter_timestep);
+    //model.timeseries = List(niter/niter_timestep);
     
     //model.timeseries = roleDataCpp[int(niter/niter_timestep)];
-    //model.timeseries = std::vector<roleDataCpp>(niter/niter_timestep);\
+    //model.timeseries = std::vector<roleDataCpp>(niter/niter_timestep);
     int timeseries_index = 0;
     
     //roleModelCpp model = model.copy(); NOTE - deprecated iterSim returning a roleModel, now acts on specified roleModel 
@@ -31,14 +31,14 @@ roleModelCpp iterSim(roleModelCpp model,int niter, int niter_timestep, bool prin
         // if reached steps per save
         if((i % niter_timestep) == 0)
         {
-          //Rcout << "copying timestep data " << timeseries_index <<"\n";
+          if(print){Rcout << "copying timestep data " << timeseries_index <<"\n";}
           // add a deep copy of the simulation as it stands before the next step to the time series
           //if(print){Rcout << "copying timestep data" << "\n";}
           //model.timeseries[timeseries_index] = model.copyData();
           //roleDataCpp temp = model.timeseries[timeseries_index];
           //Rcout << "copied abundance sp " << temp.local.abundance_sp <<"\n";
-          //model.addTimeseriesStep(timeseries_index);
-          //timeseries_index++;
+          model.addTimeseriesStep(timeseries_index);
+          timeseries_index++;
         }
         
         // get params

@@ -10,7 +10,7 @@ test_that('model of 100 iters runs without crash with filled timeseries', {
 
 # works
 test_that('model of 100 iters runs without crash', {
-  model <- roleR::dummyModel(R=FALSE,run=TRUE,fill_ts=FALSE,niters=100)
+  model <- roleR::dummyModel(R=FALSE,run=TRUE,fill_ts=FALSE,niters=100,print=TRUE)
 })
 
 # works

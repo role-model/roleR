@@ -29,6 +29,9 @@ class rolePhyloCpp {
         {
         }
         
+        rolePhyloCpp(){
+        }
+        
         void birth()
         {
         }

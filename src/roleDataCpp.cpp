@@ -29,6 +29,9 @@ class roleDataCpp {
                      phylo(phy_)
         {
         }
+        
+        roleDataCpp(){
+        }
 };
 
 RCPP_EXPOSED_CLASS(roleDataCpp)

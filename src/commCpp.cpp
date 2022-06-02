@@ -26,6 +26,8 @@ class metaCommCpp {
           abundance = abundance_; 
           traits = traits_;
         }
+        metaCommCpp(){
+        }
 };
 
 //' @name localCommCpp
@@ -47,6 +49,10 @@ class metaCommCpp {
 class localCommCpp {
     private:
     public:
+        NumericVector abundance_sp;
+        NumericVector traits_sp;
+        NumericVector pi_sp;
+      
         NumericVector abundance_indv; 
         NumericVector species_ids;
         NumericVector traits; 
@@ -54,9 +60,6 @@ class localCommCpp {
   
         arma::mat traitdiffs;
                                   
-        NumericVector abundance_sp;
-        NumericVector traits_sp;
-        NumericVector pi_sp;
         int S_index;
         
         bool print;
@@ -129,6 +132,9 @@ class localCommCpp {
                      abundance_sp(abundance_sp_), traits_sp(traits_sp_), pi_sp(pi_sp_),
                      abundance_indv(abundance_indv_), traits(traits_)
         {
+        }
+        
+        localCommCpp(){
         }
         
         // birth is called on indv i, the new indv REPLACING the index at r
