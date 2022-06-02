@@ -1,0 +1,121 @@
+---
+title: "Harmonizing the Lotka-Volterra and MESS models"
+author: "A. J. Rominger"
+date: "5/25/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## The Lotka-Volterra competition model
+
+The Lotka-Volterra competition model for two species (here after refered to as LV) looks like this
+
+
+\begin{align}
+\frac{dx_1}{dt} &= r_1 x_1 \left(1 - \frac{x_1 + \alpha_{12} x_2}{K_1} \right) \label{eq:lv1} \\
+\frac{dx_2}{dt} &= r_2 x_2 \left(1 - \frac{x_2 + \alpha_{21} x_1}{K_2} \right) \label{eq:lv2}
+\end{align}
+
+
+Our goal is to put this in terms of birth and death rates so we can convert these differential equations to an individual-based model like MESS.
+
+We'll look at just the equation for species 1, recognizing the two equations are the same except for subscripts.  The equation we want is simply the per capita birth rate (times population size) minus the per capita death rate (time population size)
+
+
+\begin{equation}
+\frac{dx_1}{dt} = B(x_1) x_1 - D(x_1) x_1 \label{eq:lvBD}
+\end{equation}
+
+
+Now we need to find meaningful forms for $B(x_1)$ and $D(x_1)$ that are consistent with the LV equations.  A sensible option is 
+
+
+\begin{align}
+B(x_1) &= \lambda_1^{(0)} \\
+D(x_1) &= \mu_1^{(0)} + \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2
+\end{align}
+
+These equations say that the per capita birth rate is constant across $x_1$ while the per capita death rate increases linearly with $x_1$ and with $x_2$.
+
+Plugging these form of $B(x_1)$ nd $D(x_1)$ into eq. (\ref{eq:lvBD}) we get
+
+
+\begin{align}
+\frac{dx_1}{dt} &= \lambda_1^{(0)} x_1 - \mu_1^{(0)} x_1 - \mu_1^{(1)} x_1^2 - \mu_1^{(2)} x_1 x_2 \\
+&= \left(\lambda_1^{(0)} - \mu_1^{(0)}\right) x_1 - \mu_1^{(1)} x_1^2 + \mu_1^{(2)} x_1 x_2
+\end{align}
+
+
+Rearranging eq. (\ref{eq:lv1}) we can quickly see the equivalent terms
+
+
+\begin{equation}
+\frac{dx_1}{dt} = r_1 x_1 - \frac{r_1}{K_1} x_1^2 - \frac{r_1 \alpha_{12}}{K_1} x_1 x_2
+\end{equation}
+
+
+Which gives us
+
+
+\begin{align}
+r_1 &= \lambda_1^{(0)} - \mu_1^{(0)} \\
+\frac{r_1}{K_1} &= \mu_1^{(1)} \\
+\frac{r_1 \alpha_{12}}{K_1} &= \mu_1^{(2)}
+\end{align}
+
+
+
+A few nice things to note: we confirm that $r_1$ is the "rate of increase when rare" (i.e. $\lambda_1^{(0)} - \mu_1^{(0)}$); and we see that "carrying capacity" is inversely proportional to the slopes of the death rates with respect to $x_1$ and $x_2$, i.e., density dependence.
+
+We can also see that the standard LV parameterization has 3 parameters, while the $B - D$ parameterization has 4 parameters.  Specifically, $\lambda_1^{(0)}$ and $\mu_1^{(0)}$ are not distinguishable, i.e., infinitely many different combinations of $\lambda_1^{(0)}$ and $\mu_1^{(0)}$ will yield the same outcome as long as those combinations obey $r_1 = \lambda_1^{(0)} - \mu_1^{(0)}$.  This will be important to consider when mapping these parameters to the individual-based model.
+
+
+## Taking the LV model to an individual-based framework
+
+To start, let's convert the above birth and death rates to birth and death probabilities.  This is done simply by normalizing the rates
+
+
+\begin{align}
+P_B(x_1) &= \frac{B(x_1)}{B(x_1) + D(x_1)} \\
+&= \frac{\lambda_1^{(0)}}{\lambda_1^{(0)} + \mu_1^{(0)} + \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2} \\
+P_D(x_1) &= \frac{D(x_1)}{B(x_1) + D(x_1)} \\
+&= \frac{\mu_1^{(0)} + \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2}{\lambda_1^{(0)} + \mu_1^{(0)} + \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2}
+\end{align}
+
+
+Because we normalized the *per capita* rates, we actually now have the probability of birth or death for one individual of species 1.  That means we've arrived at an individual-based model.
+
+We want a death and birth every time step...how to do that?  Scale it so $P_D$ and $P_B$ equal 1 at equilibirum?  Scale the $K_i$'s to equal $J$?
+
+If we do that, I think we get conversion to MESS params for free 
+
+
+
+## The MESS model
+
+The MESS model is individual-based.  Each time step an individual dies and is immediately replaced with a new individual. We will start by considering the MESS model for only 2 species, and with no immigration, speciation, or trait evolution.  Thus, death events are replaced only by births.  Species 1 and 2 each have only one distinct trait value (call them $t_1$ and $t_2$).  There is also an environmental optimum, call it $\hat{t}$.  There are three mechanisms for death: neutral, trait-based competition, environmental filtering.  For **one individual** belonging to species 1, the rates of death from **n**eutral, **c**ompetitive, and **e**nvironmental filtering processes are
+
+
+
+\begin{align}
+D_N(n_1) &= 1 \\
+D_C(n_1) &= \frac{1}{J} \sum_{j = 1}^J \exp \left[ \frac{1}{\sigma_C} (t_1 - t_j)^2 \right] \\
+D_E(n_1) &= 1 - \exp \left[ \frac{1}{\sigma_E} (t_1 - \hat{t})^2 \right]
+\end{align}
+
+The *probability* of death in one time step for this individual is
+
+\begin{equation}
+P_D(n_1) = \delta D_N(n_1) + (1 - \delta) (\gamma D_C + (1 - \gamma) D_E)
+\end{equation}
+
+
+The deth rate due to competition can be further 
+
+
+
+
+
