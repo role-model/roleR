@@ -97,6 +97,6 @@ setMethod("getTimeseries", signature(x="roleExperiment"),
             
             model <- x@modelRuns[[runNum]]
             
-            return(getTimeseries(model,type,valueName))
+            return(getTimeseries(model,type,valueName,entropyN))
           }
 )
