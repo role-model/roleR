@@ -1,65 +1,16 @@
-# simulate stochastic lotka-voltera
-
-lvsim <- function(x0, params, nreps) {
-    xt <-  matrix(NA, nrow = nreps, ncol = 2)
-    xt[1, ] <- x0
-
-    for(b in 2:nreps) {
-        if(all(x0 <= 0)) break
-        print(b)
-
-        # rates
-        births <- c(params$la1,
-                    params$la2) * x0
-        deaths <- c(params$mu1 * x0[1] + params$a12 * x0[2],
-                    params$mu2 * x0[2] + params$a21 * x0[1]) * x0
-
-        # which event happened
-        e <- sample(1:4, 1, prob = c(births, deaths))
-
-        # update
-        if(e <= 2) {
-            # brith
-            i <- e
-            x0[i] <- x0[i] + 1
-        } else {
-            # death
-            i <- e - 2
-            x0[i] <- x0[i] - 1
-        }
-
-        xt[b, ] <- x0
-    }
-
-    return(xt)
-}
-
-p <- list(la1 = 1,
-          mu1 = 0.05,
-          la2 = 0.8,
-          mu2 = 0.05,
-          a12 = 0.01,
-          a21 = 0.01)
-
-nn <- lvsim(x0 = c(10, 10), params = p, nreps = 1000)
-
-matplot(nn, type = 'l', lty = 1, lwd = 2)
-
-imax <- sum(!is.na(nn[, 1]))
-colz <- viridis::viridis(imax)
-
-plot(nn, type = 'n')
-
-for(i in 2:imax) {
-    segments(x0 = nn[i - 1, 1], x1 = nn[i, 1],
-             y0 = nn[i - 1, 2], y1 = nn[i, 2],
-             col = colz[i])
-}
-
-
-
-
-
+#' simulate IBM lotka-voltera
+#' 
+#' @param x0 initial condition, vector of spp IDs (1s and 2s)
+#' @param t0 initial trait value of each individual
+#' @param params a named list of the model params:
+#'     * `de` 2-long vector of death rates due to environment
+#'     * `dc` 2-long vector of death rates due to competition
+#'     * `se` sigma for environment death rate kernel 
+#'     * `sc` sigma for competition death rate kernel 
+#'     * `that` "t hat" the optimal trait value
+#'     * `sbm` rate of brownian trait variation
+#' @param nreps single int, the number of timesteps
+#' @return matrix of nrow equal to `nreps` and ncol equal to 2 (one for each spp)
 
 
 lvibm <- function(x0, t0, params, nreps) {
