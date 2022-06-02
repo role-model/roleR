@@ -1,21 +1,42 @@
 
-fit <- function(input, simrun)
+fitRole <- function(input, role)
 {
-  simrun <- sim
-  sim$params$values
-  
-  ts_values <- data.frame(matrix(ncol = 40, nrow = length(simrun$timeseries)))
-  
-  #each row is a timestep of a sim
-  for(i in 1:length(simrun$timeseries))
+  # each row of all_stats_params will be a timestep of a model
+  all_stats_params <- data.frame(matrix(ncol = 40, nrow = length(role@timeseries)))
+
+  counter <- 1
+  # for each model run
+  for(r in 1:length(role@modelRuns))
   {
-    s <- simrun$timeseries[i]
-    # make row of params and summary stats
-    row <- c(s$params$values[1],s$params$values[2])
-    ts_values[i] <- row #add to data
+    model <- role@modelRuns[[r]]
+    for(i in 1:length(model@timeseries))
+    {
+      # get summary stats df row
+      stats <- model@timeseries[[1]]@stats[i,]
+      
+      # get params
+      params <- model@paramValues
+      
+      # make row of needed params
+      params <- c(params$speciation_local[i],
+                  params$speciation_meta[i],
+                  params$extinction_meta[i],
+                  params$trait_sigma[i],
+                  params$env_sigma[i],
+                  params$comp_sigma[i],
+                  params$dispersal_prob[i])
+      params <- t(data.frame(params))
+      rownames(params) <- NULL
+      colnames(params) <- c("speciation_local","speciation_meta","extinction_meta","trait_sigma","env_sigma","comp_sigma","dispersal_prob")
+      
+      # make row of params and summary stats
+      row <- cbind(stats,params)
+      all_stats_params[counter] <- row #add to data
+      counter <- counter + 1
+    }
   }
   
-  #rf <- randomForest(param ~ stat1 + stat2 + stat3 ... , data=ts_values, ..., subset, na.action=na.fail, test = input$param)
-  #rf <- out 
+  #rf <- randomForest(comp_sigma ~ stat1 + stat2 + stat3, data=all_stats_params, na.action=na.fail, test = input$)
+  #return(rf)
 }
 
