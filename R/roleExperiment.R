@@ -1,14 +1,15 @@
-#' @title An S4 class containing multiple model runs and the params used to generate them
-#'
-#' @slot modelRuns a list of roleModel objects, each containing its own current state and 
-#' a timeseries of past states 
-#' @slot params a roleParams object
+#' @title An S4 class to represent a complete self-enclosed experiment (a model run or set of runs) within roleR
+#' @description contains one or more roleModel runs and the roleArguments used to generate each of the runs
+#' @details this is the core object in the roleR package for users to create, analyze, and distribute
+#' 
+#' @slot modelRuns a list of roleModel objects, each containing a timeseries of past states and a copy of parameter values
+#' @slot arguments a roleArguments object
 #'
 #' @export
 
 setClass('roleExperiment',
          slots = c(modelRuns = 'list',
-                   params = 'roleParams'))
+                   arguments = 'roleArguments'))
 
 # NOTE - should we require users to specify a params object, and thus avoid needing niter, nruns, niter_timestep as params of roleExperiment? 
 #' @title Run a RoLE model simulation and return a roleExperiment object

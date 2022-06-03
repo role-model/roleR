@@ -8,12 +8,13 @@
 
 setClass('roleModel',
          slots = c(timeseries = 'list', 
-                   paramValues = 'list'))
+                   params = 'roleParams',
+                   niter = 'numeric'))
 
 # constructor for roleModel
-roleModel <- function(timeseries,paramValues,niter)
+roleModel <- function(timeseries,params,niter)
 {
-  new("roleParams", timeseries=timeseries, paramValues=paramValues)
+  new("roleModel", timeseries=timeseries, paramValues=paramValues,niter=niter)
 }
 
 # "as" functions don't work with C++ pointers, so created From and To functions
