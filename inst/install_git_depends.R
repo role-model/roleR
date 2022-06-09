@@ -12,6 +12,7 @@ install.packages("crayon")
 devtools::install_github('scrm/scrm-r')
 devtools::install_github("ajrominger/pika")
 
+install.packages("ape")
 install.packages("Rcpp")
 install.packages("TreeSim")
 install.packages("RcppArmadillo")
