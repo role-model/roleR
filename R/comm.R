@@ -36,11 +36,11 @@ localComm <- function(abundanceIndv, speciesIDsIndv, traitsIndv,
 #' @export
 
 setClass('metaComm',
-         slots = c(abundanceSp = 'numeric',
-                   traitsSp = 'matrix'))
+         slots = c(abundanceSpM = 'numeric',
+                   traitsSpM = 'matrix'))
 # constructor
-metaComm <- function(abundanceSp,traitsSp,Smax) {
+metaComm <- function(abundanceSpM,traitsSpM) {
   return(new('metaComm',
-      abundanceSp = abundanceSp,
-      traitsSp = traitsSp))
+      abundanceSpM = abundanceSpM,
+      traitsSpM = traitsSpM))
 }
