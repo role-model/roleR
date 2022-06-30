@@ -9,12 +9,11 @@
 
 setClass('roleExperiment',
          slots = c(modelRuns = 'list',
-                   arguments = 'roleArguments'))
+                   arguments = 'roleArguments',
+                   startState = 'roleData'))
 
 # NOTE - should we require users to specify a params object, and thus avoid needing niter, nruns, niter_timestep as params of roleExperiment? 
 #' @title Run a RoLE model simulation and return a roleExperiment object
-#'
-#' @description Simulate communities under the RoLE model, The key distinction
 #' between the two functions is that \code{roleExperiment} is optimized to run many
 #' simulations, while \code{roleExperimentPlay} is meant to run one simulation with
 #' periodic output of results for visualization and exploration.
@@ -48,14 +47,14 @@ roleExperimentPlay <- function()
 }
 
 
-roleExperiment <- function(params, startModel = NULL, initType = "oceanic_island", print = FALSE) {
+roleExperiment <- function(arguments, startState=NULL, initType = "oceanic_island", print = FALSE) {
   
-    nruns <- params@nruns
+    nruns <- arguments@nruns
     niter <- params@niter
     niter_timestep <- params@niterTimestep
     
     # prepare params for C++ loop by stretching 1-length values to niter and sampling from provided priors 
-    cparams <- stretchAndSampleParams(params)
+    params <- stretchAndSampleParams(arguments)
     
     # initialize list to hold finished model runs
     runs <- list()
@@ -63,12 +62,8 @@ roleExperiment <- function(params, startModel = NULL, initType = "oceanic_island
     # do nrun model runs 
     for(i in 1:nruns)
     {
-      i <- 1
-      # get the params for the run 
-      parlist <- cparams@values[[i]] 
-      
       # initialize a C++ roleModelCpp starting condition
-      init <- initModel(parlist,initType, niter) 
+      init <- initModel(params[[i]],initType, niter) 
       
       init$print <- print
       
@@ -88,46 +83,44 @@ roleExperimentPlay <- function() {
 #' object
 #' @param params a named List of parameters 
 
-initModel <- function(parlist, type, niter) {
+initModel <- function(params, type, niter) {
     
     # set aug length
     naug <- niter  
   
-    # some testing lines
-    params <- roleParams(nrun=1,niter=100,niterTimestep=10,defaults=TRUE)
-
     # simulate phylogeny
-    phy <- TreeSim::sim.bd.taxa(parlist[["species_meta"]][1], numbsim = 1,
-                                lambda = parlist[["speciation_meta"]][1],
-                                mu = parlist[["extinction_meta"]][1], complete = FALSE)[[1]]
+    phy <- TreeSim::sim.bd.taxa(params@species_meta[1], numbsim = 1,
+                                lambda = params@speciation_meta[1],
+                                mu = params@extinction_meta[1], complete = FALSE)[[1]]
     
     # simulate metacommunity SAD
-    abundance_m <- lseriesFromSN(parlist[["species_meta"]][1],
-                                  parlist[["individuals_meta"]][1])
+    abundance_m <- lseriesFromSN(params@species_meta[1],
+                                 params@individuals_meta[1])
     
     # initalize meta comm traits:
     # first column is species ID, second column is trait value
     # Smax rows
     # talk over with andy - why is rTraitCont producing values in the thousands and negative thousands? 
-    traits_m <- cbind(1:parlist[["species_meta"]][1],
-                         ape::rTraitCont(phy, sigma = parlist[["trait_sigma"]][1]))
+    traits_m <- cbind(1:params@species_meta[1],
+                         ape::rTraitCont(phy, sigma = params@trait_sigma[1]))
+    
     # create metaCommCpp object
     meta <- new(metaCommCpp, abundance_m, traits_m)
     
     # initialize vector of 0 species abundances
-    abundance_l_sp <- rep(0, parlist[["species_meta"]][1])
+    abundance_l_sp <- rep(0, params@species_meta[1])
     
     # oceanic island model assigns all abundance to one species
     if(type == "oceanic_island"){
       # index of the species that will initially have all abundance
-      i <- sample(parlist[["species_meta"]][1], 1, prob = meta$abundance)
+      i <- sample(params@species_meta[1], 1, prob = meta$abundance)
       # passing all abundance to that species
-      abundance_l_sp[i] <- parlist[["individuals_local"]][1]
+      abundance_l_sp[i] <- params@individuals_local[1]
     }
     # bridge island model assigns abundances to all species proportional to species abundance
     else if(type == "bridge_island"){
       # vector of species
-      abundance_l_sp <- sample(parlist[["species_meta"]][1], prob = meta$abundance)
+      abundance_l_sp <- sample(params@species_meta[1], prob = meta$abundance)
     }
     
 
@@ -135,7 +128,7 @@ initModel <- function(parlist, type, niter) {
     traits_l_sp <- traits_m
     
     # soon set pi to be simulated sequences (of length equal to the number of species in the metacomm)
-    pi_l <- rep(1:parlist[["species_meta"]][1])
+    pi_l <- rep(1:params@species_meta[1])
     
     # create localCommCpp object
     local <- new(localCommCpp, abundance_l_sp, traits_l_sp, pi_l, naug)
@@ -146,7 +139,21 @@ initModel <- function(parlist, type, niter) {
     # convert rolePhylo to rolePhyloCpp
     phy <- rolePhyloToCpp(phy)
     
-    # create roleModelCpp object of local comm, meta comm, phylogeny, and params
+    # convert params to named list for Cpp
+    parlist = list()
+    names <- c("individuals_local","individuals_meta","species_meta",
+               "speciation_local","speciation_meta",
+               "extinction_meta","trait_sigma","env_sigma","comp_sigma",
+               "dispersal_prob","mutation_rate","equilib_escape","num_basepairs")
+    #length(numeric(0))
+    for(n in names){
+      #print(slot(params,n))
+      if(length(slot(params,n)) > 0){
+        parlist[[n]] <- slot(params,n)
+      }
+    }
+    #print(parlist)    
+    # create roleModelCpp object of local comm, meta comm, phylogeny, and args
     out <- new(roleModelCpp,local,meta,phy,parlist)
 
     return(out)

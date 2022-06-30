@@ -23,7 +23,7 @@ roleModelCpp iterSim(roleModelCpp model,int niter, int niter_timestep, bool prin
     int timeseries_index = 0;
     
     //roleModelCpp model = model.copy(); NOTE - deprecated iterSim returning a roleModel, now acts on specified roleModel 
-    for(int i = 0; i < niter; i++) {
+    for(int i = 0; i < niter - 1; i++) {
       
         // set the iter of the model
         model.iter = i; 
@@ -51,7 +51,9 @@ roleModelCpp iterSim(roleModelCpp model,int niter, int niter_timestep, bool prin
         if(print){Rcout << "end death event" << "\n";}
         
         //if speciation occurs based on local speciation param
-        if(R::runif(0,1) <= speciation_local[i]){
+        Rcout << "i" << i << "\n";
+        double ru = R::runif(0,1);
+        if(ru <= speciation_local[i]){
             //if(print){Rcout << "start speciation event: chance was" <<
             //model.params.values.speciation_local << "\n";}
             model.speciation(dead_index);

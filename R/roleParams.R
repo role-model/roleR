@@ -34,3 +34,7 @@ roleParams <- setClass('roleParams',
                             num_basepairs = "numeric",
                             init_type = "character"
                           ))
+
+roleParams <- function(){
+  return(new("roleParams"))
+}

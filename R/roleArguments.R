@@ -21,7 +21,7 @@ roleArguments <- setClass('roleArguments',
            nruns = "numeric", 
            niter = "numeric",
            niterTimestep = "numeric",
-           params = "array",
+           params = "list",
            priors = "array",
            iterfuncs = "array",
            meta = "character"
@@ -39,19 +39,19 @@ roleArguments <- setClass('roleArguments',
            
            # check all params to make sure they are either 1 length or niter length
            # for each run
-           for(r in 1:length(object@values))
-           {
+           #for(r in 1:length(object@values))
+           #{
              # for each param
-             for(p in 1:length(object@values[[1]]))
-             {
-               # return false if not 1-length or niter length
-               if((length(object@values[[r]][[p]]) != 1) & (length(object@values[[r]][[p]]) != object@niter)){
-                 # AND there are no priors for that param name
-                 if(length(object@priors[[1]][[p]]) != 1){
-                  return(FALSE)}
-               }
-             }
-           }
+             #for(p in 1:length(object@values[[1]]))
+             #{
+               ## return false if not 1-length or niter length
+               #if((length(object@values[[r]][[p]]) != 1) & (length(object@values[[r]][[p]]) != object@niter)){
+               #  # AND there are no priors for that param name
+               #  if(length(object@priors[[1]][[p]]) != 1){
+               #   return(FALSE)}
+               #}
+             #}
+           #}
            
            return(TRUE)
          })
@@ -80,32 +80,31 @@ roleArguments <- function(nruns, niter, niterTimestep=10,defaults=TRUE,
                        mutation_rate = NA, equilib_escape=NA,
                        genesim_savesteps=NA,num_basepairs=NA){
 
-  values <- array(list(),nruns)
-  
-  # set default zeroes
-  # could also set default values but I dunno
-  for(i in 1:nruns)
-  {
-    values[[i]][["individuals_local"]] <- individuals_local
-    values[[i]][["individuals_meta"]] <- individuals_meta
-    values[[i]][["species_meta"]] <- species_meta
-    values[[i]][["speciation_local"]] <- speciation_local
-    values[[i]][["speciation_meta"]] <- speciation_meta
-    values[[i]][["extinction_meta"]] <- extinction_meta
-    values[[i]][["trait_sigma"]] <- trait_sigma
-    values[[i]][["env_sigma"]] <- env_sigma
-    values[[i]][["comp_sigma"]] <- comp_sigma
-    values[[i]][["dispersal_prob"]] <- dispersal_prob
-    values[[i]][["mutation_rate"]] <- mutation_rate
-    values[[i]][["equilib_escape"]] <- equilib_escape
-    values[[i]][["genesim_savesteps"]] <- genesim_savesteps
-    values[[i]][["num_basepairs"]] <- num_basepairs
+  params <- list()
+  for(k in 1:nruns){
+    p <- roleParams()
+    params <- append(params,p)
   }
   
-  if(is.null(niterTimestep)){
-    niterTimestep = 10}
-
-  args <- new("roleArguments", nruns=nruns, niter=niter,values=values,niterTimestep=niterTimestep)
+  # set default zeroes
+  # could also set default params but I dunno
+  for(i in 1:nruns)
+  {
+    #names <- c("individuals_local","individuals_meta","species_meta",
+              #"speciation_local","speciation_meta",
+              #"extinction_meta","trait_sigma","env_sigma","comp_sigma",
+              #"dispersal_prob","mutation_rate","equilib_escape","genesim_savesteps","num_basepairs")
+    #values <- c(individuals_local,individuals_meta,species_meta,
+                #speciation_local,speciation_meta,
+                #extinction_meta,trait_sigma,env_sigma,comp_sigma,
+                #dispersal_prob,mutation_rate,equilib_escape,genesim_savesteps,num_basepairs)
+    
+    #for(p in 1:14){
+    #  slot(params[[i]], names[p]) <- values[p]
+    #}
+  }
+  
+  args <- new("roleArguments", nruns=nruns, niter=niter,params=params,niterTimestep=niterTimestep)
   if(defaults){
     args <- setDefaultParams(args)}
   
@@ -138,14 +137,14 @@ setMethod("setParam", signature(x="roleArguments"),
             {
               for(i in 1:x@nruns)
               {
-                x@values[[i]][[paramName]] <- values
+                slot(x@params[[i]], paramName) <- values
               }
             }
             
             # else apply only to the target sim_num
             else
             {
-                x@values[[runNum]][[paramName]] <- values
+              slot(x@params[[runNum]], paramName) <- values
             }
             
             return(x)
@@ -214,8 +213,8 @@ setMethod("setDefaultParams", signature(x="roleArguments"),
             x <- setParam(x,"trait_sigma",0.5)
             x <- setParam(x,"env_sigma",0.1)
             x <- setParam(x,"comp_sigma",0.1)
-            x <- setParam(x,"trait_z",0.5)
-            x <- setParam(x,"genesim_nstep",10)
+            #x <- setParam(x,"trait_z",0.5)
+            #x <- setParam(x,"genesim_nstep",10)
             return(x)
           }
 )
@@ -242,26 +241,31 @@ stretchAndSampleParams <- function(args) {
   }
   
   # if multiple sets of priors specified for each model run, apply each to each run  
-  else if(length(params@priors) > 1){
-    for(i in 1:length(params@priors))
+  else if(length(args@priors) > 1){
+    for(i in 1:length(args@priors))
     {
     }
   }
   
   # stretch 1-value params across all iter values
   # for each run
-  for(r in 1:length(params@values))
+  for(r in 1:length(args@params))
   {
+    names <- c("individuals_local","individuals_meta","species_meta",
+               "speciation_local","speciation_meta",
+               "extinction_meta","trait_sigma","env_sigma","comp_sigma",
+               "dispersal_prob","mutation_rate","equilib_escape","num_basepairs")
+    
     # for each param
-    for(p in 1:length(params@values[[1]]))
+    for(p in 1:13)
     {
-      if(length(params@values[[r]][[p]]) == 1){
-        params@values[[r]][[p]] <- rep(params@values[[r]][[p]],params@niter)
+      if(length(slot(args@params[[r]],names[p]) == 1)){
+        slot(args@params[[r]],names[p]) <- rep(slot(args@params[[r]],names[p]),args@niter)
       }
     }
   }
   
-  return(params)
+  return(args)
 }
 
 writeRoleArguments <- function(args, dir = NULL, fileName, saveTxt = TRUE)

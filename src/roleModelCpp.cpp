@@ -64,7 +64,7 @@ class roleModelCpp {
             
             // get params from params List
             NumericVector env_sigma = params["env_sigma"];
-            NumericVector trait_z = params["trait_z"];
+            NumericVector trait_z = params["trait_sigma"];
             
             if(print){Rcout << "calculating probs of death due to env" << "\n";}
 
