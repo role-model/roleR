@@ -72,12 +72,10 @@ void specPhyloRCpp(int i, int n, NumericMatrix e,
     }
   }
   
+  // update n
+  n ++;
   
   // update alive vector
   alive(n) = TRUE;
-  
-  // update n
-  n ++;
-
 }
 
