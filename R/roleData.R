@@ -12,16 +12,16 @@ setClass('roleData',
          slots = c(localComm = 'localComm',
                    metaComm = 'metaComm',
                    phylo = 'rolePhylo',
-                   stats = 'data.frame',
-                   iterNum = 'integer'))
+                   stats = 'data.frame'))
+                   #iterNum = 'integer'))
 
 # constructor
 roleData <- function(localComm,metaComm,phylo,iterNum) {
   return(new('roleData',
              localComm = localComm,
              metaComm = metaComm,
-             phylo = phylo,
-             iterNum = iterNum))
+             phylo = phylo))
+             #iterNum = iterNum))
 }
 
 roleDataFromCpp <- function(data) {

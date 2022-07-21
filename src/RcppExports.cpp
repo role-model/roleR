@@ -11,19 +11,69 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// rcpp_hello_world
+List rcpp_hello_world();
+RcppExport SEXP _roleR_rcpp_hello_world() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(rcpp_hello_world());
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpparma_hello_world
+arma::mat rcpparma_hello_world();
+RcppExport SEXP _roleR_rcpparma_hello_world() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(rcpparma_hello_world());
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpparma_outerproduct
+arma::mat rcpparma_outerproduct(const arma::colvec& x);
+RcppExport SEXP _roleR_rcpparma_outerproduct(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpparma_outerproduct(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpparma_innerproduct
+double rcpparma_innerproduct(const arma::colvec& x);
+RcppExport SEXP _roleR_rcpparma_innerproduct(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpparma_innerproduct(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// rcpparma_bothproducts
+Rcpp::List rcpparma_bothproducts(const arma::colvec& x);
+RcppExport SEXP _roleR_rcpparma_bothproducts(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::colvec& >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(rcpparma_bothproducts(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
-RcppExport SEXP _rcpp_module_boot_iterSimCpp();
-RcppExport SEXP _rcpp_module_boot_commCpp();
-RcppExport SEXP _rcpp_module_boot_phyloCpp();
-RcppExport SEXP _rcpp_module_boot_modelCpp();
-RcppExport SEXP _rcpp_module_boot_dataCpp();
+RcppExport SEXP _rcpp_module_boot_iterModelCpp();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rcpp_module_boot_iterSimCpp", (DL_FUNC) &_rcpp_module_boot_iterSimCpp, 0},
-    {"_rcpp_module_boot_commCpp", (DL_FUNC) &_rcpp_module_boot_commCpp, 0},
-    {"_rcpp_module_boot_phyloCpp", (DL_FUNC) &_rcpp_module_boot_phyloCpp, 0},
-    {"_rcpp_module_boot_modelCpp", (DL_FUNC) &_rcpp_module_boot_modelCpp, 0},
-    {"_rcpp_module_boot_dataCpp", (DL_FUNC) &_rcpp_module_boot_dataCpp, 0},
+    {"_roleR_rcpp_hello_world", (DL_FUNC) &_roleR_rcpp_hello_world, 0},
+    {"_roleR_rcpparma_hello_world", (DL_FUNC) &_roleR_rcpparma_hello_world, 0},
+    {"_roleR_rcpparma_outerproduct", (DL_FUNC) &_roleR_rcpparma_outerproduct, 1},
+    {"_roleR_rcpparma_innerproduct", (DL_FUNC) &_roleR_rcpparma_innerproduct, 1},
+    {"_roleR_rcpparma_bothproducts", (DL_FUNC) &_roleR_rcpparma_bothproducts, 1},
+    {"_rcpp_module_boot_iterModelCpp", (DL_FUNC) &_rcpp_module_boot_iterModelCpp, 0},
     {NULL, NULL, 0}
 };
 

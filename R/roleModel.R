@@ -1,98 +1,103 @@
-
-#' @title An S4 class to specify one RoLE model - or 1 run within roleSim
+#' @title One run of the RoLE model
 #'
-#' @slot timeseries a list of roleData objects
-#' @slot paramValues a named list of numeric vectors containing params
-#'
+#' @description An S4 class to hold one model run of the RoLE model
+#' 
+#' @slot modelSteps a list of roleData objects, one for each recorded time step
+#' @slot params a roleParams object with the RoLE model params
+#' 
+#' @rdname roleModel
 #' @export
-
+#' 
 setClass('roleModel',
-         slots = c(timeseries = 'list', 
-                   params = 'roleParams',
-                   niter = 'numeric'))
+         slots = c(params = 'roleParams', modelSteps = 'list'))
 
 # constructor for roleModel
-roleModel <- function(timeseries,params,niter)
-{
-  new("roleModel", timeseries=timeseries, paramValues=paramValues,niter=niter)
-}
+#' @rdname roleModel
+#' @export
 
-# "as" functions don't work with C++ pointers, so created From and To functions
-roleModelFromCpp <- function(modelCpp) {
-  
-  ts <- list() 
-
-  if(length(modelCpp$timeseries) > 0){
-  for(i in 1:length(modelCpp$timeseries))
-  {
-    ts <- append(ts,roleDataFromCpp(modelCpp$timeseries[[i]]))
-  }
-  }
-  
-  return(new('roleModel',
-             timeseries=ts,
-             paramValues = modelCpp$params))
-}
-
-roleModelToCpp <- function(model) {
-  localComm <- localComm(modelCpp$local$abundance_indv,modelCpp$local$species_ids,
-                         modelCpp$local$traits,modelCpp$local$abundance_sp,
-                         modelCpp$local$traits_sp,modelCpp$local$pi)
-  return(new('roleModel',
-             localComm = localComm))
-}
-
-#niters = 100
-# create a model from scratch with default params, exclusively for testing purposes
-# dummyModel example runs:
-# role <- dummyModel(run=TRUE,niters=1000,return_experiment=TRUE)
-dummyModel <- function(R=TRUE, run=FALSE,fill_ts=FALSE,niters=100,return_experiment=FALSE,print=FALSE,no_speciation=F,no_dispersal=F){
-  
-  args <- roleArguments(nruns=1,niter=niters,niterTimestep=niters/10,defaults=TRUE)
-  #args <- roleArguments(nruns=1,niter=100,niterTimestep=10,defaults=TRUE)
-  
-  if(no_dispersal){
-    args@params[[1]]@dispersal_prob <- 0
-  }
-  cargs <- stretchAndSampleParams(args)
-  parlist <- cargs@params[[1]]
-  model <- initModel(parlist,type="bridge_island",niter=niters)
-  
-  if(no_speciation){
-    model$params$speciation_local <- 0
-    model$params$speciation_meta <- 0
-  }
-
-  if(fill_ts){
-    data_copy <- model$copyData() 
-  }
-  
-  if(print == FALSE){
-    model$print <- FALSE
-    model$local$print <- FALSE
-  }
-
-  if(run){
-    model <- iterSim(model,args@niter,args@niterTimestep,print)
-  }
-  
-  if(fill_ts){
-    ts <- vector("list", niters/(niters/10))
-    for(i in 1:length(ts)){
-      ts[[i]] <- data_copy
+roleModel <- function(params) {
+    J <- params@individuals_local[1]
+    if(J < 100) {
+        stop('`individuals_local` (set in `roleParams`) cannot be less than 100')
     }
-    model$timeseries <- ts
-  }
-  
-  if(R){
-    model <- roleModelFromCpp(model)
-  }
-  
-  if(return_experiment){
-    runs = list(model) 
-    return(new("roleExperiment", modelRuns=runs, arguments=args))
-  }
-  else{
-    return(model)
-  }
+    
+    Sm <- params@species_meta
+    if(Sm < 200) {
+        stop('`species_meta` (set in `roleParams`) cannot be less than 200')
+    }
+    
+    
+    locs <- localComm(indSpecies=rep(1,J),
+                      indTrait = seq(1, 1.2, length.out = J),
+                      indSeqs = rep('ATCG', J),
+                      spGenDiv = c(1))
+                      
+    #indSpTrt <- matrix(c(rep(1, J), seq(1, 1.2, length.out = J)), ncol = 2)
+    
+    #locs <- localComm(indSppTrt = indSpTrt, 
+    #                  indSeqs = matrix(rep('ATCG', J), ncol = 1), 
+    #                  sppGenDiv = matrix(1, ncol = 1))
+    
+    # for(s in 1:length(species)){
+    #     sp <- species[1];
+    #     abund <- 0
+    #     traits <- c()
+    #     for(r in 1:nrow(indSpTrt)){
+    #         print(indSpTrt[1,1])
+    #         print(sp)
+    #         if(indSpTrt[r,1] == sp){
+    #             abund <- abund + 1
+    #             traits <- c(traits,indSpTrt(r,1))
+    #         }
+    #     }
+    #     spAbundTrt(sp,0) <- abund;
+    #     spAbundTrt(sp,1) <- mean(traits); 
+    # }
+    # locs@spAbundTrt <- spAbundTrt
+    
+    meta <- metaComm(spAbund =(Sm:1) / Sm, spTrait = 1:Sm)
+    
+    phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)
+    phylo <- as(phylo, 'rolePhylo')
+    
+    dat <- roleData(localComm = locs, metaComm = meta, phylo = phylo)
+    
+    niter <- params@niter
+    if(niter > 100) {
+        #stop('`niter` (set in `roleParams`) cannot be greater than 100')
+    }
+    
+    niterTimestep <- params@niterTimestep
+    
+    # output data
+    modelSteps <- vector('list', length = niter / niterTimestep + 1)
+    modelSteps[[1]] <- dat
+    #j <- 2 # counter to keep track of where to save data
+    
+    #for(i in 1:niter) {
+        # update local comm
+    #    locs@indSppTrt[i, ] <- c(i + 1, meta@sppAbundTrt[i + 1, 2])
+    #    locs@sppGenDiv <- rbind(locs@sppGenDiv, 
+    #                            matrix(1 / (i + 1), nrow = 1, ncol = 1))
+        
+        # write data every `niterTimestep`
+    #    if(i %% niterTimestep == 0) {
+            # over-write local comm in dat
+    #        dat@localComm <- locs
+            
+            # save it
+    #        modelSteps[[j]] <- dat
+    #        j <- j + 1
+    #    }
+    #}
+    
+    # save last step if haven't already
+    #if(i %% niterTimestep != 0) {
+    #    modelSteps <- c(modelSteps, dat)
+    #}
+    
+    return(new('roleModel', 
+               params =  params, 
+               modelSteps = modelSteps))
 }
+
