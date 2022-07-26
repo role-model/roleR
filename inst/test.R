@@ -7,9 +7,19 @@ params <- roleParams(individuals_local = 100, individuals_meta = 1000,
                      equilib_escape = 1, num_basepairs = 250,
                      init_type = 'oceanic_island', niter = 100000, niterTimestep = 1000)
 
+
+params@individuals_local
+
+
+
+
 model <- roleModel(params)
 
 data_list <- iterModel(model,F)
+
+foo <- as(data_list, 'roleExperiment')
+boo <- getSumStats(foo, list(abund = rawAbundance, rich = richness))
+
 
 # note - probably have to add one to indSpecies afterward
 data_list[[1]]@localComm@indSpecies
@@ -23,7 +33,7 @@ install.packages("parallel")
 params_list <- list(params,p2,p3)
 library(parallel)
 
-experiment <- roleExperiment(params_list) # throws "attempt to replicate an object of type S4" error
+experiment <- roleExperiment(params_list, priors_list) # throws "attempt to replicate an object of type S4" error
 runs <- experiment@modelRuns
 experiment <- iterExperiment(exp)
 

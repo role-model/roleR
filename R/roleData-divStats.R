@@ -149,6 +149,6 @@ setGeneric('richness',
 setMethod('richness', 
           signature = 'roleData', 
           definition = function(x) {
-              length(unique(x@localComm@indSppTrt[, 1]))
+              length(unique(x@localComm@indSpecies))
           }
 )

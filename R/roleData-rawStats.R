@@ -23,7 +23,7 @@ setGeneric('rawAbundance',
 setMethod('rawAbundance', 
           signature = 'roleData', 
           definition = function(x) {
-              list(tabulate(x@localComm@indSppTrt[, 1]))
+              list(tabulate(x@localComm@indSpecies))
           }
 )
 
