@@ -59,7 +59,7 @@ roleExperiment <- function(allParams) {
         }
     }
     else{
-        allFuns <- NULL
+        allFuns <- list(NULL)
     }
     
     # create models from params and add to experiment
@@ -102,6 +102,7 @@ setAs(from = 'roleModel', to = 'roleExperiment',
           
           # put param vals in a data.frame
           names(pout) <- pnames
+          # browser()
           pout <- do.call(data.frame, pout)
           
           # add time information
@@ -114,7 +115,8 @@ setAs(from = 'roleModel', to = 'roleExperiment',
           return(new('roleExperiment', 
                      experimentMeta = pout,
                      modelRuns = from@modelSteps, 
-                     allParams = list(from@params)))
+                     allParams = list(from@params), 
+                     allFuns = list(NULL)))
       }
 )
 
