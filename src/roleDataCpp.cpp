@@ -19,12 +19,12 @@ public:
     NumericVector spAbundM;
     NumericVector spTraitM;
     
-    int nTipsP;
+    NumericVector nTipsP;
     NumericMatrix edgesP;
     NumericVector lengthsP;
     LogicalVector aliveP;
     CharacterVector tipNamesP;
-    double scaleP;    
+    NumericVector scaleP;    
     
     NumericVector envFilterProbs;
     arma::mat traitDiffsSq;
@@ -53,11 +53,12 @@ public:
         spTraitM = Rcpp::as<NumericVector>(meta.slot("spTrait"));
         
         
-        nTipsP = Rcpp::as<int>(phylo.slot("n"));
+        nTipsP = Rcpp::as<NumericVector>(phylo.slot("n"));
         edgesP = Rcpp::as<NumericMatrix>(phylo.slot("e"));
         lengthsP = Rcpp::as<NumericVector>(phylo.slot("l"));
         aliveP = Rcpp::as<LogicalVector>(phylo.slot("alive"));
         tipNamesP = Rcpp::as<CharacterVector>(phylo.slot("tipNames"));
+        scaleP = Rcpp::as<NumericVector>(phylo.slot("scale"));
         
         // subtract one from each species to start species at 0 
         indSpeciesL = indSpeciesL - 1;

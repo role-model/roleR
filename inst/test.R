@@ -5,9 +5,9 @@ params <- roleParams(individuals_local = 100, individuals_meta = 1000,
                      speciation_meta = 1, extinction_meta = 0.8, #1
                      trait_sigma=1,comp_sigma = 0.1, env_sigma=0.1,dispersal_prob = 0.1, mutation_rate = 0.01,
                      equilib_escape = 1, num_basepairs = 250,
-                     init_type = 'oceanic_island', niter = 100000, niterTimestep = 1000)
+                     init_type = 'oceanic_island', niter = 1000, niterTimestep = 1000)
 
-
+params <- roleParams(niter=100)
 params@individuals_local
 
 
@@ -16,7 +16,9 @@ params@individuals_local
 model <- roleModel(params)
 
 data_list <- iterModel(model,F)
-
+state <- getFinalState(data_list)
+state@
+state@
 foo <- as(data_list, 'roleExperiment')
 boo <- getSumStats(foo, list(abund = rawAbundance, rich = richness))
 

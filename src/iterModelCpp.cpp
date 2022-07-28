@@ -204,7 +204,12 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             if(print){Rcout << "created m" << "\n";}
             
             S4 out_p("rolePhylo");
-            
+            out_p.slot("n") = Rcpp::clone(d.nTipsP);
+            out_p.slot("e") = Rcpp::clone(d.edgesP);
+            out_p.slot("l") = Rcpp::clone(d.lengthsP);
+            out_p.slot("alive") = Rcpp::clone(d.aliveP);
+            out_p.slot("tipNames") = Rcpp::clone(d.tipNamesP);
+            out_p.slot("scale") = Rcpp::clone(d.scaleP);
             if(print){Rcout << "created p" << "\n";}
             
             S4 out_d("roleData");

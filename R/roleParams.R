@@ -11,11 +11,14 @@
 #' @slot env_sigma selectivity of environmental filter
 #' @slot comp_sigma selectivity of competition
 #' @slot dispersal_prob local dispersal probability
+#' 
 #' @slot mutation_rate mutation rate
 #' @slot equilib_escape proportion of equilibrium achieved
 #' @slot num_basepairs number of basepairs
+#' 
 #' @slot init_type initialization routine; a single character string either 
 #'     "oceanic_island" or "bridge_island"
+#'     
 #' @slot niter an integer specifying the number of iterations 
 #' @slot niterTimestep an integer specifying the frequency (in numbers of 
 #'     iterations) at which the model state is saved
@@ -42,6 +45,7 @@ roleParams <- setClass('roleParams',
                            dispersal_prob = "numeric",
                            mutation_rate = "numeric" ,
                            equilib_escape = "numeric",
+                           alpha = "numeric",
                            num_basepairs = "numeric",
                            init_type = "character", 
                            niter = 'integer', 
@@ -54,22 +58,22 @@ roleParams <- setClass('roleParams',
 #' @rdname roleParams
 #' @export
 
-roleParams <- function(individuals_local,
-                       individuals_meta,
-                       species_meta,
-                       speciation_local,
-                       speciation_meta,
-                       extinction_meta,
-                       trait_sigma,
-                       env_sigma,
-                       comp_sigma,
-                       dispersal_prob,
-                       mutation_rate,
-                       equilib_escape,
-                       num_basepairs,
-                       init_type, 
-                       niter, 
-                       niterTimestep) {
+roleParams <- function(individuals_local=100,
+                       individuals_meta=1000,
+                       species_meta=500,
+                       speciation_local=0.1,
+                       speciation_meta=0.5,
+                       extinction_meta=0.5,
+                       trait_sigma=1,
+                       env_sigma=0.1,
+                       comp_sigma=0.1,
+                       dispersal_prob=0.1,
+                       mutation_rate=0.01,
+                       equilib_escape=1,
+                       num_basepairs=250,
+                       init_type='oceanic_island', 
+                       niter=100, 
+                       niterTimestep=10) {
     # check that `niter` is given correctly
     if(missing(niter) | length(niter) > 1) {
         stop('must supply a single value for `niter`')

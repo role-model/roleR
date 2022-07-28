@@ -13,7 +13,7 @@ simulateSpGenDiv <- function(model){
     # NOTE - where does diemScalar get specified?
     
     # import msprime into R 
-    # library(reticulate)
+    library(reticulate)
     msprime <- import("msprime")
     
     # get arguments from role experiment
@@ -29,11 +29,12 @@ simulateSpGenDiv <- function(model){
         # get model 
         m <- model@modelSteps[[i]]
         # get num basepairs
-        num_basepairs <- arguments@values[[i]]$num_basepairs
+        num_basepairs <- model@params@num_basepairs
         
         # get the model timeseries of species abundances
-        ts <- getTimeseries(m,type="model_values")
-        abundance_ts <- ts$abundanceSp
+        # ts <- getTimeseries(m,type="model_values")
+        # ask andy how to do this
+        # abundance_ts <- ts$abundanceSp
         
         # convert to a matrix 
         abundance_ts <- t(matrix(unlist(abundance_ts),ncol=niter_timestep))
@@ -77,7 +78,7 @@ simulateSpGenDiv <- function(model){
                     local_pop_end <- abundance_vect[end_timestep]
                     
                     # if the species originated in local and thus did not come from meta
-                    if(sp_index > length(model@timeseries[[1]]@metaComm@abundanceSp))
+                    if(sp_index > length(model@modelSteps[[1]]@metaComm@spAbund))
                     {
                         # sample size is species abundance at present
                         # Ne is effective populatin size - harmonic mean of all abundances of all timesteps
@@ -94,13 +95,13 @@ simulateSpGenDiv <- function(model){
                         bp_diversity <- ts$diversity()/num_basepairs
                         
                         # at the timeseries, for the given species, set bp_diversity
-                        model@timeseries[[t+1]]@localComm@gDiversitiesSp[sp_index] <- bp_diversity
+                        model@modelSteps[[t+1]]@localComm@spGenDiv[sp_index] <- bp_diversity
                     }
                     
                     # otherwise the species immigrated from meta
                     else
                     {
-                        meta_pop_startend <- model@timeseries[[1]]@metaComm@abundanceSp[sp_index] * 100 # * individuals meta
+                        meta_pop_startend <- model@modelSteps[[1]]@metaComm@spAbund[sp_index] * 100 # * individuals meta
                         
                         # create the meta community
                         pop_meta <- msprime$PopulationConfiguration(sample_size=as.integer(meta_pop_startend),
@@ -109,8 +110,8 @@ simulateSpGenDiv <- function(model){
                                                                      initial_size=as.integer(local_pop_start))
                         
                         # specify migration from local to metacommunity (backwards in time)
-                        mig_matrix <- matrix(c(0,arguments@values[1][[1]]$dispersal_prob,0,0),nrow=2,ncol=2)
-                        
+                        #mig_matrix <- matrix(c(0,arguments@values[1][[1]]$dispersal_prob,0,0),nrow=2,ncol=2)
+                        mig_matrix <- matrix(c(0,model@params@dispersal_prob[1],0,0),nrow=2,ncol=2) #todo fix
                         # disperal_rate may be a scalar of the prob
                         # same for iters
                         # tdiv <- niters * 1/J (J is # local individuals of species at niter)
@@ -127,14 +128,14 @@ simulateSpGenDiv <- function(model){
                         # Length of sequence to simulate, in basepairs
                         sequences <- msprime$simulate(length=as.integer(num_basepairs),
                                                       migration_matrix=mig_matrix,
-                                                      mutation_rate=arguments@values[1][[i]]$mutation_rate,
+                                                      mutation_rate=model@params@mutation_rate[1], #todo fix
                                                       population_configurations=c(pop_meta, pop_local),
                                                       demographic_events=c(split_event))
                         
                         # divide ts.diversity() by sequence length to get average number of pairwise difference __per basepair__
                         bp_diversity <- sequences$diversity()/num_basepairs
                         # at the timeseries, for the given species, set bp_diversity
-                        model@timeseries[[t+1]]@localComm@gDiversitiesSp[sp_index] <- bp_diversity
+                        model@modelSteps[[t+1]]@localComm@spGenDiv[sp_index] <- bp_diversity
                     }
                     #g_diversities <- c(g_diversities,bp_diversity)
                 }

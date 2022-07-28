@@ -39,7 +39,7 @@ setGeneric('rawSppID',
 setMethod('rawSppID', 
           signature = 'roleData', 
           definition = function(x) {
-              list(x@localComm@indSppTrt[, 1])
+              list(x@localComm@indSpecies) #list(x@localComm@indSppTrt[, 1])
           }
 )
 
@@ -54,7 +54,7 @@ setGeneric('rawTraits',
 setMethod('rawTraits', 
           signature = 'roleData', 
           definition = function(x) {
-              list(x@localComm@indSppTrt[, 2])
+              list(x@localComm@indTrait)
           }
 )
 
@@ -70,7 +70,7 @@ setGeneric('rawGenDiv',
 setMethod('rawGenDiv', 
           signature = 'roleData', 
           definition = function(x) {
-              list(x@localComm@sppGenDiv[, 1])
+              list(x@localComm@spGenDiv)  #list(x@localComm@sppGenDiv[, 1])
           }
 )
 
@@ -87,7 +87,7 @@ setGeneric('rawSeqs',
 setMethod('rawSeqs', 
           signature = 'roleData', 
           definition = function(x) {
-              list(x@localComm@indSeqs[, 1])
+              list(x@localComm@indSeqs)
           }
 )
 

@@ -1,4 +1,3 @@
-
 library(testthat)
 library(roleR)
 context('roleExperiment constructs and runs without error')

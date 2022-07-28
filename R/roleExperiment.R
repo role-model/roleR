@@ -15,13 +15,54 @@
 setClass('roleExperiment',
          slots = c(experimentMeta = 'data.frame',
                    modelRuns = 'list', 
-                   allParams = 'list'))
+                   allParams = 'list',
+                   allFuns = 'list'))
 
 # constructor for roleExperiment
 #' @rdname roleExperiment
 #' @export
 
 roleExperiment <- function(allParams) {
+    # if given priors or iterfuns, run functions on each model, param, and iter and 
+    # add to new allParams object
+    if(class(allParams) == 'rolePriors' | class(allParams) == 'roleIterFuns'){
+        # save allFuns
+        allFuns <- allParams
+        # create new allParams
+        allParams <- list()
+        # for each model's set of priors
+        for(p in 1:length(allFuns)){
+            funs <- allFuns[[p]]
+            params <- roleParams()
+            # for each slot
+            for(slot_name in slotNames(funs))
+            {
+                if(class(allFuns) == 'rolePriors'){
+                    # get the list of funs, one per iteration
+                    fun_list <- slot(priors,slot_name)
+                    # for each iteration/functions
+                    for(f in 1:length(fun_list)){
+                        fun = fun_list[[f]]
+                        slot(params,slot_name)[f] = fun()
+                    }
+                }
+                else{
+                    # get the list of funs, one per iteration
+                    fun <- slot(iterfuns,slot_name)
+                    # for each iteration/functions
+                    for(i in 1:niter){
+                        slot(params,slot_name)[i] = fun(i)
+                    }
+                }
+                allParams <- list(allParams,params)
+            }
+        }
+    }
+    else{
+        allFuns <- NULL
+    }
+    
+    # create models from params and add to experiment
     allModels <- list()
     for(i in 1:length(allParams)){
         allModels <- append(allModels,roleModel(allParams[[i]]))
@@ -30,15 +71,8 @@ roleExperiment <- function(allParams) {
     return(new('roleExperiment', 
                experimentMeta = data.frame(), 
                modelRuns = allModels,
-               allParams=allParams))
-    
-    # loop over all params, running roleModel on each set, coercing to a
-    # roleExperiment
-    # outEx <- lapply(allParams, function(ps) {
-    #     mod <- roleModel(ps)
-    #     return(as(mod, 'roleExperiment'))
-    # })
-    # return(do.call(rbind, outEx))
+               allParams=allParams,
+               allFuns=allFuns))
 }
 
 
