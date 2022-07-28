@@ -116,6 +116,7 @@ setAs(from = 'roleModel', to = 'roleExperiment',
                      experimentMeta = pout,
                      modelRuns = from@modelSteps, 
                      allParams = list(from@params), 
+                     # iterFuns = list(from@iterFuns) # when iterFuns added to roleModel, uncomment this and delete line about `allFuns`
                      allFuns = list(NULL)))
       }
 )
