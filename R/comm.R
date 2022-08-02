@@ -32,9 +32,9 @@ setClass('localComm',
 localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { #indSppTrt, indSeqs, sppGenDiv
     
     # create the species indexed vectors
-    spAbund <- rep(NA, 10000)
+    spAbund <- rep(0, 10000)
     spAbund[1] <- sum(indSpecies == 1)
-    spTrait <- rep(NA, 10000)
+    spTrait <- rep(0, 10000)
     spTrait[1] <- mean(indTrait)
     
     #spAbundTrt <- matrix(data=NA, 10000, 2);

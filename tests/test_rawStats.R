@@ -22,7 +22,6 @@ test_that('get final state runs without error'){
     # summary stat functions with `raw` in the name return the raw data (as a list
     # containing the raw output, more on that later)
     
-    
     rawAbundance(datFrmMod)
     
     rawSppID(datFrmMod)

@@ -27,6 +27,17 @@ setMethod('rawAbundance',
           }
 )
 
+# abundance
+setGeneric('rawSpAbundance', 
+           def = function(x, ...) standardGeneric('rawSpAbundance'), 
+           signature = 'x')
+
+setMethod('rawSpAbundance', 
+          signature = 'roleData', 
+          definition = function(x) {
+              list(tabulate(x@localComm@spAbund))
+          }
+)
 
 # spp IDs
 #' @rdname raw-sumStats

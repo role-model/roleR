@@ -10,6 +10,8 @@ using namespace Rcpp;
 // alive is vector of whether or not each tip is extant or extinct 
 
 // [[Rcpp::export]]
+// i species index of parent
+// n is the index at which you add new species (num species that have ever lived)
 void specPhyloRCpp(int i, int n, NumericMatrix e, 
                             NumericVector l, LogicalVector alive) {
 
