@@ -179,8 +179,12 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
         if(R::runif(0,1) < p.speciation_local(i))
         {
             if(print){Rcout << "speciated, prob:" <<  p.speciation_local(i) << "\n";}
-            //d.indSpTrtL(dead_index,0) = d.nTipsP + 1;
-            //d.nTipsP = d.nTipsP + 1;
+            // d.indSpTrtL(dead_index,0) = d.nTipsP + 1; // update dead ind with index of new species
+            
+            // incorporate script from inst/specPhyloRCpp.cpp
+            
+            // check to see if the below is already done in specPhyloRCpp.cpp script
+            // d.nTipsP = d.nTipsP + 1;
         }
         
         // save if i is 0, 9, 19 ... 99 

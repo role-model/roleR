@@ -2,6 +2,12 @@
 
 using namespace Rcpp;
 
+// i is the species index of the parent
+// n is the number of species that have ever lived (i.e. index after which to 
+//   add new species)
+// e is the edge matrix
+// l is the vector of edge lengths
+// alive is vector of whether or not each tip is extant or extinct 
 
 // [[Rcpp::export]]
 void specPhyloRCpp(int i, int n, NumericMatrix e, 
