@@ -42,6 +42,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     
     // calculate initial probs of death from environmental filtering
     NumericVector env_filter_probs = 1 - exp(-1/p.env_sigma[0] * pow(d.indTraitL - 0, 2));
+    if(print){Rcout << "calculated initial probs of death from env filtering: " << env_filter_probs << "\n";}
     double prev_env_sigma = p.env_sigma[0];
     
     // create out array to hold timeseries data 
@@ -51,36 +52,24 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     for(int i = 0; i < (int) params.slot("niter"); i++) {
         if(print){Rcout << "started iteration " << i << "\n";}
             
-        // // sample for dead index 
-        // calculate probs of death due to env filtering
+        // sample for dead index 
+        // NOTES
         // picture curve with prob of death being 0 at trait optimum
         // curve equation is 1-exp(-1(xi - xopt)^2 / env_sigma
         // env_sigma determines if curve is wide or narrow
         // traits optimum is 0 
-        
-        // note that env_filter_probs is calculated before the loop and updated when indTraitL or env_sigma changes
-        
-        // sum of
+        // env_filter_probs is calculated before the loop and updated when indTraitL or env_sigma changes
         // sigma comp makes the curve wider, making more dissimilar individuals having greater impact on death
         // lower sigma comp means individual is only competing with itself and very close indv is trait space 
         // recall that we called the optimum trait_z for the use case where trait optima changes as the environment changes 
-        //NumericVector c_probs = Rcpp::as<NumericVector>(Rcpp::wrap(1/p.individuals_local * sum(exp((-1/p.comp_sigma(i)) * d.traitDiffsSq,0)));
-        //Rcout << "trait diffs sq " << d.traitDiffsSq << "\n";
-        //Rcout << "arma exp " << arma::exp((-1/p.comp_sigma(i)) * d.traitDiffsSq) << "\n";
-        //Rcout << "arma sum " << arma::sum(arma::exp((-1/p.comp_sigma(i)) * d.traitDiffsSq),1) << "\n";
-        //Rcout << "type of arma sum" << typeid(arma::sum(arma::exp((-1/p.comp_sigma(i)) * d.traitDiffsSq),1)).name() << "\n";
-        //Rcout << "arma sum / indv" << arma::sum(arma::exp((-1/p.comp_sigma(i)) * d.traitDiffsSq),1) / n_indv << "\n";
         
         arma::colvec comp_probs_a = arma::sum(arma::exp((-1/p.comp_sigma(i)) * d.traitDiffsSq),1) / n_indv;
         NumericVector comp_probs = Rcpp::wrap(comp_probs_a.begin(),comp_probs_a.end());
-                                                               
-        //Rcout << "comp probs " << comp_probs << "\n";
-        //Rcout << "env filter probs " << "\n" << env_filter_probs << "\n";
-        // 1/indv_local averages
-        // save squares of traitdiffs instead of traitdiffs
+        if(print){Rcout << "calculated comp probs: " << comp_probs << "\n";}
         
         // calculate combined death probs
         NumericVector death_probs = env_filter_probs + comp_probs;
+        if(print){Rcout << "combined env and comp probs: " << death_probs << "\n";}
         //Rcout << "dead probs " << death_probs << "\n";
         
         // get dead index and dead species
@@ -99,10 +88,12 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
         bool not_in_meta = dead_species > d.spAbundM.length();
         // check for extinction
         if(extinct_in_local & not_in_meta){
-            if(print){Rcout << "extinction occured in local, species: " << dead_species << "\n";}
+            if(print){Rcout << "extinction occured in local only species, species: " << dead_species << "\n";}
             d.aliveP(dead_species) = false;
         }
         
+        // set dispersal var for use in speciation, which is slightly different depending
+        bool dispersed_this_iter = false; 
         // check for birth (prob = 1 - dispersal_prob) 
         if(R::runif(0,1) >= p.dispersal_prob(i)){
             if(print){Rcout << "birthed, dispersal prob: " << p.dispersal_prob(i) << "\n";}
@@ -122,8 +113,6 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             
             // add to the abundance of the species matrix
             d.spAbundL(birthed_species) = d.spAbundL(birthed_species) + 1; 
-            
-            double var = p.trait_sigma(1) / (p.speciation_meta(1) + p.extinction_meta(1));
                                                  
             // calculate trait change from parent
             NumericVector trait_change = Rcpp::rnorm(1, 0, p.trait_sigma(1) / (p.speciation_meta(1) + p.extinction_meta(1)));
@@ -132,22 +121,20 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             // add new trait value
             d.indTraitL(dead_index) = d.indTraitL(parent_indv) + trait_change(0);
             if(print){Rcout << "new trait value: " <<  d.indTraitL(dead_index) << "\n";}
-            
-            // update env_filter_probs
-            
-            // update traitDiffsSq by changing the row and column of the new individual
         }
         else{
             if(print){Rcout << "dispersed, dispersal prob: " <<  p.dispersal_prob(i) << "\n";}
-    
+            dispersed_this_iter = true;
+            
             // sample a parent index using species abundances as probs
             int parent_index = sample_index_using_probs(d.spAbundM);
             if(print){Rcout << "sampled parent index:" <<  parent_index << "\n";}
             
             // set the species to the parent species from meta
             d.indSpeciesL(dead_index) = parent_index;
-            
-            // update trait    
+            // add to the abundance of the species matrix
+            d.spAbundL(d.indSpeciesL(dead_index)) = d.spAbundL(d.indSpeciesL(dead_index)) + 1;
+
             // calculate trait change from parent
             NumericVector trait_change = Rcpp::rnorm(1, 0, p.trait_sigma(1) / (p.speciation_meta(1) + p.extinction_meta(1)));
             if(print){Rcout << "trait change from parent: " << trait_change << "\n";}
@@ -156,6 +143,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             d.indTraitL(dead_index) = d.spTraitM(parent_index) + trait_change(0);
         }
         
+        if(print){Rcout << "updating trait diffs sq" << "\n";}
         // update traitDiffsSq using two for loops 
         for(int r = 0; r < n_indv; r++)
         {
@@ -166,25 +154,132 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             d.traitDiffsSq(dead_index,c) = pow(d.indTraitL(dead_index) - d.indTraitL(c),2);
         }
         
+        if(print){Rcout << "checking if new env sigma" << "\n";}
         // if new env_sigma, must recalculate entirely
         if(prev_env_sigma != p.env_sigma[i]){
+            if(print){Rcout << "recalculating full env sigma" << "\n";}
             env_filter_probs = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL - 0, 2));
         }
         //otherwise just update the probs of the new individual
         else{
+            if(print){Rcout << "recalculating env sigma for new individual" << "\n";}
             env_filter_probs(dead_index) = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL(dead_index), 2));
         }
+        prev_env_sigma = p.env_sigma[i];
         
         // if speciation occurs
         if(R::runif(0,1) < p.speciation_local(i))
         {
             if(print){Rcout << "speciated, prob:" <<  p.speciation_local(i) << "\n";}
-            // d.indSpTrtL(dead_index,0) = d.nTipsP + 1; // update dead ind with index of new species
             
-            // incorporate script from inst/specPhyloRCpp.cpp
+            float dp = p.dispersal_prob(i);
+            if(print){Rcout << "dp" << dp << "\n";}
+            if(print){Rcout << "spAbundM" << d.spAbundM << "\n";}
+            if(print){Rcout << "spAbundL" << d.spAbundL << "\n";}
+            if(print){Rcout << "computing probs of speciation as sum of weighted meta and local abundances" << "\n";}
+            NumericVector probs = dp * (d.spAbundM / sum(d.spAbundM)) + 
+                (1 - dp) * (d.spAbundL / sum(d.spAbundL));
+            if(print){Rcout << "computed probs" << probs << "\n";}
+            probs = (abs(probs)+probs)/2;
+            IntegerVector s = sample(d.spAbundM.length(), 1, false, probs);
+            // make i from 0 to phylo.n - 1 (previously 1 to phylo.n)
+            int chosen_species = s(0) - 1;
+            if(print){Rcout << "chosen speciation species: " << chosen_species << "\n";}
             
-            // check to see if the below is already done in specPhyloRCpp.cpp script
-            // d.nTipsP = d.nTipsP + 1;
+            //calculate deviation of trait from previous species trait
+            float trait_dev = R::rnorm(0, p.trait_sigma(i));
+            if(print){Rcout << "calculated trait dev: " << trait_dev << "\n";}
+            float parent_trait_val = 0;
+            if(dispersed_this_iter){
+                if(print){Rcout << "getting parent trait val from meta" << "\n";}
+                parent_trait_val = d.spTraitM(chosen_species);
+            }
+            else{
+                if(print){Rcout << "getting parent trait val from meta" << "\n";}
+                parent_trait_val = d.spTraitM(chosen_species);
+                //parent_trait_val = d.indTraitL(chosen_species);
+            }
+            d.indTraitL(dead_index) = parent_trait_val + trait_dev;
+            if(print){Rcout << "set new trait val";}
+            
+            // the indv that was birthed or immigrated becomes the new species
+            d.indSpeciesL(dead_index) = d.nTipsP(0); 
+            
+            if(print){Rcout << "starting phylo element of speciation" << "\n";}
+        
+            // set easy named variables for phylogeny speciation
+            NumericMatrix e = d.edgesP;
+            NumericVector l = d.lengthsP;
+            int n = d.nTipsP(0);
+            int i = chosen_species;
+            LogicalVector alive = d.aliveP;
+            
+            // nrows of the edge matrix
+            int eMax = e.nrow();
+            
+            // find index of where unrealized edges in edge matrix start
+            // eNew <- min(which(e[, 1] == -1))
+            int eNew = -1;
+            
+            for (int k = 0; k < eMax; k++) {
+                if (e(k, 0) == -1) {
+                    eNew = k;
+                    break;
+                }
+            }
+            
+            // index of the edge matrix of where to add new edge
+            // j <- which(e[, 2] == i)
+            int j = -1;
+            for (int k = 0; k < eMax; k++) {
+                if (e(k, 1) == i) {
+                    j = k;
+                    break;
+                }
+            }
+            
+            // add one to internal node indices
+            //e[e > n] <- e[e > n] + 1
+            
+            for (int r = 0; r < eNew; r++) {
+                for (int c = 0; c < 2; c++){
+                    if (e(r, c) > n) {
+                        e(r, c) ++;
+                    }
+                }
+            }
+
+            // add new internal node
+            int newNode = 2 * n + 1; // index of new node
+            e(eNew, 0) = newNode;
+            e(1 + eNew, 0) = newNode; // do this more elegantly
+            
+            // add tips
+            e(eNew, 1) = e(j, 1); // add old tip
+            e(eNew + 1, 1) = n + 1; // add new tip
+            
+            // update ancestry of internal nodes
+            e(j, 1) = newNode;
+            
+            // augment edge lengths
+            l[eNew] = 0;
+            l[1 + eNew] = 0;
+            
+            // increase all tip edge lengths by 1 time step
+            for (int r = 0; r <= eNew + 1; r++) {
+                if (e(r, 1) <= n + 1) {
+                    l(r) ++;
+                }
+            }
+            
+            // update n
+            n++;
+            
+            // update alive vector
+            alive(n) = TRUE;
+            
+            // increment nTipsP
+            d.nTipsP(0) = d.nTipsP(0) + 1;
         }
         
         // save if i is 0, 9, 19 ... 99 
@@ -197,8 +292,8 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             //out_l.slot("indSppTrt") = Rcpp::clone(d.indSpTrtL);
             out_l.slot("indSpecies") = Rcpp::clone(d.indSpeciesL);
             out_l.slot("indTrait") = Rcpp::clone(d.indTraitL);
-            
-            if(print){Rcout << "created l" << i << "\n";}
+            out_l.slot("spAbund") = Rcpp::clone(d.spAbundL);
+            if(print){Rcout << "created l" << "\n";}
             
             S4 out_m("metaComm");
             //out_m.slot("sppAbundTrt") = Rcpp::clone(d.spAbundTrtM);
