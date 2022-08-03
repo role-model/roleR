@@ -11,14 +11,17 @@
 #alpha = 0.5
 simulateSpeciesGenDiv <- function(model){
     
-    # NOTE - where does diemScalar get specified?
-    
     # import msprime into R 
     library(reticulate)
     msprime <- import("msprime")
     
+    # init spGenDiv with zeroes
+    for(s in 1:length(model@modelSteps)){
+        model@modelSteps[[s]]@localComm@spGenDiv <- rep(0,10000)
+    }
+    
     # get params from model
-    diem_scalar <- 0.5
+    diem_scalar <- 100
     niter <- model@params@niter
     niter_timestep <- model@params@niterTimestep
     indv_local <- model@params@individuals_local[1]
@@ -27,54 +30,49 @@ simulateSpeciesGenDiv <- function(model){
     J <- model@params@individuals_local[1]
     
     # create sp abundance matrix
-    mat <- matrix(data=0,nrow=(niter/niter_timestep) + 1,ncol=10000)
+    abundance_ts_mat <- matrix(data=0,nrow=(niter/niter_timestep) + 1,ncol=10000)
     for(m in 1:length(model@modelSteps)){
-        print(m)
-        mat[m,] <- model@modelSteps[[m]]@localComm@spAbund
+        abundance_ts_mat[m,] <- model@modelSteps[[m]]@localComm@spAbund
     }
-    abundance_ts <- mat 
     
     # delete cols where every value is 0 - don't understand why this is again, ask 
     # resolves problem of resolution where a species could exist then go extinct within one interval
-    # abundance_ts <- abundance_ts[, colSums(abundance_ts) > 0]
     
     # get species indices to loop through
-    sp_indices <- which(colSums(abundance_ts) > 0)
-    sp_indices <- 1
+    sp_indices <- which(colSums(abundance_ts_mat) > 0)
+    
     # initialize g_diversities
     #g_diversities <- numeric(ncol(abundance_ts))
     # place NAs for species where no individuals are recorded to have existed 
     #g_diversities[-sp_indices] <- NA
+    
     # sp_index = 1
     # for each species (each column in the abundance timeseries matrix) 
     for(sp_index in sp_indices)
     {
-        abundance_vect <- abundance_ts[,sp_index]
-        # get index of first nonzero abundance - this is the timestep at which the species emerged
-        speciation_timestep <- min(which(abundance_vect != 0))
- 
-        # likewise find the extinction
-        extinction_timestep <- max(which(abundance_vect != 0))
+        sp_abundance_vect <- abundance_ts_mat[,sp_index]
         
+        # diem size - scalar for difference between observed and actual counts 
+        sp_abundance_vect <- sp_abundance_vect * diem_scalar
         
-        # diem size - scalar for different between observed and actual counts 
-        abundance_vect <- abundance_vect * diem_scalar
-        
-        t = 1
         # for every timestep pair i.e. a step and that step + 1
-        for(t in 1:length(abundance_vect)){
+        # t = 1
+        for(t in 1:(length(sp_abundance_vect)-1)){
             
-            if(t >= speciation_timestep & t < extinction_timestep & abundance_vect[t] > 0 & abundance_vect[t+1] > 0){
+            if(sp_abundance_vect[t] > 0 & sp_abundance_vect[t+1] > 0){
+                
                 # get the start and end timesteps to simulate
                 start_timestep <- t
                 end_timestep <- t + 1
                 
                 # start - end * iters per timestep
                 # 1 generation = J/2 timesteps 
-                n_gens_lived <- ((extinction_timestep - speciation_timestep) * niter_timestep) / (J/2)
-                local_pop_start <- abundance_vect[start_timestep]
-                local_pop_end <- abundance_vect[end_timestep]
-                    
+                n_gens_lived <- ((end_timestep - start_timestep) * niter_timestep) / (J/2)
+                local_pop_start <- sp_abundance_vect[start_timestep]
+                local_pop_end <- sp_abundance_vect[end_timestep]
+                
+                start_end_vect <- sp_abundance_vect[start_timestep:end_timestep]
+    
                 # if the species originated in local and thus did not come from meta
                 if(sp_index > length(model@modelSteps[[1]]@metaComm@spAbund) | sp_index == 0)
                 {
@@ -86,12 +84,11 @@ simulateSpeciesGenDiv <- function(model){
                     
                     # num_basepairs = 10
                     ts <- msprime$simulate(sample_size=as.integer(10),
-                                           Ne=as.integer(1e5),
+                                           Ne=length(start_end_vect) / sum(1/start_end_vect),
                                            length=as.integer(num_basepairs),
                                            mutation_rate=as.integer(1e-7))
-                    
                     bp_diversity <- ts$diversity()/num_basepairs
-     
+
                     # at the timeseries, for the given species, set bp_diversity
                     model@modelSteps[[t+1]]@localComm@spGenDiv[sp_index] <- bp_diversity
                 }
@@ -141,4 +138,5 @@ simulateSpeciesGenDiv <- function(model){
         }
         #model@modelSteps[[i]]@timeseries[[niter_timestep]]@localComm@gdiversitiesSp <- g_diversities
     }
+    return(model)
 }

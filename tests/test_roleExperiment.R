@@ -24,7 +24,7 @@ test_that('experiment models iterated over successfully, unparallelized'){
                          speciation_meta = 1, extinction_meta = 0.8, 
                          trait_sigma=0.1,comp_sigma = 0.1, dispersal_prob = 0.1, mutation_rate = 0.01,
                          equilib_escape = 1, num_basepairs = 250,
-                         init_type = 'oceanic_island', niter = 10, niterTimestep = 10) 
+                         init_type = 'oceanic_island', niter = 100, niterTimestep = 10) 
     p2 <- params
     p3 <- params
     params_list <- list(params,p2,p3)

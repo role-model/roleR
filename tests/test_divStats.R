@@ -41,9 +41,10 @@ test_that('div stat funs run without error through getSumStat function'){
     
     expr <- as(model, 'roleExperiment')
     
-    ss <- getSumStats(expr, funs = list(abund = rawAbundance, rich = richness, 
-                                        hillAbund = hillAbund, 
+    ss <- getSumStats(expr, funs = list(hillAbund = hillAbund, 
                                         hillTrait = hillTrait))
+    experiment <- expr
+    ss
 }
 
 

@@ -53,6 +53,8 @@ public:
         spTraitM = Rcpp::as<NumericVector>(meta.slot("spTrait"));
         
         
+        //NumericVector nTipsP_vect = Rcpp::as<NumericVector>(phylo.slot("n"));
+        //nTipsP = nTipsP_vect
         nTipsP = Rcpp::as<NumericVector>(phylo.slot("n"));
         edgesP = Rcpp::as<NumericMatrix>(phylo.slot("e"));
         lengthsP = Rcpp::as<NumericVector>(phylo.slot("l"));
