@@ -17,14 +17,14 @@ setClass('roleModel',
 
 roleModel <- function(params) {
     J <- params@individuals_local[1]
-    if(J < 100) {
-        stop('`individuals_local` (set in `roleParams`) cannot be less than 100')
-    }
-    
+    # if(J < 100) {
+    #     stop('`individuals_local` (set in `roleParams`) cannot be less than 100')
+    # }
+    # 
     Sm <- params@species_meta
-    if(Sm < 200) {
-        stop('`species_meta` (set in `roleParams`) cannot be less than 200')
-    }
+    # if(Sm < 200) {
+    #     stop('`species_meta` (set in `roleParams`) cannot be less than 200')
+    # }
     
     
     locs <- localComm(indSpecies=rep(1,J),
