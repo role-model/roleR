@@ -13,7 +13,7 @@ iterExperiment <- function(experiment, cores=1){
 
 #runs <- as.list(experiment@modelRuns)
 #runs <- experiment@modelRuns
-iterModel <- function(model,print=T) {
+iterModel <- function(model, print=FALSE) {
     
     # init the first data step of the model using params 
     #model <- initModel(model)
