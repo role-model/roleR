@@ -5,6 +5,7 @@ reticulate::conda_install("r-reticulate",
 
 msprime <- reticulate::import('msprime')
 newick <- reticulate::import('newick')
+collections <- reticulate::import('collections')
 
 library(roleR)
 p <- roleParams(individuals_local = 100, individuals_meta = 10000, 
@@ -15,10 +16,15 @@ p <- roleParams(individuals_local = 100, individuals_meta = 10000,
                 init_type = 'oceanic_island', 
                 niter = 1000, niterTimestep = 200)
 
-mod <- roleExperiment(list(p))
-mod <- iterExperiment(mod)
+mod <- roleModel(p)
+mod <- iterModel(mod, print = FALSE)
 
 
+
+e <- roleExperiment(list(p))
+e <- iterExperiment(e)
+
+getSumStats(mod, list(rich = richness))
 
 ex <- as(mod, 'roleExperiment')
 ex@experimentMeta
@@ -37,13 +43,19 @@ treNewick <- ape::write.tree(tre)
 metaSAD <- as.list(mod@params@individuals_meta * mod@modelSteps[[1]]@metaComm@spAbund)
 names(metaSAD) <- tre$tip.label
 
-metaSAD <- list(t1 = )
+lambda <- function() mean(unlist(metaSAD))
+initSize <- collections$defaultdict(lambda)
+initSize$update(dict(metaSAD))
 
 
 d <- msprime$Demography$from_species_tree(treNewick, 
                                           time_units = 'myr', 
-                                          initial_size = reticulate::dict(metaSAD), 
+                                          initial_size = initSize, 
                                           generation_time = 1, growth_rate = 0)
+
+
+
+
 
 
 
@@ -75,18 +87,41 @@ simGenData <- function(x) {
     # take harmonic mean--that's best 
 }
 
+lambda <- function() 100
+initial_size = coll$defaultdict(lambda)
+initial_size$update(dict(list(A = 1000, B = 2000)))
 
+tree = "(A:10.0,B:10.0)"
+
+demography = msprime$Demography$from_species_tree(tree, initial_size)
+
+
+
+
+
+
+# initial_size.update({"A": 1000, "B": 2000})
 
 demography <- msprime$Demography$from_species_tree(
     "(((human:5.6,chimpanzee:5.6):3.0,gorilla:8.6):9.4,orangutan:18.0)", 
     time_units = "myr",
-    initial_size = 10^4, # make these harmonic means from getSumStats
+    initial_size = reticulate::dict(list(gorilla = 1000, 
+                                         human = 2000, 
+                                         chimpanzee = 3000, 
+                                         orangutan = 4000, 
+                                         None = 10000)),
     generation_time = 1, 
     growth_rate = 0)
 
 
+ts <- msprime$sim_ancestry(reticulate::dict(list(gorilla = 2, human = 4)), 
+                          demography = demography, ploidy = 1)
+
+
+cat(ts$draw_text())
+
 # add pop split in a "trunk-like" topology see here:
-# https://tskit.dev/msprime/docs/stable/demography.html#sec-demography-events-population-split)
+# https://tskit.dev/msprime/docs/stable/demography.html#sec-demography-events-population-split
 # that's how you could have meta and local pops (with migration from meta added
 # after the split)
 # 
