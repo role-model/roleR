@@ -11,6 +11,21 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// iterModelCpp
+List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bool print);
+RcppExport SEXP _roleR_iterModelCpp(SEXP localSEXP, SEXP metaSEXP, SEXP phyloSEXP, SEXP paramsSEXP, SEXP printSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< RObject >::type local(localSEXP);
+    Rcpp::traits::input_parameter< RObject >::type meta(metaSEXP);
+    Rcpp::traits::input_parameter< RObject >::type phylo(phyloSEXP);
+    Rcpp::traits::input_parameter< RObject >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< bool >::type print(printSEXP);
+    rcpp_result_gen = Rcpp::wrap(iterModelCpp(local, meta, phylo, params, print));
+    return rcpp_result_gen;
+END_RCPP
+}
 // rcpp_hello_world
 List rcpp_hello_world();
 RcppExport SEXP _roleR_rcpp_hello_world() {
@@ -68,6 +83,7 @@ END_RCPP
 RcppExport SEXP _rcpp_module_boot_iterModelCpp();
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_roleR_iterModelCpp", (DL_FUNC) &_roleR_iterModelCpp, 5},
     {"_roleR_rcpp_hello_world", (DL_FUNC) &_roleR_rcpp_hello_world, 0},
     {"_roleR_rcpparma_hello_world", (DL_FUNC) &_roleR_rcpparma_hello_world, 0},
     {"_roleR_rcpparma_outerproduct", (DL_FUNC) &_roleR_rcpparma_outerproduct, 1},

@@ -27,6 +27,9 @@ int sample_index_using_probs(NumericVector probs){
     return(v(0));
 }
 
+
+// [[Rcpp::export]]
+
 List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bool print) {
     if(print){Rcout << "iter loop started" << "\n";}
     

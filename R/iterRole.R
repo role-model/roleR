@@ -20,13 +20,29 @@ iterModel <- function(model, print=FALSE) {
     
     # iterate the model using its params 
     # returns the new modelSteps (a list of roleData)
-    model@modelSteps <- iterModelCpp(slot(model@modelSteps[[1]],"localComm"), 
-                 slot(model@modelSteps[[1]],"metaComm"),
-                 slot(model@modelSteps[[1]],"phylo"),
-                 model@params,print)
-
+    # browser()
+    # save initial step
+    initStep <- model@modelSteps[[1]]
+    
+    # iterate model
+    
+    model@modelSteps <- iterModelCpp(local = slot(model@modelSteps[[1]],"localComm"), 
+                 meta = slot(model@modelSteps[[1]],"metaComm"), 
+                 phylo = slot(model@modelSteps[[1]],"phylo"), 
+                 params = model@params, 
+                 print = print)
+    
+    # model@modelSteps <- iterModelCpp(slot(model@modelSteps[[1]],"localComm"), 
+    #              slot(model@modelSteps[[1]],"metaComm"),
+    #              slot(model@modelSteps[[1]],"phylo"),
+    #              model@params,print)
+    
     return(model)
 }
+
+
+# mod <- roleModel(p)
+# foo <- iterModel(mod)
 
 # take a roleModel and init it's first data before giving to iterSim 
 # initModel <- function(model) {
