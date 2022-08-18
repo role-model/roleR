@@ -13,36 +13,28 @@ iterExperiment <- function(experiment, cores=1){
 
 #runs <- as.list(experiment@modelRuns)
 #runs <- experiment@modelRuns
-iterModel <- function(model, print=FALSE) {
+iterModel <- function(model,print=T) {
     
+    library(rlang)
+    m <- duplicate(model)
+    # m <- model
     # init the first data step of the model using params 
     #model <- initModel(model)
-    
+    # start_data <- m@modelSteps[[1]]
     # iterate the model using its params 
+    
     # returns the new modelSteps (a list of roleData)
-    # browser()
-    # save initial step
-    initStep <- model@modelSteps[[1]]
+    m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
+                                 slot(m@modelSteps[[1]],"metaComm"),
+                                 slot(m@modelSteps[[1]],"phylo"),
+                                 m@params,print)
     
-    # iterate model
-    
-    model@modelSteps <- iterModelCpp(local = slot(model@modelSteps[[1]],"localComm"), 
-                 meta = slot(model@modelSteps[[1]],"metaComm"), 
-                 phylo = slot(model@modelSteps[[1]],"phylo"), 
-                 params = model@params, 
-                 print = print)
-    
-    # model@modelSteps <- iterModelCpp(slot(model@modelSteps[[1]],"localComm"), 
-    #              slot(model@modelSteps[[1]],"metaComm"),
-    #              slot(model@modelSteps[[1]],"phylo"),
-    #              model@params,print)
-    
-    return(model)
+    for(d in 1:length(m@modelSteps))
+    {
+        m@modelSteps[[d]]@localComm@indSpecies <- m@modelSteps[[d]]@localComm@indSpecies + 1
+    }
+    return(m)
 }
-
-
-# mod <- roleModel(p)
-# foo <- iterModel(mod)
 
 # take a roleModel and init it's first data before giving to iterSim 
 # initModel <- function(model) {
