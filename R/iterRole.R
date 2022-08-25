@@ -13,7 +13,8 @@ iterExperiment <- function(experiment, cores=1){
 
 #runs <- as.list(experiment@modelRuns)
 #runs <- experiment@modelRuns
-iterModel <- function(model,print=T) {
+#print=T
+iterModel <- function(model,print=F) {
     
     library(rlang)
     m <- duplicate(model)
@@ -28,10 +29,11 @@ iterModel <- function(model,print=T) {
                                  slot(m@modelSteps[[1]],"metaComm"),
                                  slot(m@modelSteps[[1]],"phylo"),
                                  m@params,print)
-    
+
     for(d in 1:length(m@modelSteps))
     {
         m@modelSteps[[d]]@localComm@indSpecies <- m@modelSteps[[d]]@localComm@indSpecies + 1
+        m@modelSteps[[d]]@phylo@e <- m@modelSteps[[d]]@phylo@e + 1
     }
     return(m)
 }

@@ -209,27 +209,36 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             d.indSpeciesL(dead_index) = d.nTipsP(0); 
             
             if(print){Rcout << "starting phylo element of speciation" << "\n";}
-        
+            bool print_matrices = false;
+            
             // set easy named variables for phylogeny speciation
             NumericMatrix e = d.edgesP;
+            //e = e(Rcpp::Range(0,110),_);
+            
             NumericVector l = d.lengthsP;
             int n = d.nTipsP(0);
+            Rcout << "n tips p: " << n << "\n";
             int i = chosen_species;
+            Rcout << "chosen species: " << i << "\n";
             LogicalVector alive = d.aliveP;
+            
+            if(print_matrices){Rcout << "edge matrix at start: " << e << "\n";}
             
             // nrows of the edge matrix
             int eMax = e.nrow();
+            Rcout << "got number of rows of edge matrix: " << eMax << "\n";
             
             // find index of where unrealized edges in edge matrix start
             // eNew <- min(which(e[, 1] == -1))
             int eNew = -1;
             
             for (int k = 0; k < eMax; k++) {
-                if (e(k, 0) == -1) {
+                if (e(k, 0) == -2) {
                     eNew = k;
                     break;
                 }
             }
+            Rcout << "got index of where unrealized edges in edge matrix start: " << eNew << "\n";
             
             // index of the edge matrix of where to add new edge
             // j <- which(e[, 2] == i)
@@ -241,6 +250,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
                 }
             }
             
+            Rcout << "got index of the edge matrix of where to add new edge: " << j << "\n";
             // add one to internal node indices
             //e[e > n] <- e[e > n] + 1
             
@@ -251,18 +261,24 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
                     }
                 }
             }
-
+            if(print_matrices){Rcout << "edge matrix after adding to internal node indices: " << e << "\n";}
+            
             // add new internal node
             int newNode = 2 * n + 1; // index of new node
+            Rcout << "got index of new internal node: " << newNode << "\n";
+            
             e(eNew, 0) = newNode;
             e(1 + eNew, 0) = newNode; // do this more elegantly
+            if(print_matrices){Rcout << "edge matrix after adding new parent nodes: " << e << "\n";}
             
             // add tips
             e(eNew, 1) = e(j, 1); // add old tip
             e(eNew + 1, 1) = n + 1; // add new tip
+            if(print_matrices){Rcout << "edge matrix after adding new child nodes: " << e << "\n";}
             
             // update ancestry of internal nodes
             e(j, 1) = newNode;
+            if(print_matrices){Rcout << "edge matrix after updating internal node ancestry: " << e << "\n";}
             
             // augment edge lengths
             l[eNew] = 0;
@@ -278,14 +294,11 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
                 }
             }
             
-            // update n
-            n++;
-            
             // update alive vector
-            alive(n) = TRUE;
-            
+            alive(n) = TRUE; // double check this
+
             // increment nTipsP
-            // d.nTipsP(0) = d.nTipsP(0) + 1;
+            d.nTipsP(0) = d.nTipsP(0) + 1;
         }
         
         // save if i is 0, 9, 19 ... 99 
