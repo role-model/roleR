@@ -268,6 +268,9 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             l[eNew] = 0;
             l[1 + eNew] = 0;
             
+            // e[Rcpp::range(0, eNew), ]
+            // Rcout << "saving, niter: " << e(0:eNew, ) << "\n";
+            
             // increase all tip edge lengths by 1 time step
             for (int r = 0; r <= eNew + 1; r++) {
                 if (e(r, 1) <= n + 1) {
@@ -282,7 +285,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             alive(n) = TRUE;
             
             // increment nTipsP
-            d.nTipsP(0) = d.nTipsP(0) + 1;
+            // d.nTipsP(0) = d.nTipsP(0) + 1;
         }
         
         // save if i is 0, 9, 19 ... 99 
