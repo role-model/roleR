@@ -27,4 +27,43 @@ An object of class `roleExperiment` contains multiple different model runs and t
 
 ## Dive right in!
 
+```{r}
+library(roleR)
 
+# set-up parameters
+p <- roleParams(
+  individuals_local = 1000,
+  individuals_meta = 10000,
+  species_meta = 50,
+  speciation_local = 0.5,
+  speciation_meta = 1,
+  extinction_meta = 0.8,
+  trait_sigma = 2,
+  env_sigma = 1,
+  comp_sigma = 1,
+  dispersal_prob = 0.5,
+  mutation_rate = 0.01,
+  equilib_escape = 1,
+  num_basepairs = 250,
+  init_type = 'oceanic_island',
+  niter = 1000
+)
+
+# initialize the model
+m <- roleModel(p)
+
+# run the model
+m <- iterModel(m)
+
+# coerce to an experiment
+e <- as(m, 'roleExperiment')
+
+# experiments have a nice data.frame summary of all the params
+e@experimentMeta
+
+# we can extract summary statistics; note: rows of summary statistic
+# output match rows of `e@experimentMeta`
+getSumStats(e, list(rich = richness, hill = hillAbund))
+
+
+```
