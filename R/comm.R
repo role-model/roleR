@@ -31,11 +31,14 @@ setClass('localComm',
 
 localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { #indSppTrt, indSeqs, sppGenDiv
     
-    # create the species indexed vectors
+    # create the species indexed vectors from individual index vectors
     spAbund <- rep(0, 10000)
-    spAbund[1] <- sum(indSpecies == 1)
+    temp <- tabulate(indSpecies)
+    spAbund[1:length(temp)] <- temp
+    
     spTrait <- rep(0, 10000)
-    spTrait[1] <- mean(indTrait)
+    temp <- tapply(indTrait, indSpecies, mean)
+    spTrait[as.numeric(names(temp))] <- as.numeric(temp)
     
     #spAbundTrt <- matrix(data=NA, 10000, 2);
     #spAbundTrt[1,1] <- length(indSppTrt)
