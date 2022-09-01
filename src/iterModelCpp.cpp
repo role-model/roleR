@@ -238,6 +238,11 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
                     break;
                 }
             }
+            
+            // add if statement to catch whether eNew >= eMax
+            // if eNew >= eMax, augment e with addition eMax rows
+            // else leave as is
+            
             Rcout << "got index of where unrealized edges in edge matrix start: " << eNew << "\n";
             
             // index of the edge matrix of where to add new edge
