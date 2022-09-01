@@ -57,6 +57,14 @@ public:
         //nTipsP = nTipsP_vect
         nTipsP = Rcpp::as<NumericVector>(phylo.slot("n"));
         edgesP = Rcpp::as<NumericMatrix>(phylo.slot("e"));
+        edgesP = edgesP - 1; //subtract one from edges to make them start at 0 
+        // fix -1s 
+        //for (int e = 0; e < edgesP.nrow(); e++) {
+        //    if (edgesP(e, 0) == -2) {
+        //        edgesP(e, 0) = -1;
+        //        edgesP(e, 1) = -1;
+        //    }
+        //}
         lengthsP = Rcpp::as<NumericVector>(phylo.slot("l"));
         aliveP = Rcpp::as<LogicalVector>(phylo.slot("alive"));
         tipNamesP = Rcpp::as<CharacterVector>(phylo.slot("tipNames"));
