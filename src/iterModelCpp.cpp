@@ -261,7 +261,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             
             for (int r = 0; r < eNew; r++) {
                 for (int c = 0; c < 2; c++){
-                    if (e(r, c) > n) {
+                    if (e(r, c) >= n) {
                         e(r, c) ++;
                     }
                 }
@@ -278,7 +278,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             
             // add tips
             e(eNew, 1) = e(j, 1); // add old tip
-            e(eNew + 1, 1) = n + 1; // add new tip
+            e(eNew + 1, 1) = n; // add new tip
             if(print_matrices){Rcout << "edge matrix after adding new child nodes: " << e << "\n";}
             
             // update ancestry of internal nodes
