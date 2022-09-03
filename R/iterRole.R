@@ -13,7 +13,7 @@ iterExperiment <- function(experiment, cores=1){
 
 #runs <- as.list(experiment@modelRuns)
 #runs <- experiment@modelRuns
-#print=T
+#print=F
 iterModel <- function(model,print=F) {
     
     library(rlang)
@@ -29,7 +29,6 @@ iterModel <- function(model,print=F) {
                                  slot(m@modelSteps[[1]],"metaComm"),
                                  slot(m@modelSteps[[1]],"phylo"),
                                  m@params,print)
-
     for(d in 1:length(m@modelSteps))
     {
         m@modelSteps[[d]]@localComm@indSpecies <- m@modelSteps[[d]]@localComm@indSpecies + 1

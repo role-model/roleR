@@ -51,6 +51,30 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     // create out array to hold timeseries data 
     RObject out[(niter / niter_timestep) + 1]; 
     
+    // save niter 0 
+    if(print){Rcout << "saving, niter: 0" << "\n";}
+    S4 out_l("localComm");
+    //out_l.slot("indSppTrt") = Rcpp::clone(d.indSpTrtL);
+    out_l.slot("indSpecies") = Rcpp::clone(d.indSpeciesL);
+    out_l.slot("indTrait") = Rcpp::clone(d.indTraitL);
+    out_l.slot("spAbund") = Rcpp::clone(d.spAbundL);
+    S4 out_m("metaComm");
+    //out_m.slot("sppAbundTrt") = Rcpp::clone(d.spAbundTrtM);
+    out_m.slot("spAbund") = Rcpp::clone(d.spAbundM);
+    out_l.slot("spTrait") = Rcpp::clone(d.spTraitM);
+    S4 out_p("rolePhylo");
+    out_p.slot("n") = Rcpp::clone(d.nTipsP);
+    out_p.slot("e") = Rcpp::clone(d.edgesP);
+    out_p.slot("l") = Rcpp::clone(d.lengthsP);
+    out_p.slot("alive") = Rcpp::clone(d.aliveP);
+    out_p.slot("tipNames") = Rcpp::clone(d.tipNamesP);
+    out_p.slot("scale") = Rcpp::clone(d.scaleP);
+    S4 out_d("roleData");
+    out_d.slot("localComm") = out_l;
+    out_d.slot("metaComm") = out_m; 
+    out_d.slot("phylo") = out_p;
+    out[0] = out_d; 
+    
     // loop from 0 to niter - 1 
     for(int i = 0; i < (int) params.slot("niter"); i++) {
         if(print){Rcout << "started iteration " << i << "\n";}
@@ -217,16 +241,16 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             
             NumericVector l = d.lengthsP;
             int n = d.nTipsP(0);
-            Rcout << "n tips p: " << n << "\n";
+            if(print){Rcout << "n tips p: " << n << "\n";}
             int i = chosen_species;
-            Rcout << "chosen species: " << i << "\n";
+            if(print){Rcout << "chosen species: " << i << "\n";}
             LogicalVector alive = d.aliveP;
             
             if(print_matrices){Rcout << "edge matrix at start: " << e << "\n";}
             
             // nrows of the edge matrix
             int eMax = e.nrow();
-            Rcout << "got number of rows of edge matrix: " << eMax << "\n";
+            if(print){Rcout << "got number of rows of edge matrix: " << eMax << "\n";}
             
             // find index of where unrealized edges in edge matrix start
             // eNew <- min(which(e[, 1] == -1))
@@ -243,7 +267,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             // if eNew >= eMax, augment e with addition eMax rows
             // else leave as is
             
-            Rcout << "got index of where unrealized edges in edge matrix start: " << eNew << "\n";
+            if(print){Rcout << "got index of where unrealized edges in edge matrix start: " << eNew << "\n";}
             
             // index of the edge matrix of where to add new edge
             // j <- which(e[, 2] == i)
@@ -255,7 +279,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
                 }
             }
             
-            Rcout << "got index of the edge matrix of where to add new edge: " << j << "\n";
+            if(print){Rcout << "got index of the edge matrix of where to add new edge: " << j << "\n";}
             // add one to internal node indices
             //e[e > n] <- e[e > n] + 1
             
@@ -269,8 +293,8 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             if(print_matrices){Rcout << "edge matrix after adding to internal node indices: " << e << "\n";}
             
             // add new internal node
-            int newNode = 2 * n + 1; // index of new node
-            Rcout << "got index of new internal node: " << newNode << "\n";
+            int newNode = 2 * n; // index of new node n+1
+            if(print){Rcout << "got index of new internal node: " << newNode << "\n";}
             
             e(eNew, 0) = newNode;
             e(1 + eNew, 0) = newNode; // do this more elegantly
@@ -294,7 +318,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             
             // increase all tip edge lengths by 1 time step
             for (int r = 0; r <= eNew + 1; r++) {
-                if (e(r, 1) <= n + 1) {
+                if (e(r, 1) <= n + 1) { //n+1
                     l(r) ++;
                 }
             }
@@ -307,7 +331,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
         }
         
         // save if i is 0, 9, 19 ... 99 
-        if(i == 0 || (i + 1) % niter_timestep == 0) //i == 0 || (i + 1) % niter_timestep == 0
+        if((i + 1) % niter_timestep == 0) //i == 0 || (i + 1) % niter_timestep == 0
         {
             
             if(print){Rcout << "saving, niter: " << i << "\n";}
@@ -352,7 +376,6 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             }
         
             if(print){Rcout << "added to out" << "\n";}
-            
         }
     } 
     
