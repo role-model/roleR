@@ -50,17 +50,17 @@ simGen <- function(localPop, metaPop, localSamp,
     
 }
 
-
-processFasta <- function(x) {
-    x <- gsub('[0-9]|\n', '', x)
-    
-    return(strsplit(x, '>n')[[1]][-1])
-}
-
-
-foo <- simGen(localPop = 1000, metaPop = 10000, localSamp = 5, 
-              mutationRate = 1, immRate = 1, maxTime = 10000, 
-              bp = 500, ploidy = 1)
-
-cat(foo$raw$draw_text())
-foo$div
+# 
+# processFasta <- function(x) {
+#     x <- gsub('[0-9]|\n', '', x)
+#     
+#     return(strsplit(x, '>n')[[1]][-1])
+# }
+# 
+# 
+# foo <- simGen(localPop = 1000, metaPop = 10000, localSamp = 5, 
+#               mutationRate = 1, immRate = 1, maxTime = 10000, 
+#               bp = 500, ploidy = 1)
+# 
+# cat(foo$raw$draw_text())
+# foo$div
