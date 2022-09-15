@@ -55,10 +55,16 @@ roleModel <- function(params) {
     # }
     # locs@spAbundTrt <- spAbundTrt
     
-    meta <- metaComm(spAbund =(Sm:1) / Sm, spTrait = 1:Sm)
+    
     
     phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)
     phylo <- as(phylo, 'rolePhylo')
+    
+    meta <- metaComm(spAbund = .lseriesFromSN(params@species_meta, 
+                                              params@individuals_local), 
+                     spTrait = ape::rTraitCont(phylo, 
+                                               sigma = params@trait_sigma))
+    
     
     dat <- roleData(localComm = locs, metaComm = meta, phylo = phylo)
     
@@ -99,5 +105,33 @@ roleModel <- function(params) {
     return(new('roleModel', 
                params =  params, 
                modelSteps = modelSteps))
+}
+
+
+
+
+# ----
+#' @description function to solve for parameter of logseries
+#' @param S number of species
+#' @param N number of individuals
+
+.lseriesFromSN <- function(S, N) {
+    # solve for alpha paramter
+    asol <- uniroot(interval = c(.Machine$double.eps^0.25,
+                                 .Machine$integer.max),
+                    f = function(a) {
+                        a * log(1 + N / a) - S
+                    })
+    
+    # calculate p parameter and beta (as used by pika)
+    p <- 1 - exp(-S / asol$root)
+    beta <- -log(p)
+    
+    # calculate idealized SAD from parameter
+    thisSAD <- pika::sad(model = 'fish', par = beta)
+    thisSAD <- pika::sad2Rank(thisSAD, S = S)
+    
+    # return relative abundances
+    return(thisSAD / sum(thisSAD))
 }
 
