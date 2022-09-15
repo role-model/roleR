@@ -2,26 +2,26 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 iterModelCpp <- function(local, meta, phylo, params, print) {
-    .Call('_roleR_iterModelCpp', PACKAGE = 'roleR', local, meta, phylo, params, print)
+    .Call(`_roleR_iterModelCpp`, local, meta, phylo, params, print)
 }
 
 rcpp_hello_world <- function() {
-    .Call('_roleR_rcpp_hello_world', PACKAGE = 'roleR')
+    .Call(`_roleR_rcpp_hello_world`)
 }
 
 rcpparma_hello_world <- function() {
-    .Call('_roleR_rcpparma_hello_world', PACKAGE = 'roleR')
+    .Call(`_roleR_rcpparma_hello_world`)
 }
 
 rcpparma_outerproduct <- function(x) {
-    .Call('_roleR_rcpparma_outerproduct', PACKAGE = 'roleR', x)
+    .Call(`_roleR_rcpparma_outerproduct`, x)
 }
 
 rcpparma_innerproduct <- function(x) {
-    .Call('_roleR_rcpparma_innerproduct', PACKAGE = 'roleR', x)
+    .Call(`_roleR_rcpparma_innerproduct`, x)
 }
 
 rcpparma_bothproducts <- function(x) {
-    .Call('_roleR_rcpparma_bothproducts', PACKAGE = 'roleR', x)
+    .Call(`_roleR_rcpparma_bothproducts`, x)
 }
 
