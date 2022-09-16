@@ -27,10 +27,7 @@ roleModel <- function(params) {
     # }
     
     
-    locs <- localComm(indSpecies=rep(1,J),
-                      indTrait = seq(1, 1.2, length.out = J),
-                      indSeqs = rep('ATCG', J),
-                      spGenDiv = c(1))
+
                       
     #indSpTrt <- matrix(c(rep(1, J), seq(1, 1.2, length.out = J)), ncol = 2)
     
@@ -58,15 +55,36 @@ roleModel <- function(params) {
     
     
     phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)
-    phylo <- as(phylo, 'rolePhylo')
     
     meta <- metaComm(spAbund = .lseriesFromSN(params@species_meta, 
-                                              params@individuals_local), 
+                                              params@individuals_meta), 
                      spTrait = ape::rTraitCont(phylo, 
                                                sigma = params@trait_sigma))
     
+    # initialize indSpecies from random draw from meta (based on oceanic or
+    # bridge island)
+    if(params@init_type == 'oceanic_island') {
+        initSpp <- rep(sample(params@species_meta, 1, 
+                              prob = meta@spAbund), 
+                       J)
+    } else if(params@init_type == 'bridge_island') {
+        initSpp <- sample(params@speciation_meta, J, 
+                          replace = TRUE, prob = meta@spAbund)
+    } else {
+        stop('`init_type` must be one of `"oceanic_island"` or `"bridge_island"`')
+    }
     
-    dat <- roleData(localComm = locs, metaComm = meta, phylo = phylo)
+    # initialize traits based on spp ID
+    initTrait <- meta@spTrait[initSpp]
+    
+    locs <- localComm(indSpecies = initSpp,
+                      indTrait = initTrait,
+                      indSeqs = rep('ATCG', J), # leave genetic stuff alone
+                      spGenDiv = c(1))
+    
+    dat <- roleData(localComm = locs, 
+                    metaComm = meta, 
+                    phylo = as(phylo, 'rolePhylo'))
     
     niter <- params@niter
     if(niter > 100) {
@@ -117,6 +135,7 @@ roleModel <- function(params) {
 
 .lseriesFromSN <- function(S, N) {
     # solve for alpha paramter
+    # browser()
     asol <- uniroot(interval = c(.Machine$double.eps^0.25,
                                  .Machine$integer.max),
                     f = function(a) {
@@ -134,4 +153,5 @@ roleModel <- function(params) {
     # return relative abundances
     return(thisSAD / sum(thisSAD))
 }
+
 
