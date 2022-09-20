@@ -2,8 +2,17 @@
 #'
 #' @description An S4 class to hold one model run of the RoLE model
 #' 
+#' @details A model is first initialized using a set of params, then iterated using iterModel(modeL)
+#' roleExperiments consist of many roleModels with different parameters
+#' 
 #' @slot modelSteps a list of roleData objects, one for each recorded time step
-#' @slot params a roleParams object with the RoLE model params
+#' `niterTimestep` param defines recording interval
+#' @slot params a `roleParams` object defining the model params
+#' 
+#' @examples 
+#' Create a model using a default set of params, then run it
+#' model <- roleModel(roleParams())
+#' run <- iterModel(model)
 #' 
 #' @rdname roleModel
 #' @export

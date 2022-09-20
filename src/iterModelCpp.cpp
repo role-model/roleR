@@ -79,16 +79,17 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     for(int i = 0; i < (int) params.slot("niter"); i++) {
         if(print){Rcout << "started iteration " << i << "\n";}
             
-        // sample for dead index 
         // NOTES
+        // sample for dead index
         // picture curve with prob of death being 0 at trait optimum
         // curve equation is 1-exp(-1(xi - xopt)^2 / env_sigma
         // env_sigma determines if curve is wide or narrow
-        // traits optimum is 0 
+        // traits optimum is 0
         // env_filter_probs is calculated before the loop and updated when indTraitL or env_sigma changes
         // sigma comp makes the curve wider, making more dissimilar individuals having greater impact on death
-        // lower sigma comp means individual is only competing with itself and very close indv is trait space 
-        // recall that we called the optimum trait_z for the use case where trait optima changes as the environment changes 
+        // lower sigma comp means individual is only competing with itself and very close indv is trait space
+        // recall that we called the optimum trait_z for the use case where trait optima changes as the environment changes
+        // either find param values that make things neutral, or togglable parameter that makes things neutral
         
         arma::colvec comp_probs_a = arma::sum(arma::exp((-1/p.comp_sigma(i)) * d.traitDiffsSq),1) / n_indv;
         NumericVector comp_probs = Rcpp::wrap(comp_probs_a.begin(),comp_probs_a.end());

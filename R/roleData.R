@@ -1,4 +1,5 @@
-#' @title An S4 class to role model data for timeseries
+#' @title A set of data representing one step or state of a roleModel 
+#' @description  Contains community states, phylo state, and summmary stats
 #' @slot localComm an object of class \code{localComm}
 #' @slot metaComm an object of class \code{metaComm}
 #' @slot phylo an object of class \code{rolePhylo}
