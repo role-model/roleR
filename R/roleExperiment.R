@@ -1,13 +1,19 @@
-#' @title RoLE experiment
+#' @title A RoLE experiment: one or more models used collectively to ask a question or probe a hypothesis 
 #' 
 #' @description An S4 class to represent a complete self-enclosed experiment (a 
 #'     model run or set of runs with associated meta data). Contains one or more 
 #'     `roleModel` runs and the `roleParams` used to generate each of the runs
 #' 
-#' @slot experimentMeta data.frame of model meta data
+#' @slot experimentMeta data.frame of model metadata
 #' @slot modelRuns list of `roleData` objects containing outputs
 #' @slot allParams list of `roleParams` objects containing input params for 
 #'     each run
+#' @examples 
+#' Create a roleExperiment using a set of params
+#' p1 <- roleParams(speciation_local=0.2)
+#' p2 <- roleParams(speciation_local=0.3)
+#' p3 <- roleParams(speciation_local=0.4)
+#' exp <- roleExperiment(list(p1,p2,p3))
 #' 
 #' @rdname roleExperiment
 #' @export

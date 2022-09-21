@@ -1,5 +1,5 @@
 Rcpp::loadModule("iterModelCpp", TRUE)
-library(reticulate)
+#library(reticulate)
 out <- tryCatch(install_miniconda(),error=function(e) {})
 out <- tryCatch(conda_install("r-reticulate",
               packages="msprime",

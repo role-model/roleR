@@ -1,5 +1,6 @@
 #' @title Parameters of one roleModel
-#' @description An S4 class for roleModel parameters
+#' @description An S4 class containing params for population sizes, rates of processes, the number of iterations
+#' to run, and more 
 #' 
 #' @slot individuals_local number of individuals in local community
 #' @slot individuals_meta number of individuals in meta community
@@ -8,7 +9,7 @@
 #' @slot speciation_meta speciation rate in meta community
 #' @slot extinction_meta extinction rate in meta community
 #' @slot trait_sigma rate of Brownian trait evolution in the meta community
-#' @slot env_sigma selectivity of environmental filter
+#' @slot env_sigma selectivity of environmental filter # might need another parameter for death rate in the face of neutrality
 #' @slot comp_sigma selectivity of competition
 #' @slot dispersal_prob local dispersal probability
 #' 
@@ -23,10 +24,23 @@
 #' @slot niterTimestep an integer specifying the frequency (in numbers of 
 #'     iterations) at which the model state is saved
 #' 
-#' @details Each parameter other than `init_type`, `niter`, and `niterTimestep`
-#'     is a vector containing either one value or `niter` values; `init_type`, 
-#'     `niter`, and `niterTimestep` can only take a single value (others can
-#'     only take single vals too...clear this up)
+#' @details Params `init_type`, `niter`, `niterTimestep`, 
+#'     `mutation_rate`,`equilib_escape`,and `num_basepairs` take a single value.
+#'      All other params are numeric vectors containing either one value or `niter` values.
+#'      If one value that value is used for all iterations of the model.
+#'      If `niter`values a different sequential value is used for each iteration 
+#'      
+#' @examples 
+#' Create a set of params
+#' params <- roleParams(individuals_local = 100, individuals_meta = 1000,
+#' species_meta = 10, speciation_local = 0.5, 
+#' speciation_meta = 1, extinction_meta = 0.8, env_sigma = 0.5,
+#' trait_sigma=1,comp_sigma = 0.1, dispersal_prob = 0.1, mutation_rate = 0.01,
+#' equilib_escape = 1, num_basepairs = 250,
+#' init_type = 'oceanic_island', niter = 2, niterTimestep = 2)
+#' 
+#' Use it to create a roleModel
+#' model <- roleModel(params)
 #' 
 #' @rdname roleParams
 #' @export

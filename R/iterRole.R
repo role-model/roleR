@@ -1,22 +1,74 @@
+#' @title Run a roleModel or roleExperiment object 
+#' @description Return a RoLE object run to completion using the params contained within it
+#' @param x the `roleModel` or `roleExperiment` object to run
+#' @param print whether to print step information as the model runs
+#' @return a run `roleModel` or `roleExperiment`
+#' 
+#' @examples 
+#' Create and run a model
+#' model <- roleModel(roleParams())
+#' model <- runRoLE(model)
+#' 
+#' Create and run an experiment
+#' p1 <- roleParams(speciation_local=0.2)
+#' p2 <- roleParams(speciation_local=0.3)
+#' p3 <- roleParams(speciation_local=0.4)
+#' exp <- roleExperiment(list(p1,p2,p3))
+#' exp <- runRoLE(exp)
+#' 
+#' @rdname runRoLE
+#' @export
 
-iterExperiment <- function(experiment, cores=1){
-    if(cores == 1){
-        experiment@modelRuns <- lapply(experiment@modelRuns, iterModel)
-    }
-    else{
-        cl <- makeCluster(cores,type="SOCK")
-        experiment@modelRuns <- clusterApply(cl, experiment@modelRuns, iterModel)
-        stopCluster(cl)
-    }
-    return(experiment)
-}
+setGeneric('runRoLE', 
+           def = function(x, print = F) standardGeneric('runRoLE'), 
+           signature = 'x')
 
+setMethod('runRoLE', 
+          signature = 'roleModel', 
+          definition = function(x, print = F) {
+              library(rlang)
+              m <- duplicate(x)
+              # m <- model
+              # init the first data step of the model using params 
+              #model <- initModel(model)
+              # start_data <- m@modelSteps[[1]]
+              # iterate the model using its params 
+              
+              # returns the new modelSteps (a list of roleData)
+              m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
+                                           slot(m@modelSteps[[1]],"metaComm"),
+                                           slot(m@modelSteps[[1]],"phylo"),
+                                           m@params,print)
+              for(d in 1:length(m@modelSteps))
+              {
+                  m@modelSteps[[d]]@localComm@indSpecies <- m@modelSteps[[d]]@localComm@indSpecies + 1
+                  m@modelSteps[[d]]@phylo@e <- m@modelSteps[[d]]@phylo@e + 1
+              }
+              return(m)
+          }
+)
+
+setMethod('runRoLE', 
+          signature = 'roleExperiment', 
+          definition = function(x, print = F) {
+              experiment <- x
+              if(cores == 1){
+                  experiment@modelRuns <- lapply(experiment@modelRuns, iterModel)
+              }
+              else{
+                  cl <- makeCluster(cores,type="SOCK")
+                  experiment@modelRuns <- clusterApply(cl, experiment@modelRuns, iterModel)
+                  stopCluster(cl)
+              }
+              return(experiment)
+          }
+)
 #runs <- as.list(experiment@modelRuns)
 #runs <- experiment@modelRuns
-#print=T
+#print=F
 iterModel <- function(model,print=F) {
     
-    library(rlang)
+    #ibrary(rlang)
     m <- duplicate(model)
     # m <- model
     # init the first data step of the model using params 
@@ -29,13 +81,24 @@ iterModel <- function(model,print=F) {
                                  slot(m@modelSteps[[1]],"metaComm"),
                                  slot(m@modelSteps[[1]],"phylo"),
                                  m@params,print)
-
     for(d in 1:length(m@modelSteps))
     {
         m@modelSteps[[d]]@localComm@indSpecies <- m@modelSteps[[d]]@localComm@indSpecies + 1
         m@modelSteps[[d]]@phylo@e <- m@modelSteps[[d]]@phylo@e + 1
     }
     return(m)
+}
+
+iterExperiment <- function(experiment, cores=1){
+    if(cores == 1){
+        experiment@modelRuns <- lapply(experiment@modelRuns, iterModel)
+    }
+    else{
+        cl <- makeCluster(cores,type="SOCK")
+        experiment@modelRuns <- clusterApply(cl, experiment@modelRuns, iterModel)
+        stopCluster(cl)
+    }
+    return(experiment)
 }
 
 # take a roleModel and init it's first data before giving to iterSim 

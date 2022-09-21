@@ -58,9 +58,9 @@ processFasta <- function(x) {
 }
 
 
-foo <- simGen(localPop = 1000, metaPop = 10000, localSamp = 5, 
-              mutationRate = 1, immRate = 1, maxTime = 10000, 
-              bp = 500, ploidy = 1)
+#foo <- simGen(localPop = 1000, metaPop = 10000, localSamp = 5, 
+#              mutationRate = 1, immRate = 1, maxTime = 10000, 
+#              bp = 500, ploidy = 1)
 
-cat(foo$raw$draw_text())
-foo$div
+#cat(foo$raw$draw_text())
+#foo$div

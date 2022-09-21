@@ -7,7 +7,12 @@
 #' @param lastColAsTitle specify to use the last column gathered by the fun as column names for the output dataframe
 
 #' @return a dataframe containing the timeseries 
-#'
+#' @examples 
+#' Run a model, then get a timeseries of mean trait values at each timestep
+#' model <- roleModel(roleParams())
+#' model <- iterModel(model)
+#' trait_means <- getTimeseries(model,getTraitMean)'
+#' 
 #' @export
 
 setGeneric('getTimeseries', function(x, ...) standardGeneric('getTimeseries'), signature = 'x')
@@ -27,8 +32,8 @@ setMethod("getTimeseries", signature(x="roleModel"),
           }
 )
 
-role <- readRDS("data/example_out_in/test.roleexperiment")
-model <- role@modelRuns[[1]]
+#role <- readRDS("data/example_out_in/test.roleexperiment")
+#model <- role@modelRuns[[1]]
 
 # get one value
 getAbundanceSp <- function(roledata){

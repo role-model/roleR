@@ -1,14 +1,47 @@
 Package: roleR
 Type: Package
 Title: Rules of Life Engine
-Version: 1.0
-Date: 2021-11-04
+Version: 0.1.0
+Date: 2022-09-15
 Author: Andrew Rominger, Isaac Overcast, Megan Ruffley, Mike Hickerson, Jacob Idec
 Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
-Description: A simulation-based model the captures many processes across ecology and evolution and jointly predicts multi-dimensional biodiversity data.
-License: GPL (>= 2)
-Depends: R (>= 3.2), methods
-Imports: Rcpp (>= 1.0.9), ape, pika, rlang, reticulate
-LinkingTo: Rcpp, RcppArmadillo
+Description: A simulation-based model the captures many processes across ecology 
+    and evolution and jointly predicts multi-dimensional biodiversity data.
+License: GNU GENERAL PUBLIC LICENSE
+LazyData: true
+Encoding: UTF-8
+Depends:
+    R (>= 3.2)
+Imports: 
+    Rcpp (>= 1.0.9),
+    ape,
+    pika, 
+    methods,
+    rlang,
+    reticulate
 Remotes:
     ajrominger/pika
+LinkingTo: Rcpp, RcppArmadillo
+Collate:
+    'RcppExports.R'
+    'comm.R'
+    'rolePhylo.R'
+    'roleParams.R'
+    'roleData.R'
+    'roleModel.R'
+    'roleExperiment.R'
+    'iterRole.R'
+    'getFinalState.R'
+    'getSumStats.R'
+    'getTimeseries.R'
+    'roleData-divStats.R'
+    'roleData-rawStats.R'
+    'roleExperiment-methods.R'
+    'createPredModel.R'
+    'roleIterFuns.R'
+    'rolePriors.R'
+    'simGen.R'
+    'simulateSpeciesGenDiv.R'
+    'prepRebuild.R'
+    'zzz.R'
+RoxygenNote: 7.2.0
