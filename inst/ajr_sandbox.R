@@ -6,7 +6,7 @@ p <- roleParams(individuals_local = 100, individuals_meta = 10000,
                 comp_sigma = 1, dispersal_prob = 0.1, mutation_rate = 0.01, 
                 equilib_escape = 1, alpha = 1000, num_basepairs = 500, 
                 init_type = 'oceanic_island', 
-                niter = 1000, niterTimestep = 200)
+                niter = 100000)
 
 m <- roleModel(p)
 
