@@ -26,8 +26,8 @@ setGeneric('runRoLE',
 setMethod('runRoLE', 
           signature = 'roleModel', 
           definition = function(x, print = F) {
-              library(rlang)
-              m <- duplicate(x)
+              # library(rlang)
+              m <- rlang::duplicate(x)
               # m <- model
               # init the first data step of the model using params 
               #model <- initModel(model)
@@ -69,7 +69,7 @@ setMethod('runRoLE',
 iterModel <- function(model,print=F) {
     
     #ibrary(rlang)
-    m <- duplicate(model)
+    m <- rlang::duplicate(model)
     # m <- model
     # init the first data step of the model using params 
     #model <- initModel(model)
