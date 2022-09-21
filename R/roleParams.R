@@ -131,7 +131,7 @@ roleParams <- function(individuals_local=100,
         if(allParams$niter < 10 * allParams$individuals_local[1]) {
             allParams$niterTimestep <- allParams$niter
         } else {
-            allParams$niterTimestep <- 10 * allParams$individuals_local
+            allParams$niterTimestep <- 10 * allParams$individuals_local[1]
         }
     }
     
