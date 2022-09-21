@@ -1,14 +1,17 @@
 library(roleR)
 
 p <- roleParams(individuals_local = 100, individuals_meta = 10000, 
-                species_meta = 5, speciation_local = 0.05, speciation_meta = 1, 
-                extinction_meta = 0.5, trait_sigma = 1, env_sigma = 1, 
+                species_meta = 5, speciation_local = 0.00075, speciation_meta = 0.1, 
+                extinction_meta = 0.05, trait_sigma = 1, env_sigma = 1, 
                 comp_sigma = 1, dispersal_prob = 0.1, mutation_rate = 0.01, 
                 equilib_escape = 1, alpha = 1000, num_basepairs = 500, 
                 init_type = 'oceanic_island', 
                 niter = 1000, niterTimestep = 200)
 
 m <- roleModel(p)
+
+# m@modelSteps[[1]]@localComm@indSpecies <- rep(3, 100)
+# m@modelSteps[[1]]@localComm@spAbund[c(1, 3)] <- c(0, 100)
 
 foo <- iterModel(m)
 
