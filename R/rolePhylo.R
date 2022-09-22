@@ -109,7 +109,7 @@ setAs(from = 'phylo', to = 'rolePhylo',
           
           
           # buffer objects so we can add new species without augmenting objects
-          addOn <- n * 100
+          addOn <- n * 2000
           e <- rbind(e, matrix(-1, nrow = addOn, ncol = 2))
           l <- c(l, rep(0, addOn))
           alive <- c(alive, rep(FALSE, addOn))

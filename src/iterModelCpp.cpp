@@ -41,11 +41,16 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     roleDataCpp d(local,meta,phylo);
     roleParamsCpp p = roleParamsCpp(params,niter); // constructor samples/stretches
     
+    // save n_indv to use easily throughout
     int n_indv = p.individuals_local[0];
     
-    // calculate initial probs of death from environmental filtering
-    NumericVector env_filter_probs = 1 - exp(-1/p.env_sigma[0] * pow(d.indTraitL - 0, 2));
-    if(print){Rcout << "calculated initial probs of death from env filtering: " << env_filter_probs << "\n";}
+    // if not neutral, calculate initial probs of death from environmental filtering
+    NumericVector env_filter_probs (1.0,n_indv);
+    if(p.neut_delta[0] != 1)
+    {
+        env_filter_probs = 1 - exp(-1/p.env_sigma[0] * pow(d.indTraitL - 0, 2));
+        if(print){Rcout << "calculated initial probs of death from env filtering: " << env_filter_probs << "\n";}
+    }
     double prev_env_sigma = p.env_sigma[0];
     
     // create out array to hold timeseries data 
@@ -91,15 +96,26 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
         // recall that we called the optimum trait_z for the use case where trait optima changes as the environment changes
         // either find param values that make things neutral, or togglable parameter that makes things neutral
         
-        // expensive operation
-        arma::colvec comp_probs_a = arma::sum(arma::exp((-1/p.comp_sigma(i)) * d.traitDiffsSq),1) / n_indv;
-        NumericVector comp_probs = Rcpp::wrap(comp_probs_a.begin(),comp_probs_a.end());
-        if(print){Rcout << "calculated comp probs: " << comp_probs << "\n";}
+        // neutral death probs is rep(1,n_indv)
+        NumericVector death_probs(1.0,n_indv);
         
-        // calculate combined death probs
-        NumericVector death_probs = env_filter_probs + comp_probs;
-        if(print){Rcout << "combined env and comp probs: " << death_probs << "\n";}
-        //Rcout << "dead probs " << death_probs << "\n";
+        // if not neutral, calculate initial probs of death from environmental filtering
+        if(p.neut_delta[0] != 1)
+        {
+            NumericVector env_filter_probs = 1 - exp(-1/p.env_sigma[0] * pow(d.indTraitL - 0, 2));
+            if(print){Rcout << "calculated initial probs of death from env filtering: " << env_filter_probs << "\n";}
+            double prev_env_sigma = p.env_sigma[0];
+
+            arma::colvec comp_probs_a = arma::sum(arma::exp((-1/p.comp_sigma(i)) * d.traitDiffsSq),1) / n_indv;
+            NumericVector comp_probs = Rcpp::wrap(comp_probs_a.begin(),comp_probs_a.end());
+            if(print){Rcout << "calculated comp probs: " << comp_probs << "\n";}
+        
+            // calculate combined death probs
+            death_probs = p.neut_delta[0] + (1-p.neut_delta[0]) * (env_filter_probs + comp_probs);
+            //death_probs = env_filter_probs + comp_probs;
+            if(print){Rcout << "combined env and comp probs: " << death_probs << "\n";}
+            //Rcout << "dead probs " << death_probs << "\n";
+        }
         
         // get dead index and dead species
         int dead_index = sample_index_using_probs(death_probs);
@@ -184,17 +200,21 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
         }
         
         if(print){Rcout << "checking if new env sigma" << "\n";}
-        // if new env_sigma, must recalculate entirely
-        if(prev_env_sigma != p.env_sigma[i]){
-            if(print){Rcout << "recalculating full env sigma" << "\n";}
-            env_filter_probs = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL - 0, 2));
+        
+        if(p.neut_delta[0] != 1)
+        {
+            // if new env_sigma, must recalculate entirely
+            if(prev_env_sigma != p.env_sigma[i]){
+                if(print){Rcout << "recalculating full env sigma" << "\n";}
+                env_filter_probs = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL - 0, 2));
+            }
+            //otherwise just update the probs of the new individual
+            else{
+                if(print){Rcout << "recalculating env sigma for new individual" << "\n";}
+                env_filter_probs(dead_index) = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL(dead_index), 2));
+            }
+            prev_env_sigma = p.env_sigma[i];
         }
-        //otherwise just update the probs of the new individual
-        else{
-            if(print){Rcout << "recalculating env sigma for new individual" << "\n";}
-            env_filter_probs(dead_index) = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL(dead_index), 2));
-        }
-        prev_env_sigma = p.env_sigma[i];
         
         // if speciation occurs
         if(R::runif(0,1) < p.speciation_local(i))
