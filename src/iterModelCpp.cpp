@@ -91,6 +91,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
         // recall that we called the optimum trait_z for the use case where trait optima changes as the environment changes
         // either find param values that make things neutral, or togglable parameter that makes things neutral
         
+        // expensive operation
         arma::colvec comp_probs_a = arma::sum(arma::exp((-1/p.comp_sigma(i)) * d.traitDiffsSq),1) / n_indv;
         NumericVector comp_probs = Rcpp::wrap(comp_probs_a.begin(),comp_probs_a.end());
         if(print){Rcout << "calculated comp probs: " << comp_probs << "\n";}
