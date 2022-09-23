@@ -1,5 +1,24 @@
 library(roleR)
 
+
+neutp <- untbParams(individuals_local = 100, 
+                    individuals_meta = 1000, species_meta = 100, 
+                    speciation = 0.01, dispersal_prob = 0.2, 
+                    init_type = 'oceanic_island', 
+                    niter = 1000, niterTimestep = 10)
+
+
+neut <- roleModel(neutp)
+foo <- as(iterModel(neut), 'roleExperiment')
+foo@experimentMeta
+
+getSumStats(foo, list(rich = richness))
+
+
+
+
+
+
 p <- roleParams(individuals_local = 100, individuals_meta = 100000, 
                 species_meta = 50, speciation_local = 0.00075, speciation_meta = NULL, 
                 extinction_meta = 0.05, trait_sigma = 1, env_sigma = 1, 
@@ -9,7 +28,6 @@ p <- roleParams(individuals_local = 100, individuals_meta = 100000,
                 niter = 1000)
 
 
-neutp <- untbParams(ind_loc, ind_meta, spec, disperal_prob)
 
 
 lvParams
