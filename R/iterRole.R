@@ -28,6 +28,15 @@ setMethod('runRoLE',
           definition = function(x, print = F) {
               # library(rlang)
               m <- rlang::duplicate(x)
+ 
+              for(i in 2:length(x@modelSteps))
+              {
+                  if(!is.null(x@modelSteps[[i]]))
+                  {
+                      stop("Models can only be run once and this model has already been run")
+                  }
+              }
+              if(length(x@modelSteps) > 1)
               # m <- model
               # init the first data step of the model using params 
               #model <- initModel(model)

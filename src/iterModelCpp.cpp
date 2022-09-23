@@ -45,7 +45,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     int n_indv = p.individuals_local[0];
     
     // if not neutral, calculate initial probs of death from environmental filtering
-    NumericVector env_filter_probs (1.0,n_indv);
+    NumericVector env_filter_probs (n_indv,1.0);
     if(p.neut_delta[0] != 1)
     {
         env_filter_probs = 1 - exp(-1/p.env_sigma[0] * pow(d.indTraitL - 0, 2));
@@ -97,7 +97,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
         // either find param values that make things neutral, or togglable parameter that makes things neutral
         
         // neutral death probs is rep(1,n_indv)
-        NumericVector death_probs(1.0,n_indv);
+        NumericVector death_probs(n_indv,1.0);
         
         // if not neutral, calculate initial probs of death from environmental filtering
         if(p.neut_delta[0] != 1)
@@ -113,10 +113,10 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             // calculate combined death probs
             death_probs = p.neut_delta[0] + (1-p.neut_delta[0]) * (env_filter_probs + comp_probs);
             //death_probs = env_filter_probs + comp_probs;
-            if(print){Rcout << "combined env and comp probs: " << death_probs << "\n";}
             //Rcout << "dead probs " << death_probs << "\n";
         }
         
+        if(print){Rcout << "final death probs: " << death_probs << "\n";}
         // get dead index and dead species
         int dead_index = sample_index_using_probs(death_probs);
         if(print){Rcout << "dead_index: " << dead_index << "\n";}
@@ -188,10 +188,10 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             d.indTraitL(dead_index) = d.spTraitM(parent_index) + trait_change(0);
         }
         
-        if(print){Rcout << "updating trait diffs sq" << "\n";}
         // update traitDiffsSq using two for loops 
         for(int r = 0; r < n_indv; r++)
         {
+            if(print){Rcout << "updating trait diffs sq" << "\n";}
             d.traitDiffsSq(r,dead_index) = pow(d.indTraitL(r) - d.indTraitL(dead_index),2);
         }
         for(int c = 0; c < n_indv; c++)
@@ -199,11 +199,10 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             d.traitDiffsSq(dead_index,c) = pow(d.indTraitL(dead_index) - d.indTraitL(c),2);
         }
         
-        if(print){Rcout << "checking if new env sigma" << "\n";}
-        
         if(p.neut_delta[0] != 1)
         {
             // if new env_sigma, must recalculate entirely
+            if(print){Rcout << "checking if new env sigma" << "\n";}
             if(prev_env_sigma != p.env_sigma[i]){
                 if(print){Rcout << "recalculating full env sigma" << "\n";}
                 env_filter_probs = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL - 0, 2));
