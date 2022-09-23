@@ -57,6 +57,7 @@ roleParams <- setClass('roleParams',
                            env_sigma = "numeric",
                            comp_sigma = "numeric",
                            neut_delta = "numeric",
+                           env_comp_delta = "numeric",
                            dispersal_prob = "numeric",
                            mutation_rate = "numeric" ,
                            equilib_escape = "numeric",
@@ -65,7 +66,8 @@ roleParams <- setClass('roleParams',
                            init_type = "character", 
                            niter = 'integer', 
                            niterTimestep = 'integer'
-                       ))
+                       )
+                       )
 
 
 
@@ -73,24 +75,33 @@ roleParams <- setClass('roleParams',
 #' @rdname roleParams
 #' @export
 
-roleParams <- function(individuals_local=100,
-                       individuals_meta=1000,
-                       species_meta=500,
-                       speciation_local=0.1,
-                       speciation_meta=0.5,
-                       extinction_meta=0.5,
-                       trait_sigma=1,
-                       env_sigma=0.1,
-                       comp_sigma=0.1,
-                       neut_delta= 0,
-                       dispersal_prob=0.1,
-                       mutation_rate=0.01,
-                       equilib_escape=1,
-                       alpha = 10,
-                       num_basepairs=250,
-                       init_type='oceanic_island', 
-                       niter=100, 
-                       niterTimestep=10) {
+roleParams <- function(individuals_local,
+                       individuals_meta,
+                       species_meta,
+                       speciation_local,
+                       speciation_meta,
+                       extinction_meta,
+                       trait_sigma,
+                       env_sigma,
+                       comp_sigma,
+                       neut_delta=NA,
+                       env_comp_delta=NA,
+                       dispersal_prob,
+                       mutation_rate=NA,
+                       equilib_escape=NA,
+                       alpha=NA,
+                       num_basepairs=NA,
+                       init_type, 
+                       niter, 
+                       niterTimestep) {
+    # set defaults
+    if(is.na(neut_delta)){neut_delta <- 0}
+    if(is.na(env_comp_delta)){env_comp_delta <- 0.5}
+    if(is.na(alpha)){alpha <- 1}
+    if(is.na(equilib_escape)){equilib_escape <- 1}
+    if(is.na(mutation_rate)){mutation_rate <- 0.001}
+    if(is.na(num_basepairs)){num_basepairs <- 250}
+    
     # check that `niter` is given correctly
     if(missing(niter) | length(niter) > 1) {
         stop('must supply a single value for `niter`')
@@ -148,6 +159,7 @@ roleParams <- function(individuals_local=100,
                env_sigma = as.numeric(allParams$env_sigma),
                comp_sigma = as.numeric(allParams$comp_sigma),
                neut_delta = as.numeric(allParams$neut_delta),
+               env_comp_delta = as.numeric(allParams$env_comp_delta),
                dispersal_prob = as.numeric(allParams$dispersal_prob),
                mutation_rate = as.numeric(allParams$mutation_rate),
                equilib_escape = as.numeric(allParams$equilib_escape),
@@ -182,6 +194,7 @@ untbParams <- function(individuals_local,
                env_sigma = 1,
                comp_sigma = 1,
                neut_delta = 1, # makes the model neutral by ignoring env and comp sigmas
+               env_comp_delta = 0.5,
                dispersal_prob = dispersal_prob,
                mutation_rate = 0.01,
                equilib_escape = 1,

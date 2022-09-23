@@ -111,7 +111,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             if(print){Rcout << "calculated comp probs: " << comp_probs << "\n";}
         
             // calculate combined death probs
-            death_probs = p.neut_delta[0] + (1-p.neut_delta[0]) * (env_filter_probs + comp_probs);
+            death_probs = p.neut_delta[0] + (1-p.neut_delta[0]) * ((p.env_comp_delta[0] * env_filter_probs) + ((1-p.env_comp_delta[0]) * comp_probs));
             //death_probs = env_filter_probs + comp_probs;
             //Rcout << "dead probs " << death_probs << "\n";
         }

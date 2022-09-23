@@ -16,6 +16,7 @@ public:
     NumericVector env_sigma;
     NumericVector comp_sigma; 
     NumericVector neut_delta; 
+    NumericVector env_comp_delta; 
     NumericVector dispersal_prob; 
     //NumericVector mutation_rate; 
     NumericVector equilib_escape;
@@ -30,6 +31,7 @@ public:
         env_sigma = Rcpp::as<NumericVector>(params.slot("env_sigma"));
         comp_sigma = Rcpp::as<NumericVector>(params.slot("comp_sigma"));
         neut_delta = Rcpp::as<NumericVector>(params.slot("neut_delta"));
+        env_comp_delta = Rcpp::as<NumericVector>(params.slot("env_comp_delta"));
         dispersal_prob = Rcpp::as<NumericVector>(params.slot("dispersal_prob"));
         
         if(individuals_local.length() == 1){
@@ -57,6 +59,9 @@ public:
         }
         if(neut_delta.length() == 1){
             neut_delta = rep(neut_delta, niter);
+        }
+        if(env_comp_delta.length() == 1){
+            env_comp_delta = rep(env_comp_delta, niter);
         }
         if(dispersal_prob.length() == 1){
             dispersal_prob = rep(dispersal_prob, niter);

@@ -52,13 +52,12 @@ test_that('model outputs are reasonable using untb'){
 # NOTE - if neut delta is not specified it defaults to NA and causes "probs must be finite" error 
 # NOTE - if you iterate a model twice everything gets completely screwed up 
 test_that('model outputs are reasonable using normal params'){
-    
     params <- roleParams(individuals_local = 100, individuals_meta = 10000,
                          species_meta = 50, speciation_local = 0.01, 
                          speciation_meta = 0.8, extinction_meta = 0.05, env_sigma = 1,
                          trait_sigma=1,comp_sigma = 1, dispersal_prob = 0.1, mutation_rate = 0.01,
                          equilib_escape = 1, num_basepairs = 250,
-                         init_type = 'oceanic_island', niter = 1000, niterTimestep = 10, neut_delta=0)
+                         init_type = 'oceanic_island', niter = 1000, niterTimestep = 10, neut_delta=0,env_comp_delta = 0.8)
     model <- roleModel(params)
     #model@params@neut_delta
     model <- iterModel(model)
