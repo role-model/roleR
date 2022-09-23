@@ -15,8 +15,6 @@ test_that('model constructor runs without error'){
     model@modelSteps[[1]]@phylo@e
     model@modelSteps[[1]]@localComm@indSpecies
     foo <- roleR::runRoLE(model)
-    roleR::
-    iterR
     foo@modelSteps[[1]]@phylo@e
     foo@modelSteps[[2]]@localComm@indSpecies
     model@modelSteps[[1]]@localComm@indSpecies

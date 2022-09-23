@@ -56,6 +56,7 @@ roleParams <- setClass('roleParams',
                            trait_sigma = "numeric",
                            env_sigma = "numeric",
                            comp_sigma = "numeric",
+                           neut_delta = "numeric",
                            dispersal_prob = "numeric",
                            mutation_rate = "numeric" ,
                            equilib_escape = "numeric",
@@ -81,6 +82,7 @@ roleParams <- function(individuals_local=100,
                        trait_sigma=1,
                        env_sigma=0.1,
                        comp_sigma=0.1,
+                       neut_delta = 0,
                        dispersal_prob=0.1,
                        mutation_rate=0.01,
                        equilib_escape=1,
@@ -145,6 +147,7 @@ roleParams <- function(individuals_local=100,
                trait_sigma = as.numeric(allParams$trait_sigma),
                env_sigma = as.numeric(allParams$env_sigma),
                comp_sigma = as.numeric(allParams$comp_sigma),
+               neut_delta = as.numeric(allParams$neut_delta),
                dispersal_prob = as.numeric(allParams$dispersal_prob),
                mutation_rate = as.numeric(allParams$mutation_rate),
                equilib_escape = as.numeric(allParams$equilib_escape),
@@ -153,4 +156,38 @@ roleParams <- function(individuals_local=100,
                init_type = as.character(allParams$init_type), 
                niter = as.integer(allParams$niter),
                niterTimestep = as.integer(allParams$niterTimestep)))
+}
+
+# constructor
+#' @rdname untbParams
+#' @export
+
+untbParams <- function(individuals_local,
+                       individuals_meta,
+                       species_meta,
+                       speciation,
+                       dispersal_prob,
+                       init_type, 
+                       niter, 
+                       niterTimestep) {
+    
+    return(roleParams(
+               individuals_local = individuals_local,
+               individuals_meta = individuals_meta,
+               species_meta = species_meta,
+               speciation_local = speciation,
+               speciation_meta = 1,
+               extinction_meta = 0.8,
+               trait_sigma = 1,
+               env_sigma = 0.1,
+               comp_sigma = 0.1,
+               neut_delta = 1, # makes the model neutral by ignoring env and comp sigmas
+               dispersal_prob = dispersal_prob,
+               mutation_rate = 0.01,
+               equilib_escape = 1,
+               alpha = 10,
+               num_basepairs = 250,
+               init_type = init_type, 
+               niter = niter,
+               niterTimestep = niterTimestep))
 }
