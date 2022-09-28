@@ -62,7 +62,7 @@ roleModel <- function(params) {
     # locs@spAbundTrt <- spAbundTrt
     
     
-    
+    # browser()
     phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)
     
     meta <- metaComm(spAbund = .lseriesFromSN(params@species_meta, 
