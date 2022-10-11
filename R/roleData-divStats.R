@@ -39,7 +39,7 @@ setMethod('hillAbund',
     
     hill <- outer(n, q, '^')
     hill <- colSums(hill)^(1 / (1 - q))
-    hill[hill == 1] <- exp(sum(-n * log(n)))
+    hill[q == 1] <- exp(sum(-n * log(n)))
     
     return(hill)
 }
