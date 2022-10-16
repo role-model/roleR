@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
 ```
 
 ## The Lotka-Volterra competition model
@@ -38,23 +38,25 @@ B(x_1) &= \lambda_1^{(0)} \\
 D(x_1) &= \mu_1^{(0)} + \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2
 \end{align}
 
-These equations say that the per capita birth rate is constant across $x_1$ while the per capita death rate increases linearly with $x_1$ and with $x_2$.
+
+A note on the subscripts and superscripts: the subscript refers to the target species (e.g. the equations we wrote out are for species 1, thus the subscript is 1); the superscript in parentheses refers to the origin of effect (e.g. a superscript of $(0)$ is a zeroth order effect---like an intercept---while the term $\mu_1^{(0)}$ is the effect of species 2 on species 1).
+
+These equations say that the *per capita* birth rate is constant across $x_1$ while the *per capita* death rate increases linearly with $x_1$ and with $x_2$.
 
 Plugging these form of $B(x_1)$ nd $D(x_1)$ into eq. (\ref{eq:lvBD}) we get
 
 
-\begin{align}
-\frac{dx_1}{dt} &= \lambda_1^{(0)} x_1 - \mu_1^{(0)} x_1 - \mu_1^{(1)} x_1^2 - \mu_1^{(2)} x_1 x_2 \\
-&= \left(\lambda_1^{(0)} - \mu_1^{(0)}\right) x_1 - \mu_1^{(1)} x_1^2 + \mu_1^{(2)} x_1 x_2
-\end{align}
+$$
+\frac{dx_1}{dt} = \lambda_1^{(0)} x_1 - \mu_1^{(0)} x_1 - \mu_1^{(1)} x_1^2 - \mu_1^{(2)} x_1 x_2 
+$$
 
 
 Rearranging eq. (\ref{eq:lv1}) we can quickly see the equivalent terms
 
 
-\begin{equation}
+$$
 \frac{dx_1}{dt} = r_1 x_1 - \frac{r_1}{K_1} x_1^2 - \frac{r_1 \alpha_{12}}{K_1} x_1 x_2
-\end{equation}
+$$
 
 
 Which gives us
@@ -70,7 +72,21 @@ r_1 &= \lambda_1^{(0)} - \mu_1^{(0)} \\
 
 A few nice things to note: we confirm that $r_1$ is the "rate of increase when rare" (i.e. $\lambda_1^{(0)} - \mu_1^{(0)}$); and we see that "carrying capacity" is inversely proportional to the slopes of the death rates with respect to $x_1$ and $x_2$, i.e., density dependence.
 
-We can also see that the standard LV parameterization has 3 parameters, while the $B - D$ parameterization has 4 parameters.  Specifically, $\lambda_1^{(0)}$ and $\mu_1^{(0)}$ are not distinguishable, i.e., infinitely many different combinations of $\lambda_1^{(0)}$ and $\mu_1^{(0)}$ will yield the same outcome as long as those combinations obey $r_1 = \lambda_1^{(0)} - \mu_1^{(0)}$.  This will be important to consider when mapping these parameters to the individual-based model.
+We can also see that the standard LV parameterization has 3 parameters, while the $B - D$ parameterization has 4 parameters.  Specifically, $\lambda_1^{(0)}$ and $\mu_1^{(0)}$ are not distinguishable, i.e., infinitely many different combinations of $\lambda_1^{(0)}$ and $\mu_1^{(0)}$ will yield the same outcome as long as those combinations obey $r_1 = \lambda_1^{(0)} - \mu_1^{(0)}$.  Luckily this can be easily corrected in the two species system, specifically set 
+
+\begin{align}
+\lambda_i^{(0)} &= \lambda_j^{(0)} = B_0 \\
+\mu_i^{(0)} &= 0
+\end{align}
+
+This gives us
+
+\begin{align}
+r_i &= B_0 \\
+r_j &= B_0 - \mu_j^{(0)}
+\end{align}
+
+For the complete 2 species system we now have 6 parameters for the classic LV parameterization and 6 parameters for the $B - D$ parameterization.  We can choose whether $r_1 = B_0$ or $r_2 = B_2$ such that $\mu_j^{(0)}$ is a positive number.
 
 
 ## Taking the LV model to an individual-based framework
@@ -82,40 +98,473 @@ To start, let's convert the above birth and death rates to birth and death proba
 P_B(x_1) &= \frac{B(x_1)}{B(x_1) + D(x_1)} \\
 &= \frac{\lambda_1^{(0)}}{\lambda_1^{(0)} + \mu_1^{(0)} + \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2} \\
 P_D(x_1) &= \frac{D(x_1)}{B(x_1) + D(x_1)} \\
-&= \frac{\mu_1^{(0)} + \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2}{\lambda_1^{(0)} + \mu_1^{(0)} + \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2}
+&= \frac{\mu_1^{(0)} + \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2}{\lambda_1^{(0)} + \mu_1^{(0)} +  \mu_1^{(1)} x_1 + \mu_1^{(2)} x_2}
 \end{align}
 
 
 Because we normalized the *per capita* rates, we actually now have the probability of birth or death for one individual of species 1.  That means we've arrived at an individual-based model.
 
-We want a death and birth every time step...how to do that?  Scale it so $P_D$ and $P_B$ equal 1 at equilibirum?  Scale the $K_i$'s to equal $J$?
 
-If we do that, I think we get conversion to MESS params for free 
-
-
-
-## The MESS model
-
-The MESS model is individual-based.  Each time step an individual dies and is immediately replaced with a new individual. We will start by considering the MESS model for only 2 species, and with no immigration, speciation, or trait evolution.  Thus, death events are replaced only by births.  Species 1 and 2 each have only one distinct trait value (call them $t_1$ and $t_2$).  There is also an environmental optimum, call it $\hat{t}$.  There are three mechanisms for death: neutral, trait-based competition, environmental filtering.  For **one individual** belonging to species 1, the rates of death from **n**eutral, **c**ompetitive, and **e**nvironmental filtering processes are
-
-
-
-\begin{align}
-D_N(n_1) &= 1 \\
-D_C(n_1) &= \frac{1}{J} \sum_{j = 1}^J \exp \left[ \frac{1}{\sigma_C} (t_1 - t_j)^2 \right] \\
-D_E(n_1) &= 1 - \exp \left[ \frac{1}{\sigma_E} (t_1 - \hat{t})^2 \right]
-\end{align}
-
-The *probability* of death in one time step for this individual is
-
-\begin{equation}
-P_D(n_1) = \delta D_N(n_1) + (1 - \delta) (\gamma D_C + (1 - \gamma) D_E)
-\end{equation}
+```{r lvclassic}
+#' simulate individual-based lotka-voltera
+#' 
+#' @param x0 initial condition, should be 2-long int vector
+#' @param params a named list of the model params:
+#'     * `r1` growth rate for sp 1
+#'     * `K1` carrying capacity for sp 1
+#'     * `alpha12` effect of sp 2 on sp 1
+#'     * `r2` growth rate for sp 2
+#'     * `K2` carrying capacity of sp 2
+#'     * `alpha21` effect of sp 1 on 2
+#' @param nreps single int, the number of timesteps
+#' @return matrix of nrow equal to `nreps` and ncol equal to 2 (one for each spp)
 
 
-The deth rate due to competition can be further 
+
+lvclassic <- function(x0, params, nreps) {
+    # re-parameterize
+    imax <- which.max(c(params$r1, params$r2))
+    B0 <- max(params$r1, params$r2)
+    
+    mu10 <- ifelse(imax == 1, 0, B0 - params$r1)
+    mu20 <- ifelse(imax == 2, 0, B0 - params$r2)
+    
+    la10 <- params$r1 + mu10
+    la20 <- params$r2 + mu20
+    
+    mu11 <- params$r1 / params$K1
+    mu22 <- params$r2 / params$K2
+    
+    mu12 <- params$r1 * params$alpha12 / params$K1
+    mu21 <- params$r2 * params$alpha21 / params$K2
+    
+    # initialize
+    xt <-  matrix(NA, nrow = nreps, ncol = 2)
+    xt[1, ] <- x <- x0
+    
+    for(b in 2:nreps) {
+        # note: current population state is `x`
+        
+        if(all(x <= 0)) break
+        
+        # rates
+        births <- c(la10, la20) * x
+        deaths <- c(mu10 + mu11 * x[1] + mu12 * x[2],
+                    mu20 + mu22 * x[2] + mu21 * x[1]) * x
+        
+        # which event happened
+        # 1 = sp 1 birth
+        # 2 = sp 2 birth
+        # 3 = sp 1 death
+        # 4 = sp 2 death
+        e <- sample(1:4, 1, prob = c(births, deaths))
+        
+        # update
+        if(e <= 2) {
+            # birth
+            i <- e
+            x[i] <- x[i] + 1
+        } else {
+            # death
+            i <- e - 2
+            x[i] <- x[i] - 1
+        }
+        
+        xt[b, ] <- x
+    }
+    
+    return(xt)
+}
 
 
+p <- list(r1 = 1.2, 
+          K1 = 100, 
+          alpha12 = 0.4,
+          r2 = 1.1,
+          K2 = 120,
+          alpha21 = 0.2)
+
+nn <- lvclassic(x0 = c(10, 10), params = p, nreps = 10000)
+
+matplot(nn, type = 'l', lty = 1, lwd = 2)
+```
+
+
+Now make a function where time steps are replacement events (e.g. death then birth)
+
+```{r lvrep, dependson = 'lvclassic'}
+#' simulate individual-based lotka-voltera
+#' 
+#' @param x0 initial condition, should be 2-long int vector
+#' @param params a named list of the model params:
+#'     * `r1` growth rate for sp 1
+#'     * `K1` carrying capacity for sp 1
+#'     * `alpha12` effect of sp 2 on sp 1
+#'     * `r2` growth rate for sp 2
+#'     * `K2` carrying capacity of sp 2
+#'     * `alpha21` effect of sp 1 on 2
+#' @param nreps single int, the number of timesteps
+#' @return matrix of nrow equal to `nreps` and ncol equal to 2 (one for each spp)
+
+
+
+lvrep <- function(x0, params, nreps) {
+    # re-parameterize
+    imax <- which.max(c(params$r1, params$r2))
+    B0 <- max(params$r1, params$r2)
+    
+    mu10 <- ifelse(imax == 1, 0, B0 - params$r1)
+    mu20 <- ifelse(imax == 2, 0, B0 - params$r2)
+    
+    la10 <- params$r1 + mu10
+    la20 <- params$r2 + mu20
+    
+    mu11 <- params$r1 / params$K1
+    mu22 <- params$r2 / params$K2
+    
+    mu12 <- params$r1 * params$alpha12 / params$K1
+    mu21 <- params$r2 * params$alpha21 / params$K2
+    
+    J <- params$K1 + params$K2
+    x0 <- c(x0, J - sum(x0)) # add "rocks"
+    
+    # initialize
+    xt <-  matrix(NA, nrow = nreps, ncol = 3)
+    xt[1, ] <- x <- x0
+    
+    for(b in 2:nreps) {
+        # note: current population state is `x`
+        
+        if(all(x <= 0)) break
+        
+        # death rates
+        deaths <- c(mu10 + mu11 * x[1] + mu12 * x[2],
+                    mu20 + mu22 * x[2] + mu21 * x[1], 
+                    1) * x
+        
+        # who dies
+        idead <- sample(1:3, 1, prob = deaths)
+        x[idead] <- x[idead] - 1
+        
+        # birth rates
+        births <- c(la10, la20, 1) * (x + c(0, 0, 1)) # the added one 
+                                                      # incorporates the extra 
+                                                      # immigration prob
+        
+        # who replaces
+        iborn <- sample(1:3, 1, prob = births)
+        x[iborn] <- x[iborn] + 1
+        
+        # update
+        xt[b, ] <- x
+    }
+    
+    return(xt)
+}
+
+
+p <- list(r1 = 1.2, 
+          K1 = 100, 
+          alpha12 = 0.4,
+          r2 = 1.1,
+          K2 = 120,
+          alpha21 = 0.2)
+
+nnZS <- lvrep(x0 = c(10, 10), params = p, nreps = 10000)
+nnLV <- lvclassic(x0 = c(10, 10), params = p, nreps = 10000)
+
+par(mfcol = c(2, 1), mar = c(2, 2, 0, 0) + 0.5)
+matplot(nnLV[, 1:2], type = 'l', lty = 1, lwd = 2)
+matplot(nnZS[, 1:2], type = 'l', lty = 1, lwd = 2)
+
+```
+
+
+
+The raw timing is clearly different, but let's see if equilib is the same.  We'll say equilib is achieved post 4000 iterations for both versions
+
+```{r timing_comp, dependson=c('lvclassic', 'lvrep')}
+p <- list(r1 = 1.4, 
+          K1 = 180, 
+          alpha12 = 0.4,
+          r2 = 1.1,
+          K2 = 100,
+          alpha21 = 0.1)
+
+sims <- parallel::mclapply(1:500, mc.cores = 10, FUN = function(i) {
+    nnZS <- lvrep(x0 = c(10, 10), params = p, nreps = 10000)[-(1:4000), 1:2]
+    nnLV <- lvclassic(x0 = c(10, 10), params = p, nreps = 10000)[-(1:4000), ]
+    
+    return(c(colMeans(nnZS), colMeans(nnLV)))
+})
+
+sims <- do.call(rbind, sims)
+
+d <- lapply(1:ncol(sims), function(i) {
+    thisD <- density(sims[, i])
+    o <- as.data.frame(thisD[c('x', 'y')])
+    
+    return(cbind(ID = i, o))
+})
+
+d <- do.call(rbind, d)
+
+plot(d$x, d$y, col = c('red', 'blue', 'orange', 'darkslateblue')[d$ID])
+```
+
+
+
+## Converting LV parameters to MESS parameters
+
+Let's assume that the MESS death rate for a two species system looks like
+
+$$
+D_{MESS}(x_i) = \delta + (1 - \delta) \left(\gamma f_c(\sigma_c, d) + (1 - \gamma) f_e(\sigma_e) \right)
+$$
+Where: 
+
+- $\delta$ is the proportion of death due to pure chance ($\delta = 1$ means full neutral)
+- $\gamma$ controls the relative contributions of death due to competition versus environmental filtering
+- $f_c(\sigma_c, d)$ is the Gaussian curve that determines death due to competition ($d$ is the trait distance between species, $d = 0$ is intra-specific competition)
+- $f_e(\sigma_e)$ is the Gaussian curve that determines death due to environmental filtering (which also depends on trait distance to the optimum, but for notational simplicity I'm not including that $d$ term).
+
+Then we have:
+
+```{r wtboard, cache = FALSE, echo = FALSE}
+knitr::include_graphics('lv2mess.jpeg')
+```
+
+<!-- a bunch of random shit below, pay no mind to it -->
+
+
+<!-- To turn this into MESS type IBM we need to implement: -->
+
+<!-- - rocks (aka a null sp that *can* reproduce---a rock reproducing = one of the real spp failing to reproduce); NOTE: but really is that needed? could we have non-reproductive rocks? -->
+<!-- - ability to arrive at fully unique and independent la_i and mu_ij....how do we do that with delta, gamma, sigmas, etc? do we need an additional interaction between sigma_c and sigma_e? -->
+
+
+<!-- ## STOP!!!! -->
+
+<!-- let the eq for birth be  -->
+
+<!-- $$ -->
+<!-- B(x_i) = B_0 -->
+<!-- $$ -->
+
+<!-- and then let death be -->
+
+<!-- $$ -->
+<!-- D(x_i) = \mu_{0i} + \mu_{ii} x_i + \mu_{ij} x_j -->
+<!-- $$ -->
+
+<!-- that way $r_i = B_0 - \mu_{0i}$ and we can put all the species-specific stuff in death.  Find $B_0$ by picking $\mu_{01}$ and $\mu_{02}$ such that -->
+
+<!-- $$ -->
+<!-- r_1 = B_0 - \mu_{01} \\ -->
+<!-- r_2 = B_0 - \mu_{02} \\ -->
+<!-- \mu_{01} > 0 \\ -->
+<!-- \mu_{02} > 0 -->
+<!-- $$ -->
+
+<!-- $$ -->
+<!-- r_2 = r_1 + \mu_{01} - \mu_{02} -->
+<!-- $$ -->
+
+
+<!-- DOES $\mu_{0i}$ matter for death probs?  Seems like $\mu_{0i}$ large would make it so density dependent terms don't matter??? -->
+
+<!-- **BELOW IS THE WAY TO GO** -->
+
+<!-- Maybe force $r_1 = B_0$ which makes $\mu_{01} = 0$ and then $\mu{02}$ would have to be whatever satisfies $r_1 = B_0 - \mu_{02}$.  Could pick whether to make $r_1 = B_0$ or $r_2 = B_0$ based on what would keep the mu's positive -->
+
+
+<!-- Let's re-make the LV function so it takes the classic LV params -->
+
+<!-- ```{r} -->
+<!-- #' simulate individual-based lotka-voltera -->
+<!-- #'  -->
+<!-- #' @param x0 initial condition, should be 2-long int vector -->
+<!-- #' @param params a named list of the model params: -->
+<!-- #'     * `r1` growth rate for sp 1 -->
+<!-- #'     * `K1` carrying capacity for sp 1 -->
+<!-- #'     * `alpha12` effect of sp 2 on sp 1 -->
+<!-- #'     * `r2` growth rate for sp 2 -->
+<!-- #'     * `K2` carrying capacity of sp 2 -->
+<!-- #'     * `alpha21` effect of sp 1 on 2 -->
+<!-- #' @param nreps single int, the number of timesteps -->
+<!-- #' @return matrix of nrow equal to `nreps` and ncol equal to 2 (one for each spp) -->
+
+
+
+<!-- lvclassic <- function(x0, params, nreps) { -->
+<!--     # re-parameterize -->
+<!--     imax <- which.max(c(params$r1, params$r2)) -->
+<!--     B0 <- max(params$r1, params$r2) -->
+
+<!--     mu10 <- ifelse(imax == 1, 0, B0 - params$r1) -->
+<!--     mu20 <- ifelse(imax == 2, 0, B0 - params$r2) -->
+
+<!--     la10 <- params$r1 + mu10 -->
+<!--     la20 <- params$r2 + mu20 -->
+
+<!--     mu11 <- params$r1 / params$K1 -->
+<!--     mu22 <- params$r2 / params$K2 -->
+
+<!--     mu12 <- params$r1 * params$alpha12 / params$K1 -->
+<!--     mu21 <- params$r2 * params$alpha21 / params$K2 -->
+
+<!--     # initialize -->
+<!--     xt <-  matrix(NA, nrow = nreps, ncol = 2) -->
+<!--     xt[1, ] <- x <- x0 -->
+
+<!--     for(b in 2:nreps) { -->
+<!--         # note: current population state is `x` -->
+
+<!--         if(all(x <= 0)) break -->
+
+<!--         # rates -->
+<!--         births <- c(la10, la20) * x -->
+<!--         deaths <- c(mu10 + mu11 * x[1] + mu12 * x[2], -->
+<!--                     mu20 + mu22 * x[2] + mu21 * x[1]) * x -->
+
+<!--         # which event happened -->
+<!--         # 1 = sp 1 birth -->
+<!--         # 2 = sp 2 birth -->
+<!--         # 3 = sp 1 death -->
+<!--         # 4 = sp 2 death -->
+<!--         e <- sample(1:4, 1, prob = c(births, deaths)) -->
+
+<!--         # update -->
+<!--         if(e <= 2) { -->
+<!--             # birth -->
+<!--             i <- e -->
+<!--             x[i] <- x[i] + 1 -->
+<!--         } else { -->
+<!--             # death -->
+<!--             i <- e - 2 -->
+<!--             x[i] <- x[i] - 1 -->
+<!--         } -->
+
+<!--         xt[b, ] <- x -->
+<!--     } -->
+
+<!--     return(xt) -->
+<!-- } -->
+
+
+<!-- p <- list(r1 = 1.2,  -->
+<!--           K1 = 100,  -->
+<!--           alpha12 = 0.4, -->
+<!--           r2 = 1.1, -->
+<!--           K2 = 120, -->
+<!--           alpha21 = 0.2) -->
+
+<!-- nn <- lvclassic(x0 = c(10, 10), params = p, nreps = 10000) -->
+
+<!-- matplot(nn, type = 'l', lty = 1, lwd = 2) -->
+<!-- ``` -->
+
+
+
+
+<!-- We want a death and birth every time step...how to do that?  Scale it so $P_D$ and $P_B$ equal 1 at equilibirum?  Scale the $K_i$'s to equal $J$? -->
+
+<!-- If we do that, I think we get conversion to MESS params for free  -->
+
+
+
+<!-- ## The MESS model -->
+
+<!-- The MESS model is individual-based.  Each time step an individual dies and is immediately replaced with a new individual. We will start by considering the MESS model for only 2 species, and with no immigration, speciation, or trait evolution.  Thus, death events are replaced only by births.  Species 1 and 2 each have only one distinct trait value (call them $t_1$ and $t_2$).  There is also an environmental optimum, call it $\hat{t}$.  There are three mechanisms for death: neutral, trait-based competition, environmental filtering.  For **one individual** belonging to species 1, the rates of death from **n**eutral, **c**ompetitive, and **e**nvironmental filtering processes are -->
+
+
+
+<!-- \begin{align} -->
+<!-- D_N(n_1) &= 1 \\ -->
+<!-- D_C(n_1) &= \frac{1}{J} \sum_{j = 1}^J \exp \left[ \frac{1}{\sigma_C} (t_1 - t_j)^2 \right] \\ -->
+<!-- D_E(n_1) &= 1 - \exp \left[ \frac{1}{\sigma_E} (t_1 - \hat{t})^2 \right] -->
+<!-- \end{align} -->
+
+<!-- The *probability* of death in one time step for this individual is -->
+
+<!-- \begin{equation} -->
+<!-- P_D(n_1) = \delta D_N(n_1) + (1 - \delta) (\gamma D_C + (1 - \gamma) D_E) -->
+<!-- \end{equation} -->
+
+
+<!-- The deth rate due to competition can be further  -->
+
+
+
+
+
+
+<!-- ```{r} -->
+<!-- #' simulate individual-based lotka-voltera -->
+<!-- #'  -->
+<!-- #' @param x0 initial condition, should be 2-long int vector -->
+<!-- #' @param params a named list of the model params: -->
+<!-- #'     * `la1` birth rate for sp 1 -->
+<!-- #'     * `mu11` intra-specific density dependent death rate for sp 1 -->
+<!-- #'     * `la2` birth rate for sp 2 -->
+<!-- #'     * `mu22` intra-specific density dependent death rate for sp 2 -->
+<!-- #'     * `mu12` density dependent effect of sp 2 on 1 -->
+<!-- #'     * `mu21` density dependent effect of sp 1 on 2 -->
+<!-- #' @param nreps single int, the number of timesteps -->
+<!-- #' @return matrix of nrow equal to `nreps` and ncol equal to 2 (one for each spp) -->
+
+
+<!-- lvsim <- function(x0, params, nreps) { -->
+<!--     xt <-  matrix(NA, nrow = nreps, ncol = 2) -->
+<!--     xt[1, ] <- x <- x0 -->
+
+<!--     for(b in 2:nreps) { -->
+<!--         # note: current population state is `x` -->
+
+<!--         if(all(x <= 0)) break -->
+
+<!--         # rates -->
+<!--         births <- c(params$la1, -->
+<!--                     params$la2) * x -->
+<!--         deaths <- c(params$mu11 * x[1] + params$mu12 * x[2], -->
+<!--                     params$mu22 * x[2] + params$mu21 * x[1]) * x -->
+
+<!--         # which event happened -->
+<!--         # 1 = sp 1 birth -->
+<!--         # 2 = sp 2 birth -->
+<!--         # 3 = sp 1 death -->
+<!--         # 4 = sp 2 death -->
+<!--         e <- sample(1:4, 1, prob = c(births, deaths)) -->
+
+<!--         # update -->
+<!--         if(e <= 2) { -->
+<!--             # birth -->
+<!--             i <- e -->
+<!--             x[i] <- x[i] + 1 -->
+<!--         } else { -->
+<!--             # death -->
+<!--             i <- e - 2 -->
+<!--             x[i] <- x[i] - 1 -->
+<!--         } -->
+
+<!--         xt[b, ] <- x -->
+<!--     } -->
+
+<!--     return(xt) -->
+<!-- } -->
+
+
+<!-- p <- list(la1 = 1, -->
+<!--           mu11 = 0.05, -->
+<!--           la2 = 0.8, -->
+<!--           mu22 = 0.05, -->
+<!--           mu12 = 0.01, -->
+<!--           mu21 = 0.01) -->
+
+<!-- nn <- lvsim(x0 = c(10, 10), params = p, nreps = 1000) -->
+
+<!-- matplot(nn, type = 'l', lty = 1, lwd = 2) -->
+<!-- ``` -->
 
 
 
