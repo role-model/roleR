@@ -27,7 +27,7 @@ setGeneric('getSumStats',
 
 setMethod('getSumStats', 
           signature = 'roleData', 
-          definition = function(x, funs, moreArgs) {
+          definition = function(x, funs, moreArgs) { 
               bigFun <- .funApply(funs, moreArgs)
               
               return(bigFun(x))
@@ -45,8 +45,10 @@ setMethod('getSumStats',
               bigFun <- .funApply(funs, moreArgs)
               
               o <- lapply(x@modelSteps, bigFun)
-              
-              return(do.call(rbind, o))
+              o <- do.call(rbind, o)
+             
+              o$iteration <- seq(from=0,by=x@params@niterTimestep,length.out = (x@params@niter / x@params@niterTimestep) + 1)
+              return(o)
           }
 )
 

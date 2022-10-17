@@ -1,0 +1,169 @@
+---
+title: "roleR Use Cases"
+author: "Jacob Idec"
+date: '2022-10-16'
+output: html_document
+---
+
+This document shows off various use cases using the current implementation of roleR
+
+## Overview
+
+```{r role, cache = TRUE}
+library(roleR)
+library(ggplot2)
+```
+
+```{r overview, cache = TRUE}
+
+p <- roleParams(individuals_local = 100, individuals_meta = 1000,
+                         species_meta = 50, speciation_local = 0.05, 
+                         speciation_meta = 0.05, extinction_meta = 0.05, env_sigma = 0.5,
+                         trait_sigma=1,comp_sigma = 0.5, dispersal_prob = 0.1, mutation_rate = 0.01,
+                         equilib_escape = 1, num_basepairs = 250,
+                         init_type = 'oceanic_island', niter = 1000, niterTimestep = 100)
+model <- runRoLE(roleModel(p))
+stats <- getSumStats(model,funs=list(rich=richness)) #TODO add default where all existing sumstats are added
+ggplot(stats, aes(iteration, rich)) + 
+    geom_line()
+```
+
+## Parameter Creation
+
+Create a set of parameters specifying every one
+
+```{r params, cache = TRUE}
+
+p <- roleParams(individuals_local = 100, individuals_meta = 1000,
+                         species_meta = 50, speciation_local = 0.05, 
+                         speciation_meta = 0.05, extinction_meta = 0.05, env_sigma = 0.5,
+                         trait_sigma=1,comp_sigma = 0.5, dispersal_prob = 0.1, mutation_rate = 0.01,
+                         equilib_escape = 1, num_basepairs = 250,
+                         init_type = 'oceanic_island', niter = 1000, niterTimestep = 100)
+```
+
+Create a set of params per the Unified Neutral Theory of Biodiversity (UNTB).
+This creates a "UNTB-flavored" RoLE model 
+
+```{r untb_params, cache = TRUE}
+
+p_untb <- untbParams(individuals_local = 100, individuals_meta = 1000, 
+                        species_meta = 50, 
+                        speciation = 0.2, 
+                        dispersal_prob = 0.1, init_type = 'oceanic_island',
+                        niter = 30000, niterTimestep = 1000)   
+    
+```
+
+See the roleParams documentation for descriptions of all available parameters 
+
+## Model & Experiment Creation & Running
+
+Create a model (not yet run) using the params, then run it 
+
+```{r model, cache = TRUE}
+
+model <- roleModel(p)
+model <- runRoLE(model)
+
+```
+
+Create an experiment (not yet run) of two models using both sets of params, then run it.
+
+```{r exp, cache = TRUE}
+
+exp <- roleExperiment(list(p,p_untb))
+exp <- runRoLE(exp)
+
+```
+
+Experiments are intended to encapsulate one or more hypotheses through comparison of multiple varying models contained within them
+
+## Extracting Data From Models
+
+Get a summary stats over time for a single model, each row being a different saved iteration state.
+Available raw stats are rawAbundance, rawSpAbundance, rawTraits, rawGenDiv, rawBranchLengths, and rawApePhylo.
+Available transformed stats are hillAbund, hillGenetic, hillTrait, hillPhylo, and richness.
+
+```{r series, cache = TRUE}
+
+stats <- getSumStats(model, list(rich = richness,hill_abund=hillAbund))
+stats
+
+```
+
+Get summary stats over time for one model of an experiment
+
+```{r series2, cache = TRUE}
+
+stats <- getSumStats(exp@modelRuns[[1]], list(hill_abund=hillAbund))
+```
+
+Get mean summary stats over time for multiple models within an experiment
+
+```{r series3, cache = TRUE}
+
+#stats_exp <- getSumStats(exp, list(hill_abund=hillAbund))
+#stats
+
+```
+
+Get mean summary stats over time for multiple models within an experiment
+
+```{r series4, cache = TRUE}
+
+#stats_exp <- getSumStats(exp, list(hill_abund=hillAbund))
+#stats
+
+```
+
+## Parameter Priors & Iter-Functions
+
+A prior is any function that takes no inputs and returns a parameter value
+
+Change one parameter to be sampled from a normal distribution every iteration
+
+```{r priors, cache = TRUE}
+
+p@speciation_local <- rnorm(1,mean=0.05,sd=0.01)
+    
+```
+
+An iter-function takes an iteration number and returns a parameter value
+
+Change one parameter to increase linearly every iteration
+
+```{r iterfuns, cache = TRUE}
+
+#p@speciation_local <- function(iter){return(i * 0.001)
+    
+```
+
+## Simulating Genetic Diversities
+
+Add genetic diversities to a run model by backwards time simulation using msprime
+
+```{r gendiv, cache = TRUE}
+
+#model <- simulateSpeciesGenDiv(model)
+
+```
+
+## Saving and Loading
+
+Save and load models, experiments, and params
+
+```{r saving, cache = TRUE}
+
+#todo
+
+```
+
+## Advanced Param Setting For Experiments
+
+
+```{r adv, cache = TRUE}
+
+#todo
+
+```

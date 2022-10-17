@@ -11,7 +11,8 @@ test_that('model constructor runs without error'){
                          trait_sigma=1,comp_sigma = 0.1, dispersal_prob = 0.1, mutation_rate = 0.01,
                          equilib_escape = 1, num_basepairs = 250,
                          init_type = 'oceanic_island', niter = 3, niterTimestep = 3) 
-    model <- roleModel(params)
+    
+    model <- roleModel(p)
     model@modelSteps[[1]]@phylo@e
     model@modelSteps[[1]]@localComm@indSpecies
     foo <- roleR::runRoLE(model)

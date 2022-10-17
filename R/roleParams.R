@@ -94,7 +94,7 @@ roleParams <- function(individuals_local,
                        init_type, 
                        niter, 
                        niterTimestep) {
-    # set defaults
+    # set defaults - doesnt work right now 
     if(is.na(neut_delta)){neut_delta <- 0}
     if(is.na(env_comp_delta)){env_comp_delta <- 0.5}
     if(is.na(alpha)){alpha <- 1}
@@ -122,7 +122,7 @@ roleParams <- function(individuals_local,
     
     for(i in 1:length(allParams)) {
         if(names(allParams[i]) %in% noVal) {
-            allParams[[i]] <- NA
+            allParams[[i]] <- 0 #NA
         }
         
         if(names(allParams[i]) %in% singleValParams) {

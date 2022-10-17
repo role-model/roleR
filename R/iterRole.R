@@ -20,7 +20,7 @@
 #' @export
 
 setGeneric('runRoLE', 
-           def = function(x, print = F) standardGeneric('runRoLE'), 
+           def = function(x, cores=1, print = F) standardGeneric('runRoLE'), 
            signature = 'x')
 
 setMethod('runRoLE', 
@@ -59,7 +59,7 @@ setMethod('runRoLE',
 
 setMethod('runRoLE', 
           signature = 'roleExperiment', 
-          definition = function(x, print = F) {
+          definition = function(x, cores = 1, print = F) {
               experiment <- x
               if(cores == 1){
                   experiment@modelRuns <- lapply(experiment@modelRuns, iterModel)

@@ -46,7 +46,8 @@ p <- setParam(p,param_name="speciation_meta",value=list(0.15,0.2,0.3),runNum=c(1
 
 # set a prior
 unif_prior <- function(n,min=0,max=0.5){ # create a uniform prior sampling between 0 and 0.5 
-  return(runif(n=n,min=min,max=max))}
+  return(runif(n=n,min=min,max=max))
+    }
 p <- setPrior(p, param_name="speciation_local",priorFunc=unif_prior) # set the prior for the first two runs
 p <- setPrior(p, param_name="speciation_local",priorFunc=list(unif_prior,unif_prior,unif_prior), runNum = c(1,2)) # set the prior for all runs
 

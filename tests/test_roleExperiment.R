@@ -50,3 +50,13 @@ test_that('experiment models iterated over successfully, parallelized'){
     experiment <- iterExperiment(experiment,cores=3) #1 = 26 seconds, 3 = 16 seconds
     experiment@modelRuns[[1]]@modelSteps[[100]]
 }
+
+p <- roleParams(individuals_local = 100, individuals_meta = 10000, 
+                species_meta = 50, speciation_local = 0.00075, speciation_meta = 0.0006, 
+                extinction_meta = 0.05, trait_sigma = 1, env_sigma = 1, 
+                comp_sigma = 1, dispersal_prob = 0.1,
+                init_type = 'oceanic_island', 
+                niter = 1000,niterTimestep = 100)
+model <- roleModel(p)
+
+p

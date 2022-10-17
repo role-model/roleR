@@ -7,8 +7,11 @@ test_that('minimum constructor runs without error'){
     params <- roleParams(individuals_local = 100, individuals_meta = 500,
                          species_meta = 500, speciation_local = 0.1, 
                          speciation_meta = 1, extinction_meta = 0.8, #env_sigma = 0.5,
-                         trait_sigma=1,comp_sigma = 0.1,# dispersal_prob = 0.1
+                         trait_sigma=1, comp_sigma = 0.1,# dispersal_prob = 0.1
                          init_type = 'oceanic_island', niter = 1000, niterTimestep = 10)
+    model <- roleModel(params)
+    foo <- runRoLE(model)
+    
 }
 
 # works
@@ -31,6 +34,14 @@ test_that('untb constructor runs without error'){
                         dispersal_prob = 0.1, init_type = 'oceanic_island',
                         niter = 30000, niterTimestep = 1000)   
     
-    model <- roleModel(neutp)
-    model <- runRoLE(model)
+    params <- roleParams(individuals_local = 100, individuals_meta = 1000,
+                         species_meta = 50, speciation_local = 0.05, 
+                         speciation_meta = 0.05, extinction_meta = 0.05, env_sigma = 0.5,
+                         trait_sigma=1,comp_sigma = 0.5, dispersal_prob = 0.1, mutation_rate = 0.01,
+                         equilib_escape = 1, num_basepairs = 250,
+                         init_type = 'oceanic_island', niter = 1000, niterTimestep = 100)
+    params
+    model <- roleModel(params)
+    model <- runRoLE(model,F)
+    
 }

@@ -1,8 +1,6 @@
 #' @title using msprime simulation, add genetic diversities to a roleExperiment or roleModel for each species 
 #'
 #' @param x a roleModel or roleExperiment object to get a stat from 
-#' @param runNum an integer specifying the run number if a roleExperiment object is used
-#' @param type a string specifying the type of values to get, either "summary_stats", or "model_values" 
 
 #' @return a dataframe containing the timeseries 
 #'
