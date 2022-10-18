@@ -2,7 +2,9 @@
 title: "roleR Use Cases"
 author: "Jacob Idec"
 date: '2022-10-16'
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 This document shows off various use cases using the current implementation of roleR
