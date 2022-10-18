@@ -4,6 +4,7 @@
 #'     model run or set of runs with associated meta data). Contains one or more 
 #'     `roleModel` runs and the `roleParams` used to generate each of the runs
 #' 
+#' @slot auxMeta named string vector of author etc. 
 #' @slot experimentMeta data.frame of model metadata
 #' @slot modelRuns list of `roleData` objects containing outputs
 #' @slot allParams list of `roleParams` objects containing input params for 
@@ -19,7 +20,8 @@
 #' @export
 
 setClass('roleExperiment',
-         slots = c(experimentMeta = 'data.frame',
+         slots = c(auxMeta = 'character',
+                   experimentMeta = 'data.frame',
                    modelRuns = 'list', 
                    allParams = 'list',
                    allFuns = 'list'))

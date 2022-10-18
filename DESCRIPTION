@@ -18,6 +18,7 @@ Imports:
     pika, 
     methods,
     rlang,
+    parallel,
     reticulate
 Remotes:
     ajrominger/pika
@@ -42,6 +43,9 @@ Collate:
     'rolePriors.R'
     'simGen.R'
     'simulateSpeciesGenDiv.R'
+    'simulateGen.R'
+    'writeRoLE.R'
+    'setExpMetadata.R'
     'prepRebuild.R'
     'zzz.R'
 RoxygenNote: 7.2.0

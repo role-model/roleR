@@ -61,6 +61,7 @@ setMethod('runRoLE',
           signature = 'roleExperiment', 
           definition = function(x, cores = 1, print = F) {
               experiment <- x
+              library(roleR)
               if(cores == 1){
                   experiment@modelRuns <- lapply(experiment@modelRuns, iterModel)
               }

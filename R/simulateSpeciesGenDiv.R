@@ -57,7 +57,7 @@ simulateSpeciesGenDiv <- function(model){
         # t = 1
         for(t in 1:(length(sp_abundance_vect)-1)){
             
-            if(sp_abundance_vect[t] > 0 & sp_abundance_vect[t+1] > 0){
+            if(sp_abundance_vect[t] > 0 & sp_abundance_vect[t+1] > 0){ #if(sp_abundance_vect[t] > 0 & sp_abundance_vect[t+1] > 0){
                 
                 # get the start and end timesteps to simulate
                 start_timestep <- t
