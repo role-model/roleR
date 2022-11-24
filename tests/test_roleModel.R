@@ -10,10 +10,14 @@ test_that('model constructor runs without error'){
                          speciation_meta = 1, extinction_meta = 0.8, env_sigma = 0.5,
                          trait_sigma=1,comp_sigma = 0.1, dispersal_prob = 0.1, mutation_rate = 0.01,
                          equilib_escape = 1, num_basepairs = 250,
-                         init_type = 'oceanic_island', niter = 3, niterTimestep = 3) 
+                         init_type = 'oceanic_island', niter = 100, niterTimestep = 10) 
     
-    model <- roleModel(p)
-    model@modelSteps[[1]]@phylo@e
+    model <- roleModel(params)
+    foo <- roleR::runRoLE(model)
+    foo@modelSteps[[9]]@localComm@spAbundHarmMean
+        
+    foo <- roleR::runRoLE(model)
+    model@modelSteps[[2]]
     model@modelSteps[[1]]@localComm@indSpecies
     foo <- roleR::runRoLE(model)
     getSumStats(foo, list(rich = richness))

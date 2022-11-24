@@ -5,3 +5,5 @@
 .DS_Store
 *.dll
 *.Rd
+data/gen3sis
+data/config_southamerica

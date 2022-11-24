@@ -36,7 +36,7 @@ setMethod('runRoLE',
                       stop("Models can only be run once and this model has already been run")
                   }
               }
-              if(length(x@modelSteps) > 1)
+              #if(length(x@modelSteps) > 1)
               # m <- model
               # init the first data step of the model using params 
               #model <- initModel(model)

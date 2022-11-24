@@ -21,7 +21,10 @@ setClass('localComm',
                    spGenDiv = 'numeric',
                    #spAbundTrt = 'matrix',
                    spTrait = 'numeric',
-                   spAbund = 'numeric'
+                   spAbund = 'numeric',
+                   spAbundHarmMean = 'numeric',
+                   spLastOriginStep = 'numeric',
+                   spExtinctionStep = 'numeric'
                     ))
 
 
@@ -44,13 +47,21 @@ localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { #indSppTrt, ind
     #spAbundTrt[1,1] <- length(indSppTrt)
     #spAbundTrt[1,2] <- mean(indSppTrt[,2])
     
+    # todo - verify that this initial state is correct 
+    spAbundHarmMean <- rep(0, 10000)
+    spLastOriginStep <- rep(0, 10000)
+    spExtinctionStep <- rep(0, 10000)
+    
     return(new('localComm',
              indSpecies = indSpecies,
              indTrait = indTrait,
              indSeqs = indSeqs,
              spGenDiv = spGenDiv,
              spAbund = spAbund,
-             spTrait = spTrait))
+             spTrait = spTrait,
+             spAbundHarmMean = spAbundHarmMean,
+             spLastOriginStep = spLastOriginStep,
+             spExtinctionStep = spExtinctionStep))
 }
 
 #' @title Meta community

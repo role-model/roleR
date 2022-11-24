@@ -131,7 +131,14 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
         bool extinct_in_local = d.spAbundL(dead_species) <= 0;
         // not in meta if species of the dead individual is not in meta
         bool not_in_meta = dead_species > d.spAbundM.length();
-        // check for extinction
+        
+        // check for local extinction
+        if(extinct_in_local){
+            if(print){Rcout << "extinction occured in local: " << dead_species << "\n";}
+            d.spExtinctionStepL(dead_species) = i;
+        }
+        
+        // check for local and meta extinction
         if(extinct_in_local & not_in_meta){
             if(print){Rcout << "extinction occured in local only species, species: " << dead_species << "\n";}
             d.aliveP(dead_species) = false;
@@ -177,9 +184,15 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             
             // set the species to the parent species from meta
             d.indSpeciesL(dead_index) = parent_index;
+            
+            // update time of last origin if the species' last local abundance was 0 
+            if(d.spAbundL(d.indSpeciesL(dead_index)) <= 0){
+                d.spLastOriginStepL(d.indSpeciesL(dead_index)) = i;
+            }
+                
             // add to the abundance of the species matrix
             d.spAbundL(d.indSpeciesL(dead_index)) = d.spAbundL(d.indSpeciesL(dead_index)) + 1;
-
+            
             // calculate trait change from parent
             NumericVector trait_change = Rcpp::rnorm(1, 0, p.trait_sigma(1) / (p.speciation_meta(1) + p.extinction_meta(1)));
             if(print){Rcout << "trait change from parent: " << trait_change << "\n";}
@@ -252,6 +265,9 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             
             // the indv that was birthed or immigrated becomes the new species
             d.indSpeciesL(dead_index) = d.nTipsP(0); 
+            
+            // update time of last origin
+            d.spLastOriginStepL(d.indSpeciesL(dead_index)) = i;
             
             if(print){Rcout << "starting phylo element of speciation" << "\n";}
             bool print_matrices = false;
@@ -351,6 +367,32 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             d.nTipsP(0) = d.nTipsP(0) + 1;
         }
         
+        // update local species sum of reciprocals
+        // for each species...
+        for(int s = 0; s < d.nTipsP(0)-1; s++){
+            
+            //Rcout << "spReciprSumFull" << d.spReciprSumL << "\n";
+            //Rcout << "spReciprSum" << d.spReciprSumL(s) << "\n";
+            //Rcout << "spLastOriginStep" << d.spLastOriginStepL(s) << "\n";
+            //Rcout << "spAbundHarmMean" << d.spAbundHarmMeanL(s) << "\n";
+            
+            // if species is currently alive in local
+            if(d.spAbundL(s) > 0){
+                // add new abundance to species reciprocal sum 
+                d.spReciprSumL(s) = d.spReciprSumL(s) + (1/d.spAbundL(s));
+                // get n, the number of steps in this emergence period, as
+                // the current iteration - the iteration of origin 
+                int n = i - d.spLastOriginStepL(s);
+                // harmonic mean is then n / the current reciprocal sum 
+                d.spAbundHarmMeanL(s) = n / d.spReciprSumL(s);
+            }
+            // else species is dead in local
+            else{
+                d.spReciprSumL(s) = 0; 
+                d.spAbundHarmMeanL(s) = 0;
+            }
+        }
+        
         // save if i is 0, 9, 19 ... 99 
         if((i + 1) % niter_timestep == 0) //i == 0 || (i + 1) % niter_timestep == 0
         {
@@ -358,17 +400,18 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             if(print){Rcout << "saving, niter: " << i << "\n";}
             
             S4 out_l("localComm");
-            //out_l.slot("indSppTrt") = Rcpp::clone(d.indSpTrtL);
             out_l.slot("indSpecies") = Rcpp::clone(d.indSpeciesL);
             out_l.slot("indTrait") = Rcpp::clone(d.indTraitL);
             out_l.slot("spAbund") = Rcpp::clone(d.spAbundL);
+            out_l.slot("spTrait") = Rcpp::clone(d.spTraitL);
+            out_l.slot("spAbundHarmMean") = Rcpp::clone(d.spAbundHarmMeanL);
+            out_l.slot("spLastOriginStep") = Rcpp::clone(d.spLastOriginStepL);
+            out_l.slot("spExtinctionStep") = Rcpp::clone(d.spExtinctionStepL);
             if(print){Rcout << "created l" << "\n";}
             
             S4 out_m("metaComm");
-            //out_m.slot("sppAbundTrt") = Rcpp::clone(d.spAbundTrtM);
             out_m.slot("spAbund") = Rcpp::clone(d.spAbundM);
-            out_l.slot("spTrait") = Rcpp::clone(d.spTraitM);
-            
+            out_m.slot("spTrait") = Rcpp::clone(d.spTraitM);
             if(print){Rcout << "created m" << "\n";}
             
             S4 out_p("rolePhylo");

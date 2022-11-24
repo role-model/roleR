@@ -1,5 +1,4 @@
 simulateGen <- function(model){
-    
     # grab static params
     local_pop <- model@params@individuals_local[1]
     meta_pop <- model@params@individuals_meta[1]

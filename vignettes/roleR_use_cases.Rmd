@@ -12,6 +12,9 @@ This document shows off various use cases using the current implementation of ro
 ## Overview
 
 ```{r role, cache = TRUE}
+
+#devtools::install_github("role-model/roleR",dependencies=TRUE)
+
 library(roleR)
 library(ggplot2)
 ```
@@ -72,8 +75,9 @@ model <- runRoLE(model)
 
 ```
 
-Create an experiment (not yet run) of two models using both sets of params, then run it.
+Create an experiment (not yet run) containing two models created using both sets of params, then run it.
 Experiment running can be parallelized on Windows, Mac, & Linux by specifying the number of cores to use. 
+When you run an experiment, it runs every model within it.
 
 ```{r exp, cache = TRUE}
 
@@ -117,6 +121,7 @@ stats <- getSumStats(exp@modelRuns[[1]], list(sp_with_5=speciesWith5Indv))
 ```
 
 <span style="color:blue">Group Question: Any ideas for more default summary stats we could add? </span>
+
 <span style="color:blue">Group Question: Besides plotting model data over model iterations, any plotting functions you would want? </span>
 
 ## Extracting Data From Experiments
