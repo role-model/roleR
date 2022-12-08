@@ -6,20 +6,12 @@
 
 using namespace Rcpp;
 
-// still missing trait_diffs for fast comp filtering computation 
 // prob of selecting a parent for speciation is no longer metacomm abundance weighted by dispersal prob + local 
 // death probs due to filtering/ comp
 // replicates sample(1:x, 1)
 int sample_zero_to_x(int x)
 {
     return((int) (R::runif(0,1) * (double) x));
-}
-
-NumericVector get_zero_to_x_vector(int x)
-{
-    std::vector<int> v(x);
-    std::iota(v.begin(), v.end(), 1);
-    return(wrap(v));
 }
 
 int sample_index_using_probs(NumericVector probs){
