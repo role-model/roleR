@@ -107,6 +107,8 @@ simSeqs <- function(model){
         #model@modelSteps[[i]]@timeseries[[niter_timestep]]@localComm@gdiversitiesSp <- g_diversities
     }
 
+
+#msprime <- import('msprime')
 simSeqs2 <- function(model){
     library(plyr)
     
@@ -115,7 +117,9 @@ simSeqs2 <- function(model){
     # convert to ape phy
     phy <- as(model@modelSteps[[length(model@modelSteps)]]@phylo, 'phylo')
     
+    
     # create demography object
+    # error - all leaf pops must be at time 0 
     # initial size should be the initial size of each pop
     d <- msprime$Demography$from_species_tree(ape::write.tree(phy), 
                                               time_units = 'gen', 
@@ -163,19 +167,23 @@ simSeqs2 <- function(model){
     # for each species
     for(sp_index in sp_indices)
     {
+        # get values for this species 
         sp_abundance_vect <- abundance_ts_mat[,sp_index]
         origin_vect <- origin_step_ts_mat[,sp_index]
         ext_vect <- ext_step_ts_mat[,sp_index]
         harm_vect <- harm_ts_mat[,sp_index]
         
+        # an origin is a timestep when the abundance changed from 0 to 1 
         # for each unique origin
         uniq_origins <- unique(origin_vect)
         for(o in uniq_origins){
             # get the following extinction
             ext_index <- getNextPositiveIndexAfterIndex(ext_vect,o)
             
-            # add the population
+            # get the name of the pop tip 
+            # I believe species indices follow phylo tip names? or should do so? 
             pop_name <- paste0('t', as.character(sp_index))
+            # create a new name for the local and meta
             pop_name_l <- paste0(pop_name, '_l')
             pop_name_m <- paste0(pop_name, '_m')
             d$add_population(name = pop_name_l,initial_size=1)
@@ -183,6 +191,7 @@ simSeqs2 <- function(model){
             d$add_population(name = pop_name_m,initial_size=approx_meta_abund)
             d$add_population_split(time = o, derived = c(pop_name_l, pop_name_m), 
                                    ancestral = pop_name)
+            # add the extinction time
         }
     }
 }
