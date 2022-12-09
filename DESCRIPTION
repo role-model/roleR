@@ -47,6 +47,8 @@ Collate:
     'simSeqs.R'
     'writeRoLE.R'
     'setExpMetadata.R'
+    'cFun.R'
     'prepRebuild.R'
     'zzz.R'
 RoxygenNote: 7.2.0
+RcppModules: iterModelCpp

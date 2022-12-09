@@ -6,8 +6,18 @@
 
 using namespace Rcpp;
 
-// prob of selecting a parent for speciation is no longer metacomm abundance weighted by dispersal prob + local 
-// death probs due to filtering/ comp
+// iterModelCpp.cpp contains:
+//      + Cpp functions used within the core loop of iterModelCpp
+//          1. sample_zero_to_x
+//          2. sample_index_using_orobs
+//          3. call_birth
+//
+//      + iterModelCpp, a function exported to R that iterates a model
+//      + Wrappers around the loop C++ functions exported to R for testing
+//          1. intFunCpp
+//          2. dataFunCpp
+//          3. vectFunCpp
+
 // replicates sample(1:x, 1)
 int sample_zero_to_x(int x)
 {
@@ -19,9 +29,66 @@ int sample_index_using_probs(NumericVector probs){
     return(v(0));
 }
 
+// placing this function within the loop works but slows things down at least 5x
+// so for now, the function is not called from the loop, but the code within is identical
+void call_birth(int i, int dead_index, int parent_indv, roleDataCpp d, roleParamsCpp p, bool print){
+    
+    if(print){Rcout << "parent indv: " << parent_indv << "\n";}
+    //int birthed_species = d.indSpTrtL(parent_indv,0); 
+    int birthed_species = d.indSpeciesL(parent_indv); 
+    
+    // set the species of the new indv to that of the parent 
+    //d.indSpTrtL(dead_index,0) = birthed_species;
+    d.indSpeciesL(dead_index) = birthed_species;
+    if(print){Rcout << "set new species: " << d.indSpeciesL(dead_index) << "\n";}
+    
+    // add to the abundance of the species matrix
+    d.spAbundL(birthed_species) = d.spAbundL(birthed_species) + 1; 
+    
+    // calculate trait change from parent
+    NumericVector trait_change = Rcpp::rnorm(1, 0, p.trait_sigma(1) / (p.speciation_meta(1) + p.extinction_meta(1)));
+    if(print){Rcout << "trait change from parent: " << trait_change << "\n";}
+    
+    // add new trait value
+    d.indTraitL(dead_index) = d.indTraitL(parent_indv) + trait_change(0);
+    if(print){Rcout << "new trait value: " <<  d.indTraitL(dead_index) << "\n";}
+}
 
+S4 roleDataFromCpp(roleDataCpp d){
+    
+    S4 out_l("localComm");
+    out_l.slot("indSpecies") = Rcpp::clone(d.indSpeciesL);
+    out_l.slot("indTrait") = Rcpp::clone(d.indTraitL);
+    out_l.slot("spAbund") = Rcpp::clone(d.spAbundL);
+    out_l.slot("spTrait") = Rcpp::clone(d.spTraitL);
+    out_l.slot("spAbundHarmMean") = Rcpp::clone(d.spAbundHarmMeanL);
+    out_l.slot("spLastOriginStep") = Rcpp::clone(d.spLastOriginStepL);
+    out_l.slot("spExtinctionStep") = Rcpp::clone(d.spExtinctionStepL);
+    //if(print){Rcout << "created l" << "\n";}
+    
+    S4 out_m("metaComm");
+    out_m.slot("spAbund") = Rcpp::clone(d.spAbundM);
+    out_m.slot("spTrait") = Rcpp::clone(d.spTraitM);
+    //if(print){Rcout << "created m" << "\n";}
+    
+    S4 out_p("rolePhylo");
+    out_p.slot("n") = Rcpp::clone(d.nTipsP);
+    out_p.slot("e") = Rcpp::clone(d.edgesP);
+    out_p.slot("l") = Rcpp::clone(d.lengthsP);
+    out_p.slot("alive") = Rcpp::clone(d.aliveP);
+    out_p.slot("tipNames") = Rcpp::clone(d.tipNamesP);
+    out_p.slot("scale") = Rcpp::clone(d.scaleP);
+    //if(print){Rcout << "created p" << "\n";}
+    
+    S4 out_d("roleData");
+    out_d.slot("localComm") = out_l;
+    out_d.slot("metaComm") = out_m; 
+    out_d.slot("phylo") = out_p;
+    
+    return(out_d);
+}
+    
 // [[Rcpp::export]]
-
 List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bool print) {
     if(print){Rcout << "iter loop started" << "\n";}
     
@@ -144,20 +211,23 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             
             // sample for the parent
             int parent_indv = sample_zero_to_x(p.individuals_local(i));
-            if(print){Rcout << "parent indv: " << parent_indv << "\n";}
             
+            // call birth on data in place
+            // to revert, replace call_birth(...) with exact code from function
+            //call_birth(i, dead_index, parent_indv, d, p, print);
+            
+            if(print){Rcout << "parent indv: " << parent_indv << "\n";}
             //int birthed_species = d.indSpTrtL(parent_indv,0); 
             int birthed_species = d.indSpeciesL(parent_indv); 
             
             // set the species of the new indv to that of the parent 
             //d.indSpTrtL(dead_index,0) = birthed_species;
             d.indSpeciesL(dead_index) = birthed_species;
-            
-            //if(print){Rcout << "set new indv to parent species: " << d.indSpTrtL(dead_index,0) << " from" << d.indSpTrtL(parent_indv,0)<< "\n";}
+            if(print){Rcout << "set new species: " << d.indSpeciesL(dead_index) << "\n";}
             
             // add to the abundance of the species matrix
             d.spAbundL(birthed_species) = d.spAbundL(birthed_species) + 1; 
-                                                 
+            
             // calculate trait change from parent
             NumericVector trait_change = Rcpp::rnorm(1, 0, p.trait_sigma(1) / (p.speciation_meta(1) + p.extinction_meta(1)));
             if(print){Rcout << "trait change from parent: " << trait_change << "\n";}
@@ -443,6 +513,45 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     return(out_list);
 };
 
+
+// these funs, one for return data type, are R wrappers around multiple Cpp functions
+// ONLY for testing 
+int intFunCpp(Rcpp::StringVector fun_name, RObject data=NULL, RObject params=NULL, 
+                           NumericVector probs=NULL, int x=NULL) {
+    std::string fn = Rcpp::as<std::string >(fun_name(0));
+    
+    // tried switch, didn't work
+    if(fn == "sample_index_using_probs"){
+        return(sample_index_using_probs(probs));
+    }
+    if(fn == "sample_zero_to_x"){
+        return(sample_zero_to_x(x));
+    }
+}
+S4 dataFunCpp(Rcpp::StringVector fun_name, 
+                       RObject local=NULL, RObject meta=NULL,RObject phylo=NULL,
+                       RObject params=NULL, int niter=NULL,
+                       int i=NULL, int dead_index=NULL, int parent_indv=NULL) {
+    
+    // create Cpp objects
+    roleDataCpp d(local,meta,phylo);
+    roleParamsCpp p(params,niter);
+    std::string fn = Rcpp::as<std::string >(fun_name(0));
+    
+    // tried switch, didn't work
+    if(fn == "call_birth"){
+        call_birth(i,dead_index,parent_indv,d, p,true);
+        return(roleDataFromCpp(d));
+    }
+}
+NumericVector vectFunCpp(Rcpp::StringVector fun_name, RObject data=NULL, RObject params=NULL, 
+              NumericVector probs=NULL, int x=NULL) {
+}
+
+// export Rcpp module for use in R
 RCPP_MODULE(iterModelCpp) {
     function("iterModelCpp", &iterModelCpp);
+    function("intFunCpp", &intFunCpp);
+    function("vectFunCpp", &vectFunCpp);
+    function("dataFunCpp", &dataFunCpp);
 }
