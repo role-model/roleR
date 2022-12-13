@@ -1,8 +1,6 @@
 reticulate::conda_install("r-reticulate",
                           packages="newick")
 
-
-
 msprime <- reticulate::import('msprime')
 newick <- reticulate::import('newick')
 collections <- reticulate::import('collections')

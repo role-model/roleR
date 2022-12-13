@@ -27,7 +27,7 @@ setGeneric('getSumStats',
 
 setMethod('getSumStats', 
           signature = 'roleData', 
-          definition = function(x, funs, moreArgs) {
+          definition = function(x, funs, moreArgs) { 
               bigFun <- .funApply(funs, moreArgs)
               
               return(bigFun(x))
@@ -45,8 +45,10 @@ setMethod('getSumStats',
               bigFun <- .funApply(funs, moreArgs)
               
               o <- lapply(x@modelSteps, bigFun)
-              
-              return(do.call(rbind, o))
+              o <- do.call(rbind, o)
+             
+              o$iteration <- seq(from=0,by=x@params@niterTimestep,length.out = (x@params@niter / x@params@niterTimestep) + 1)
+              return(o)
           }
 )
 
@@ -58,15 +60,25 @@ setMethod('getSumStats',
 setMethod('getSumStats', 
           signature = 'roleExperiment', 
           definition = function(x, funs, moreArgs) {
-              bigFun <- .funApply(funs, moreArgs)
               
-              o <- lapply(x@modelRuns, bigFun)
-              
-              return(do.call(rbind, o))
+              ss <- data.frame()
+              for(r in 1:length(x@modelRuns)){
+                  s <- getSumStats(x@modelRuns[[r]],funs)
+                  s$run_num <- r
+                  ss <- rbind(ss,s)
+              }
+              return(ss)
           }
 )
 
-
+getSumStatsMean <- function(x, funs){
+    ss <- list()
+    for(r in 1:length(x@modelRuns)){
+        s <- getSumStats(x@modelRuns[[r]],funs)
+        s$run_num <- r
+        ss <- append(ss,list(s))
+    }
+}
 
 # helper function to make a new synthetic function from a list of functions 
 .funApply <- function(funs, moreArgs) {
@@ -127,4 +139,3 @@ setMethod('getSumStats',
     # above code
     return(newFun)
 }
-

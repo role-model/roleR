@@ -20,7 +20,7 @@
 #' @export
 
 setGeneric('runRoLE', 
-           def = function(x, print = F) standardGeneric('runRoLE'), 
+           def = function(x, cores=1, print = F) standardGeneric('runRoLE'), 
            signature = 'x')
 
 setMethod('runRoLE', 
@@ -36,7 +36,7 @@ setMethod('runRoLE',
                       stop("Models can only be run once and this model has already been run")
                   }
               }
-              if(length(x@modelSteps) > 1)
+              #if(length(x@modelSteps) > 1)
               # m <- model
               # init the first data step of the model using params 
               #model <- initModel(model)
@@ -59,8 +59,9 @@ setMethod('runRoLE',
 
 setMethod('runRoLE', 
           signature = 'roleExperiment', 
-          definition = function(x, print = F) {
+          definition = function(x, cores = 1, print = F) {
               experiment <- x
+              library(roleR)
               if(cores == 1){
                   experiment@modelRuns <- lapply(experiment@modelRuns, iterModel)
               }

@@ -14,6 +14,11 @@ public:
     //NumericMatrix spAbundTrtL; 
     NumericVector spAbundL;
     NumericVector spTraitL;
+    
+    NumericVector spAbundHarmMeanL;
+    NumericVector spLastOriginStepL;
+    NumericVector spExtinctionStepL; 
+    NumericVector spReciprSumL;
 
     //NumericMatrix spAbundTrtM;
     NumericVector spAbundM;
@@ -47,6 +52,12 @@ public:
         //spAbundTrtL = Rcpp::as<NumericMatrix>(local.slot("spAbundTrt"));
         spAbundL = Rcpp::as<NumericVector>(local.slot("spAbund"));
         spTraitL = Rcpp::as<NumericVector>(local.slot("spTrait"));
+        
+        spAbundHarmMeanL = Rcpp::as<NumericVector>(local.slot("spAbundHarmMean"));
+        spLastOriginStepL = Rcpp::as<NumericVector>(local.slot("spLastOriginStep"));
+        spExtinctionStepL = Rcpp::as<NumericVector>(local.slot("spExtinctionStep"));
+        
+        spReciprSumL = NumericVector(10000); // given a 10000 len 
         
         //spAbundTrtM = Rcpp::as<NumericMatrix>(meta.slot("sppAbundTrt"));
         spAbundM = Rcpp::as<NumericVector>(meta.slot("spAbund"));
