@@ -24,6 +24,7 @@ Remotes:
 LinkingTo: Rcpp, RcppArmadillo
 Collate:
     'RcppExports.R'
+    'boo.R'
     'comm.R'
     'rolePhylo.R'
     'roleParams.R'
@@ -43,5 +44,6 @@ Collate:
     'simGen.R'
     'simulateSpeciesGenDiv.R'
     'prepRebuild.R'
+    'wtf.R'
     'zzz.R'
-RoxygenNote: 7.2.0
+RoxygenNote: 7.2.1
