@@ -1,11 +1,39 @@
 library(roleR)
 
 
-neutp <- untbParams(individuals_local = 100, 
+J <- c(rep(500, 250), 100 * exp(0.007 * 0:249))
+
+plot(J)
+
+
+neutp <- untbParams(individuals_local = J, 
                     individuals_meta = 1000, species_meta = 100, 
                     speciation = 0.01, dispersal_prob = 0.2, 
                     init_type = 'oceanic_island', 
-                    niter = 1000, niterTimestep = 10)
+                    niter = 500, niterTimestep = 10)
+
+
+
+bott <- roleModel(neutp)
+bott <- iterModel(bott)
+
+plot(getSumStats(bott, list(rich = richness))[, 1])
+
+
+manyNeutral <- replicate(100, neutp)
+
+m <- roleExperiment(manyNeutral)
+m <- iterExperiment(m)
+
+
+# set-up priors
+
+# sample from priors
+
+# run experiment over those samples
+
+# proceed as normal 
+
 
 
 neut <- roleModel(neutp)
@@ -13,6 +41,17 @@ foo <- as(iterModel(neut), 'roleExperiment')
 foo@experimentMeta
 
 getSumStats(foo, list(rich = richness))
+
+
+p <- roleParams(individuals_local = 100, 
+                individuals_meta = 1000, species_meta = 100, 
+                speciation_local = 0.01, dispersal_prob = 0.2, 
+                init_type = 'oceanic_island', 
+                neut_delta = 1, # this *always* needs to be equal to 1 for neutral model
+                niter = 1000)
+m <- roleModel(p)
+m <- iterModel(m)
+
 
 
 
@@ -24,13 +63,11 @@ p <- roleParams(individuals_local = 100, individuals_meta = 100000,
                 comp_sigma = 1, dispersal_prob = 0.1, mutation_rate = 0.01, 
                 equilib_escape = 1, alpha = 1000, num_basepairs = 500, 
                 init_type = 'oceanic_island', 
-                niter = 1000)
+                niter = 1000, neut_delta = 1)
 
 
 
 
-lvParams
-coexistenceParams
 
 
 m <- roleModel(p)
