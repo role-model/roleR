@@ -156,7 +156,7 @@ roleModel <- function(params) {
     beta <- -log(p)
     
     # calculate idealized SAD from parameter
-    thisSAD <- pika::sad(model = 'fish', par = beta)
+    thisSAD <- pika::sad(model = 'lseries', par = beta)
     thisSAD <- pika::sad2Rank(thisSAD, S = S)
     
     # return relative abundances
