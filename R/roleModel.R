@@ -64,7 +64,7 @@ roleModel <- function(params) {
     
     # browser()
     phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)
-    
+
     meta <- metaComm(spAbund = .lseriesFromSN(params@species_meta, 
                                               params@individuals_meta), 
                      spTrait = ape::rTraitCont(phylo, 
@@ -162,5 +162,4 @@ roleModel <- function(params) {
     # return relative abundances
     return(thisSAD / sum(thisSAD))
 }
-
 

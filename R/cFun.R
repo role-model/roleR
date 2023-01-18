@@ -1,6 +1,6 @@
 cFun <- function(type="int",fun_name="sample_index_using_probs",
                    data=NULL,params=NULL,i=NULL,
-                   probs=NULL,
+                   probs=c(0), x = 0,
                    dead_index=NULL,parent_indv=NULL){
     
     if(!is.null(data)){
@@ -13,9 +13,10 @@ cFun <- function(type="int",fun_name="sample_index_using_probs",
     }
     
     if(type == "int"){
-        return(intFunCpp(fun_name=fun_name,data=data,params=params,probs=probs))}
+        return(intFunCpp(fun_name=fun_name,probs=probs,x=x))}
     if(type == "vector"){
-        return(vectorFunCpp(fun_name=fun_name,data=data,params=params,probs=probs))}
+        return(vectFunCpp(fun_name=fun_name,local=l,meta=m,phylo=phy
+                            ,params=params,niter=niter,i=i))}
     if(type == "data"){
         return(dataFunCpp(fun_name=fun_name,local=l,meta=m,phylo=phy,
                           params=params,niter=niter,i=i,
