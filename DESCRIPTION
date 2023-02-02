@@ -23,33 +23,5 @@ Imports:
 Remotes:
     ajrominger/pika
 LinkingTo: Rcpp, RcppArmadillo
-Collate:
-    'RcppExports.R'
-    'comm.R'
-    'rolePhylo.R'
-    'roleParams.R'
-    'roleData.R'
-    'roleModel.R'
-    'roleExperiment.R'
-    'iterRole.R'
-    'getFinalState.R'
-    'getSumStats.R'
-    'getTimeseries.R'
-    'roleData-divStats.R'
-    'roleData-rawStats.R'
-    'roleExperiment-methods.R'
-    'createPredModel.R'
-    'roleIterFuns.R'
-    'rolePriors.R'
-    'simGen.R'
-    'simulateSpeciesGenDiv.R'
-    'simulateGen.R'
-    'simSeqs.R'
-    'writeRoLE.R'
-    'setExpMetadata.R'
-    'cFun.R'
-    'prepRebuild.R'
-    'quickModel.R'
-    'zzz.R'
 RoxygenNote: 7.2.3
 RcppModules: iterModelCpp
