@@ -31,9 +31,10 @@ public:
     CharacterVector tipNamesP;
     NumericVector scaleP;    
     
-    NumericVector envFilterProbs;
     arma::mat traitDiffsSq;
-    
+    NumericVector envFilterProbs;
+    double prevEnvSigma;
+
     //roleDataCpp(RObject data){
     //    RObject local = data.slot("localComm");
     //    RObject meta = data.slot("metaComm");
