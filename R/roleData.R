@@ -7,6 +7,7 @@
 #' 2nd col contains numeric entropies used to compute hill statistics, 
 #' and 3rd col contains hill statistic values
 #' 
+#' @rdname roleData
 #' @export
 
 setClass('roleData',
@@ -17,6 +18,9 @@ setClass('roleData',
                    #iterNum = 'integer'))
 
 # constructor
+#' @rdname roleData
+#' @export
+
 roleData <- function(localComm,metaComm,phylo,iterNum) {
   return(new('roleData',
              localComm = localComm,
