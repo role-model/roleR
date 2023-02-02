@@ -1,6 +1,5 @@
 
 test_that("birth sets the new indv to the parent species", {
-    
     # create a test model and get data from a step and the params
     m <- quickModel()
     d <- m@modelSteps[[2]]
@@ -43,7 +42,6 @@ test_that("birth adds 1 to the correct spot in the species matrix", {
 })
 
 test_that("birth adds a new trait value different from the last", {
-    
     # create a test model and get data from a step and the params
     m <- quickModel()
     d <- m@modelSteps[[2]]

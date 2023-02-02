@@ -23,7 +23,6 @@ test_that("env filtering outputs a vector of the right length", {
     # what is the expected behavior of this vector? can test using different params
 })
 
-
 test_that("env filtering probs is all the same if env_sigma param is 0 (no filtering)", {
     
     # create a test model and get data from a step and the params

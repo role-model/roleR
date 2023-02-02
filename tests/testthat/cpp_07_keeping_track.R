@@ -1,4 +1,5 @@
 
+# WIP
 test_that("update trait diffs squared changes the row of the dead indv", {
     
     # create a test model and get data from a step and the params
@@ -16,4 +17,11 @@ test_that("update trait diffs squared changes the row of the dead indv", {
     # compare these two - the trait diffs at the new trait value should be changed
 })
 
-test_that("")
+test_that("update env filter probs does nothing if neutral", {
+})
+
+test_that("update env filter probs recalculates whole vector if env_sigma has changed this iter", {
+})
+
+test_that("update env filter probs sets one value of vector if env_sigma has NOT changed", {
+})
