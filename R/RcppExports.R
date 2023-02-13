@@ -5,3 +5,7 @@ iterModelCpp <- function(local, meta, phylo, params, print) {
     .Call(`_roleR_iterModelCpp`, local, meta, phylo, params, print)
 }
 
+testRand <- function(m) {
+    .Call(`_roleR_testRand`, m)
+}
+
