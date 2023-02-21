@@ -204,3 +204,22 @@ untbParams <- function(individuals_local,
                niter = niter,
                niterTimestep = niterTimestep))
 }
+
+
+checkRoleParams <- function(object) {
+    checks <- c()
+    
+    if(object@niter < object@niterTimestep) {
+        checks <- c(checks, 
+                    '`niter` must be greater than or equal to `niterTimestep`')
+    }
+    
+    if(length(checks) > 0) {
+        return(checks)
+    } else {
+        return(TRUE)
+    }
+}
+
+setValidity('roleParams', checkRoleParams)
+
