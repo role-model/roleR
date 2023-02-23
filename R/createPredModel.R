@@ -1,3 +1,12 @@
+#' @title createPredModel
+#' 
+#' @description create a random forest model to predict a parameter value using summary statistics
+
+#' @param exp a roleExperiment to use as the training set 
+#' @param paramName the parameter to predict 
+#'     
+#' @rdname createPredModel
+#' @export
 
 # returns a random forest to predict a parameter value using summary stats 
 createPredModel <- function(exp,paramName)

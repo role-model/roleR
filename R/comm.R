@@ -1,25 +1,33 @@
 #' @title Local community
 #' 
 #' @description An S4 class to specify the state of a local community
-#'
-#' @slot indSppTrt numeric matrix with rows for individuals; column 1 is species
-#'     ID (matches row number in `metaComm@sppData`); column 2 is trait value; 
-#'     column 3 is sequence (maybe? maybe shouldn't have it)
-#' @slot indSeqs character matrix with rows for individuals; column 1 is 
-#'     sequences for each individual
-#' @slot sppGenDiv a numeric matrix with rows for species; column 1 is species
-#'     level genetic diversity
+
+#' @slot indSpecies numeric vector of the species IDs for each individual
+#' For example indSpecies[1] is the ID of the species of individual 1
+#' @slot indTrait numeric vector of the trait values for each individual
+#' @slot indSeqs character vector of the gene sequences for each individual
+#'     
+#' @slot spGenDiv numeric vector of the genetic diversities for each species
+#' @slot spTrait numeric vector of the mean trait value of each species
+#' @slot spAbund numeric vector of the abundance (number of individuals) of each species
+#' 
+#' @slot spAbundHarmMean numeric vector of the harmonic mean of species abundances
+#' Equivalent to n / the reciprocal sum of abundances since last emergence where n is the number of steps in the reciprocal sum
+#' Used in genetic simulation in roleR
+#' @slot spLastOriginStep numeric vector of the last origin step of each species
+#' The last origin step is the last step where a new species appeared in the local community (either totally new or after local extinction)
+#' Used in genetic simulation in roleR
+#' @slot spExtinctionStep numeric vector of the last extinction step of each species
+#' Used in genetic simulation in roleR
 #' 
 #' @rdname localComm
 #' @export
 
 setClass('localComm',
-         slots = c(#indSppTrt = 'matrix',
-                   indSpecies = 'numeric',
+         slots = c(indSpecies = 'numeric',
                    indTrait = 'numeric',
                    indSeqs = 'character',
                    spGenDiv = 'numeric',
-                   #spAbundTrt = 'matrix',
                    spTrait = 'numeric',
                    spAbund = 'numeric',
                    spAbundHarmMean = 'numeric',
@@ -68,15 +76,15 @@ localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { #indSppTrt, ind
 #' 
 #' @description An S4 class to specify the state of a meta community
 #'
-#' @slot sppAbundTrt numeric matrix with rows for species (row number is 
-#'     species ID); column 1 is relative abundance; column 2 is trait mean
-#' 
+#' @slot spAbund numeric vector of relative abundances for each species in the meta community
+#' For example spAbundTrt[1] is the relative abundance of species 1
+#' @slot spTrait numeric vector of trait values for each species in the meta community
+
 #' @rdname metaComm
 #' @export
 
 setClass('metaComm',
-         slots = c(#sppAbundTrt = 'matrix'),
-                spAbund='numeric',
+         slots = c(spAbund='numeric',
                 spTrait='numeric'))
 
 
@@ -89,8 +97,3 @@ metaComm <- function(spAbund,spTrait) {
              spAbund=spAbund,
              spTrait=spTrait))
 }
-#install.packages("Rcpp")
-#library(Rcpp)
-#Rcpp.package.skeleton(name = "roleR")
-
-#Rcpp::Rcpp.package.skeleton(name="roleR2")
