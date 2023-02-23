@@ -46,7 +46,8 @@ p <- roleParams(
   equilib_escape = 1,
   num_basepairs = 250,
   init_type = 'oceanic_island',
-  niter = 1000
+  niter = 1000,
+  niterTimestep = 100
 )
 
 # initialize the model
