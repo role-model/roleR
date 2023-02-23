@@ -3,6 +3,7 @@
 
 #include "roleDataCpp.cpp"
 #include "roleParamsCpp.cpp"
+#include <iostream>
 
 using namespace Rcpp;
 
@@ -34,6 +35,11 @@ int sample_index_using_probs(NumericVector probs){
 }
 
 // get prob of death for each individual due to env filtering
+// raising traits - optimum to power of 2
+// multiply by gaussian kernel of env_sigma
+// ANDY NOTE - could save this to avoid recomputing
+//  this would be a new function similar to update_trait_diffs_sq
+// JACOB NOTE - this actually happens currently - every iter the prob is recomputed ONLY at the dead_indv location
 NumericVector get_filtering_death_probs(int i, roleDataCpp &d, roleParamsCpp &p){
     return(1 - exp(-1/p.env_sigma[0] * pow(d.indTraitL - 0, 2)));
 }
@@ -81,17 +87,33 @@ int call_death(int i, roleDataCpp &d, roleParamsCpp &p){
     // if not neutral, calculate initial probs of death from environmental filtering
     if(p.neut_delta[0] != 1)
     {
-        // METHOD - get probs of death due to env filtering
-        NumericVector env_filter_probs = get_filtering_death_probs(i,d,p);
+        // ANDY NOTE - figure out how ifs should be structured
+        // JACOB NOTE - done!
+        
+        // envFilterProbs is updated at the END of every loop iter to be current for the next iter
+        // comp probs are NOT updated, but the most expensive part of it which ALWAYS changes every iter (traitDiffsSquared),
+        //  is updated at the end of every loop iter
+        
+        // if env_comp_delta is 1, only env filtering matters, so don't worry about combining
+        //  and death probs is just the current envFilterProbs
+        if(p.env_comp_delta[0] == 1){
+            death_probs = d.envFilterProbs;
+        }
+        else if(p.env_comp_delta[0] == 0){ // if is 0, only competition matters
+            // METHOD - calculate probs of death due to competition
+            death_probs = get_comp_death_probs(i,d,p);
+        }
+        else{ // otherwise, must combine
+            // METHOD - calculate combined death probs
+            death_probs = get_combined_death_probs(i,p,d.envFilterProbs,get_comp_death_probs(i,d,p));
+        }
         
         // save the used env sigma as the prevEnvSigma for the next loop
+        // JACOB NOTE - should neutrality or env comp delta ever be time-varying? currently they cannot be but 
+        //   but minor refactoring would make it possible
+        // ANDY NOTE - based on conceptual principles decide which things can time vary and which can't
+        //   maybe hackathon topic - but keep track of which params are invariant
         d.prevEnvSigma = p.env_sigma[0];
-        
-        // METHOD - get probs of death due to competition
-        NumericVector comp_probs = get_comp_death_probs(i,d,p);
-
-        // METHOD - calculate combined death probs
-        death_probs = get_combined_death_probs(i,p,env_filter_probs,comp_probs);
     }
     
     // get dead index and dead species
@@ -122,10 +144,18 @@ void call_birth(int i, int dead_index, int parent_indv, roleDataCpp &d, rolePara
     d.spAbundL(birthed_species) = d.spAbundL(birthed_species) + 1; 
     
     // calculate trait change from parent
-    NumericVector trait_change = Rcpp::rnorm(1, 0, p.trait_sigma(1) / (p.speciation_meta(1) + p.extinction_meta(1)));
+    // ANDY NOTE - change rnorm and unif to use std C++
+    // JACOB NOTE - done! with different distr tnorm & sptnorm
+    // but note that if params affecting the norm for sampling traits vary over iters,
+    //  the distr object will have to be remade and reassigned as the stdev cannot be edited
+    //  however, now that I finished this I wonder if we should just stick with Rcpp sugar i.e. Rcpp:rnorm
+    //  note that Rcpp sugar DOES NOT call R, rather it is a C++ implementation
+    //  we may be reinventing the wheel in a more ugly way rather than making things faster - can test if unsure!
+    
+    float trait_change = d.norm(d.rng) * p.trait_sigma(i) / (p.speciation_meta(i) + p.extinction_meta(i));
 
     // add new trait value
-    d.indTraitL(dead_index) = d.indTraitL(parent_indv) + trait_change(0);
+    d.indTraitL(dead_index) = d.indTraitL(parent_indv) + trait_change;
 }
 
 // set the species of the new indv, update last time of origin, add to sp abundance matrix, and calculate and add new trait
@@ -146,17 +176,17 @@ void call_dispersal(int i, int dead_index, int parent_indv, roleDataCpp &d, role
     d.spAbundL(d.indSpeciesL(dead_index)) = d.spAbundL(d.indSpeciesL(dead_index)) + 1;
     
     // calculate trait change from parent
-    NumericVector trait_change = Rcpp::rnorm(1, 0, p.trait_sigma(1) / (p.speciation_meta(1) + p.extinction_meta(1)));
-
+    float trait_change = d.norm(d.rng) * p.trait_sigma(i) / (p.speciation_meta(i) + p.extinction_meta(i));
+    
     // add new trait value
-    d.indTraitL(dead_index) = d.spTraitM(parent_index) + trait_change(0);
+    d.indTraitL(dead_index) = d.spTraitM(parent_index) + trait_change;
 }
 
 // get the probs of speciation, determines by weighted local and meta abundance
 NumericVector get_speciation_probs(int i, roleDataCpp &d, roleParamsCpp &p){
     
     // get dispersal prob
-    float dp = p.dispersal_prob(i);
+    double dp = p.dispersal_prob(i);
     
     // calculate speciation probs as sum of local and meta abundances weighted by dispersal prob
     NumericVector probs = dp * (d.spAbundM / sum(d.spAbundM)) + 
@@ -171,20 +201,9 @@ NumericVector get_speciation_probs(int i, roleDataCpp &d, roleParamsCpp &p){
 // call the local and meta aspects of speciation
 void update_speciation_local_meta(int i, int dead_index, roleDataCpp &d, roleParamsCpp &p, bool dispersed_this_iter, int speciation_sp, bool print){
     
-    // calculate deviation of trait from previous species trait
-    float trait_dev = R::rnorm(0, p.trait_sigma(i));
-    float parent_trait_val = 0;
-    
-    // if dispersed, parent trait comes from meta
-    if(dispersed_this_iter){
-        parent_trait_val = d.spTraitM(speciation_sp);
-    }
-    // otherwise it comes from local
-    else{
-        parent_trait_val = d.spTraitL(speciation_sp);
-    }
-    
-    // set new trait value
+    // calculate deviation of trait from previous species trait and add new value
+    double trait_dev = d.norm(d.rng) * p.trait_sigma(i);
+    double parent_trait_val = d.indTraitL(dead_index);
     d.indTraitL(dead_index) = parent_trait_val + trait_dev;
 
     // the indv that was birthed or immigrated becomes the new species
@@ -198,25 +217,50 @@ void update_speciation_local_meta(int i, int dead_index, roleDataCpp &d, rolePar
 void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int speciation_sp){
     
     // set easy named variables for phylogeny speciation
-    NumericMatrix e = d.edgesP;
-    NumericVector l = d.lengthsP;
+    arma::imat e = d.edgesP;
+    arma::vec l = d.lengthsP;
     int n = d.nTipsP(0);
     LogicalVector alive = d.aliveP;
     
     // nrows of the edge matrix
-    int eMax = e.nrow();
+    //int eMax = e.nrow();
+    //Rcout << "Getting emax";
+    int eMax = arma::size(e)[0];
 
     // NOTE - this could be made into a separate function
     // find index of where unrealized edges in edge matrix start
     // equivalent to eNew <- min(which(e[, 1] == -1))
-    int eNew = -1;
+    //int eNew = -1;
     
+    //for (int k = 0; k < eMax; k++) {
+    //    if (e(k, 0) == -2) {
+    //        eNew = k;
+    //        break;
+    //   }
+    //}
+    
+    // index of where unrealized edges in edge matrix start
+    // an unrealized edge is the next un-utilized edge, used to avoid augmenting
+    int eNew = eMax - 2; // 2* eMax -2
+    
+    //Rcout << "index of the edge matrix of where to add new edge";
+    // index of the edge matrix of where to add new edge
+    //arma::uvec inds = find(e.col(1) == i);
+    //int j = inds(0);
+    int j = -1;
     for (int k = 0; k < eMax; k++) {
-        if (e(k, 0) == -2) {
-            eNew = k;
+       if (e(k, 1) == speciation_sp) {
+            j = k;
             break;
         }
     }
+    
+    
+    //Rcout << "add one to internal nodes";
+    
+    // add one to internal nodes
+    arma::uvec internalNode = find(e > eMax); // should it be > or >=??????
+    e.elem(internalNode) += 1;
     
     // NOTE - possible strategy for augmentation
     // add if statement to catch whether eNew >= eMax
@@ -226,46 +270,49 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
     // NOTE - this could be made into a separate function
     // get index of the edge matrix of where to add new edge
     // equivalent to j <- which(e[, 2] == i)
-    int j = -1;
-    for (int k = 0; k < eMax; k++) {
-        if (e(k, 1) == speciation_sp) {
-            j = k;
-            break;
-        }
-    }
     
     // add one to internal node indices
     // equivalent to e[e > n] <- e[e > n] + 1
-    for (int r = 0; r < eNew; r++) {
-        for (int c = 0; c < 2; c++){
-            if (e(r, c) >= n) {
-                e(r, c) ++;
-            }
-        }
-    }
-
+    //for (int r = 0; r < eNew; r++) {
+    //    for (int c = 0; c < 2; c++){
+    //        if (e(r, c) >= n) {
+    //            e(r, c) ++;
+    //        }
+    //    }
+    //}
+    
+    //Rcout << "add new internal node";
+    //Rcout << "eNew" << eNew;
+    //Rcout << "e size" << arma::size(e);
+    
     // add new internal node
-    int newNode = 2 * n; // index of new node n+1
+    //int newNode = 2 * eMax + 1; // index of new node n+1
+    int newNode = 2 * n; // this worked with prev approach
     e(eNew, 0) = newNode;
     e(1 + eNew, 0) = newNode;
-
+    
+    //Rcout << "add tips";
     // add tips
     e(eNew, 1) = e(j, 1); // replace old tip
     e(eNew + 1, 1) = n; // add new tip
-
+    
+    //Rcout << "update ancestry of internal nodes";
     // update ancestry of internal nodes
     e(j, 1) = newNode;
-
+    
+    //Rcout << "augment edge lengths";
     // augment edge lengths
     l[eNew] = 0;
     l[1 + eNew] = 0;
     
+    //Rcout << "increase all tip edge lengths by 1 time step";
     // increase all tip edge lengths by 1 time step
-    for (int r = 0; r <= eNew + 1; r++) {
-        if (e(r, 1) <= n + 1) { //n+1
-            l(r) ++;
-        }
-    }
+    l(find(e.col(1) <= eNew + 1)) += 1;
+    //for (int r = 0; r <= eNew + 1; r++) {
+    //    if (e(r, 1) <= n + 1) { //n+1
+    //        l(r) ++;
+    //    }
+    //}
     
     // update alive vector
     alive(n) = TRUE; // NOTE - double check that this updates properly
@@ -278,13 +325,14 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
 void call_speciation(int i, int dead_index, roleDataCpp &d, roleParamsCpp &p, bool dispersed_this_iter, bool print){
     
     // computing probs of speciation as sum of weighted meta and local abundances
-    NumericVector probs = get_speciation_probs(i,d,p);
+    // NumericVector probs = get_speciation_probs(i,d,p);
     
     // sample using probs (may be able to replace with sample_index_using_probs)
-    IntegerVector s = sample(d.spAbundM.length(), 1, false, probs);
+    // IntegerVector s = sample(d.spAbundM.length(), 1, false, probs);
     
     // make i from 0 to phylo.n - 1 (previously 1 to phylo.n)
-    int speciation_sp = s(0) - 1;
+    //int speciation_sp = s(0) - 1;
+    int speciation_sp = d.indSpeciesL(dead_index);
     
     // update the local and meta traits, sp vector, and time of last origin
     update_speciation_local_meta(i,dead_index,d,p,dispersed_this_iter,speciation_sp,print);
@@ -308,23 +356,28 @@ void update_trait_diffs_sq(int dead_index, roleDataCpp &d, roleParamsCpp &p){
     }
 }
 
+// update a vector containing every local trait raised to the power of 2
+// JACOB NOTe - don't think we need this as we are updating the index specifically in update_env_filter_probs
+void update_trait_pow(int dead_index, roleDataCpp &d, roleParamsCpp &p){
+    
+    // update traitPow using two for loops 
+    // updates ONLY the row and column of the dead_index
+    d.traitPow(dead_index) = pow(d.indTraitL(dead_index)-0,2);
+}
+
 // if non-neutral, save on computation by updating env_filtering probs fully if env_sigma changes and only for the new indv if it doesn't
 // make sure env_filter_probs initial null state is used properly in death
 void update_env_filter_probs(int i, int dead_index,roleDataCpp &d,roleParamsCpp &p){
     
-    // if neutral 
-    if(p.neut_delta[0] != 1)
-    {
-        // check if new env_sigma, if so must recalculate envFilterProbs entirely
-        if(d.prevEnvSigma != p.env_sigma[i]){
-            d.envFilterProbs = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL - 0, 2));
-        }
-        //otherwise just update the probs of the new individual
-        else{
-            d.envFilterProbs(dead_index) = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL(dead_index), 2));
-        }
-        d.prevEnvSigma = p.env_sigma[i]; // NOTE - double check this is right
+    // check if new env_sigma, if so must recalculate envFilterProbs entirely
+    if(d.prevEnvSigma != p.env_sigma[i]){
+        d.envFilterProbs = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL - 0, 2));
     }
+    //otherwise just update the probs of the new individual
+    else{
+        d.envFilterProbs(dead_index) = 1 - exp((-1/p.env_sigma(i)) * pow(d.indTraitL(dead_index), 2));
+    }
+    d.prevEnvSigma = p.env_sigma[i]; // NOTE - double check this is right
 }
 
 // update the local species sum of reciprocals
@@ -355,7 +408,19 @@ void update_local_sp_sum_recipr(int i, int dead_index, roleDataCpp &d, roleParam
 }
 
 // copy a roleDataCpp object to it's R side S4 equivalent
-S4 role_data_from_cpp(roleDataCpp d){
+S4 role_data_from_cpp(roleDataCpp &d){
+    
+    // ANDY NOTE - clone each element of d or clone d and extract elements
+    // JACOB NOTE - tried this, but pure C++ objects cannot be cloned
+    //      trying to clone a roleDataCpp fails because it is not a matching R/Cpp type like a NumericVector
+    //      instead tried, and none worked:
+    // 1. copy constructor 
+    // 2. copy assignment operator
+    // 3. using * to get values of pointers rather than pointers themselves
+    // All failed to deep copy, possibly some quirk of Rcpp where it would normally work in C++
+    // take a bit of a closer look at clone
+    
+    // ANDY NOTE - snip off augmented data when cloning 
     
     // construct S4 object, cloning each member of roleDataCpp directly to slots
     S4 out_l("localComm");
@@ -373,8 +438,8 @@ S4 role_data_from_cpp(roleDataCpp d){
 
     S4 out_p("rolePhylo");
     out_p.slot("n") = Rcpp::clone(d.nTipsP);
-    out_p.slot("e") = Rcpp::clone(d.edgesP);
-    out_p.slot("l") = Rcpp::clone(d.lengthsP);
+    out_p.slot("e") = Rcpp::clone(Rcpp::wrap(d.edgesP)); //Rcpp::as<T>(obj)
+    out_p.slot("l") = Rcpp::clone(Rcpp::wrap(d.lengthsP));
     out_p.slot("alive") = Rcpp::clone(d.aliveP);
     out_p.slot("tipNames") = Rcpp::clone(d.tipNamesP);
     out_p.slot("scale") = Rcpp::clone(d.scaleP);
@@ -386,10 +451,9 @@ S4 role_data_from_cpp(roleDataCpp d){
     
     return(out_d);
 }
-    
+
 // [[Rcpp::export]]
 List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bool print) {
-
     // save niter and niterTimestep
     int niter = params.slot("niter");
     int niter_timestep = params.slot("niterTimestep");
@@ -398,39 +462,44 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     roleDataCpp d(local,meta,phylo);
     roleParamsCpp p = roleParamsCpp(params,niter); // constructor samples/stretches
     
+    // setup rng distr using params
+    // JACOB NOTE - allow these to time vary - make new distr every iteration when any of these params change
+    //  change to unorm and multiple by stdev
+    //d.tnorm = std::normal_distribution<double>(0, p.trait_sigma[0] / (p.speciation_meta[0] + p.extinction_meta[0]));
+    //d.sptnorm = std::normal_distribution<double>(0, p.trait_sigma[0]);
+    
     // save n_indv to use easily throughout
     int n_indv = p.individuals_local[0];
     
-    // if not neutral, calculate initial probs of death from environmental filtering
+    // if not neutral, calculate initial probs of death from environmental filtering and set to data
     NumericVector env_filter_probs (n_indv,1.0);
     if(p.neut_delta[0] != 1)
     {
         env_filter_probs = 1 - exp(-1/p.env_sigma[0] * pow(d.indTraitL - 0, 2));
-        if(print){Rcout << "calculated initial probs of death from env filtering: " << env_filter_probs << "\n";}
     }
     d.envFilterProbs = env_filter_probs;
-    d.prevEnvSigma = p.env_sigma[0]; // NOTE - double check this is correct
+    
+    // save the env_sigma of the first iter as the trivial prev for the first titer
+    d.prevEnvSigma = p.env_sigma[0];
     
     // create out array to hold timeseries data 
-    RObject out[(niter / niter_timestep) + 1]; 
+    List out((niter / niter_timestep) + 1);
     
     // save the initial state to index 0 
     out[0] = role_data_from_cpp(d);
     
     // loop from 0 to niter - 1 
     for(int i = 0; i < (int) params.slot("niter"); i++) {
-        if(print){Rcout << "started iteration " << i << "\n";}
-        
+
         // METHOD - call death
         int dead_index = call_death(i,d,p);
         
         // set dispersal var for use in speciation, which is slightly different depending
         bool dispersed_this_iter = false; 
-        
+
         // check for birth (prob = 1 - dispersal_prob) 
-        if(R::runif(0,1) >= p.dispersal_prob(i)){
-            if(print){Rcout << "birthed, dispersal prob: " << p.dispersal_prob(i) << "\n";}
-            
+        if(d.unif(d.rng) >= p.dispersal_prob(i)){ //R::runif(0,1)
+
             // sample for the parent
             int parent_indv = sample_zero_to_x(p.individuals_local(i));
             
@@ -438,7 +507,6 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             call_birth(i, dead_index, parent_indv, d, p, print);
         }
         else{
-            if(print){Rcout << "dispersed, dispersal prob: " <<  p.dispersal_prob(i) << "\n";}
             dispersed_this_iter = true;
             
             // sample a parent index using species abundances as probs
@@ -448,17 +516,31 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             call_dispersal(i,dead_index, parent_index, d, p, print);
         }
         
-        // METHOD - update the squared differences between traits at the dead_index
-        update_trait_diffs_sq(dead_index,d,p);
-        
-        // METHOD - update the probs of enviromental filtering ONLY if non-neutral and either for all indv or just the new one
-        update_env_filter_probs(i, dead_index,d,p);
-        
         // randomly decide if speciation occurs
-        if(R::runif(0,1) < p.speciation_local(i))
+        if(d.unif(d.rng) < p.speciation_local(i))
         {
             // METHOD - call speciation and get the chosen species 
             call_speciation(i, dead_index, d, p, dispersed_this_iter, print);
+        }
+        
+        // if non-neutral, update objects used for comp and filtering
+        if(p.neut_delta[0] < 1){
+            
+            // JACOB NOTE - changed this as part of new death ifs 
+            // if filtering only
+            if(p.env_comp_delta[0] == 1){
+                // METHOD - update the probs of enviromental filtering ONLY if non-neutral and either for all indv or just the new one
+                update_env_filter_probs(i, dead_index,d,p);
+            }
+            else if(p.env_comp_delta[0] == 0){ // if competition only 
+                // METHOD - update the squared differences between traits at the dead_index
+                update_trait_diffs_sq(dead_index,d,p);
+            }
+            else{
+                // update both
+                update_env_filter_probs(i, dead_index,d,p);
+                update_trait_diffs_sq(dead_index,d,p);
+            }
         }
         
         // METHOD - update the local species sum of reciprocals
@@ -479,13 +561,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
         }
     } 
     
-    // build the final list and return it to R
-    List out_list = List::create(out[0]);
-    for(int j = 1; j < sizeof(out)/sizeof(out[0]); j++)
-    {
-        out_list.push_back(out[j]);
-    }
-    return(out_list);
+    return(out);
 };
 
 

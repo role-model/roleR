@@ -1,5 +1,5 @@
 
-
+# used ONLY on Jacob's computer before rebuilding package
 prepRebuild <- function()
 {
   # uninstall previous version
@@ -17,5 +17,3 @@ prepRebuild <- function()
   unlink("C:/Users/hiest/AppData/Local/R/win-library/4.2/00LOCK-roleR", recursive = TRUE)
   utils::browseURL("C:/OWNER/hiest/Documents/R/win-library/4.1/roleR")
 }
-
-#prepRebuild()

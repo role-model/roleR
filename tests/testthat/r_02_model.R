@@ -20,3 +20,11 @@ test_that("big model with high speciation runs without error", {
     
     m <- runRoLE(roleModel(params))
 })
+
+test_that("model copying in C++ does not result in all timesteps being equal", {
+    
+    m <- quickModel()
+    #setequal(m@modelSteps[[1]]@localComm@indSpecies,m@modelSteps[[10]]@localComm@indSpecies)
+    #m@modelSteps[[10]]@localComm@indSpecies
+    expect_false(setequal(m@modelSteps[[1]]@localComm@indSpecies,m@modelSteps[[10]]@localComm@indSpecies))
+})

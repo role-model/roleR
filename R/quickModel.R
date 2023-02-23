@@ -1,4 +1,6 @@
 
+# function to create a model using a set of reasonable params
+# used in testthat tests
 quickModel <- function(){
     p <- roleParams(individuals_local = 100, individuals_meta = 1000,
                     species_meta = 10, speciation_local = 0.1, 
