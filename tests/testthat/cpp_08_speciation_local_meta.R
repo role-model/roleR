@@ -19,7 +19,6 @@ test_that("update_speciation_local_meta sets the indv that was birthed or immigr
     expect_true(d@localComm@indSpecies[1] == d@phylo@n)
 })
 
-# WIP
 test_that("update_speciation_local_meta updates the species last origin step", {
     # create a test model and get data from a step and the params
     m <- quickModel()

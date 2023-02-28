@@ -194,7 +194,7 @@ untbParams <- function(individuals_local,
                env_sigma = 1,
                comp_sigma = 1,
                neut_delta = 1, # makes the model neutral by ignoring env and comp sigmas
-               env_comp_delta = 0.5,
+               env_comp_delta = 1,
                dispersal_prob = dispersal_prob,
                mutation_rate = 0.01,
                equilib_escape = 1,

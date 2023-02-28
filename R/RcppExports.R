@@ -5,6 +5,18 @@ iterModelCpp <- function(local, meta, phylo, params, print) {
     .Call(`_roleR_iterModelCpp`, local, meta, phylo, params, print)
 }
 
+intFunCpp <- function(fun_name, probs, x) {
+    .Call(`_roleR_intFunCpp`, fun_name, probs, x)
+}
+
+dataFunCpp <- function(fun_name, local, meta, phylo, params, niter, i, dead_index, parent_indv, dispersed_this_iter, speciation_sp) {
+    .Call(`_roleR_dataFunCpp`, fun_name, local, meta, phylo, params, niter, i, dead_index, parent_indv, dispersed_this_iter, speciation_sp)
+}
+
+vectFunCpp <- function(fun_name, local, meta, phylo, params, niter, i) {
+    .Call(`_roleR_vectFunCpp`, fun_name, local, meta, phylo, params, niter, i)
+}
+
 testRand <- function(m) {
     .Call(`_roleR_testRand`, m)
 }

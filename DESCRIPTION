@@ -19,7 +19,8 @@ Imports:
     methods,
     rlang,
     parallel,
-    reticulate
+    reticulate,
+    testthat
 Remotes:
     ajrominger/pika
 LinkingTo: Rcpp, RcppArmadillo

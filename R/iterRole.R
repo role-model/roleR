@@ -16,14 +16,14 @@
 #' exp <- roleExperiment(list(p1,p2,p3))
 #' exp <- runRoLE(exp)
 #' 
-#' @rdname runRoLE
+#' @rdname runRole
 #' @export
 
-setGeneric('runRoLE', 
-           def = function(x, cores=1, print = F) standardGeneric('runRoLE'), 
+setGeneric('runRole', 
+           def = function(x, cores=1, print = F) standardGeneric('runRole'), 
            signature = 'x')
 
-setMethod('runRoLE', 
+setMethod('runRole', 
           signature = 'roleModel', 
           definition = function(x, print = F) {
               # library(rlang)
@@ -57,7 +57,7 @@ setMethod('runRoLE',
           }
 )
 
-setMethod('runRoLE', 
+setMethod('runRole', 
           signature = 'roleExperiment', 
           definition = function(x, cores = 1, print = F) {
               experiment <- x

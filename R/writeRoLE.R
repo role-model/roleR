@@ -6,16 +6,16 @@
 #' @rdname writeRoLE
 #' @export
 
-setGeneric('writeRoLE', 
-           def = function(x, dir, filename, save_txt) standardGeneric('writeRoLE'), 
+setGeneric('writeRole', 
+           def = function(x, dir, filename, save_txt) standardGeneric('writeRole'), 
            signature = 'x')
 
 
 # method for roleData
-#' @rdname writeRoLE
+#' @rdname writeRole
 #' @export
 
-setMethod('writeRoLE', 
+setMethod('writeRole', 
           signature = 'roleExperiment', 
           definition = function(x, dir, filename, save_txt) { 
               if(is.null(dir)){
