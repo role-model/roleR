@@ -31,8 +31,8 @@ setClass('roleExperiment',
 #' @export
 
 roleExperiment <- function(allParams) {
-    # if given priors or iterfuns, run functions on each model, param, and iter and 
-    # add to new allParams object
+    # if given priors or iterfuns, run functions on each model, param, and iter 
+    # and add to new allParams object
     if(class(allParams) == 'rolePriors' | class(allParams) == 'roleIterFuns'){
         # save allFuns
         allFuns <- allParams
