@@ -37,7 +37,7 @@ int sample_index_using_probs(NumericVector probs){
 // get prob of death for each individual due to env filtering
 // raising traits - optimum to power of 2
 // multiply by gaussian kernel of env_sigma
-// ANDY NOTE - could save this to avoid recomputing
+// ANDY  - could save this to avoid recomputing
 //  this would be a new function similar to update_trait_diffs_sq
 // JACOB NOTE - this actually happens currently - every iter the prob is recomputed ONLY at the dead_indv location
 NumericVector get_filtering_death_probs(int i, roleDataCpp &d, roleParamsCpp &p){
@@ -56,7 +56,7 @@ NumericVector get_combined_death_probs(int i, roleParamsCpp &p, NumericVector f_
 }
 
 // check if extinction happens and if it does update the saved species extinction steps & the alive vector in the phylo
-void update_extinct(int i, roleDataCpp &d, roleParamsCpp &p, int dead_index){ //NOTE - uses dead_index as dead species index
+void update_extinct(int i, roleDataCpp &d, roleParamsCpp &p, int dead_index){ // - uses dead_index as dead species index
     
     int dead_species = dead_index;
     // check for extinction
@@ -87,7 +87,7 @@ int call_death(int i, roleDataCpp &d, roleParamsCpp &p){
     // if not neutral, calculate initial probs of death from environmental filtering
     if(p.neut_delta[0] != 1)
     {
-        // ANDY NOTE - figure out how ifs should be structured
+        // ANDY  - figure out how ifs should be structured
         // JACOB NOTE - done!
         
         // envFilterProbs is updated at the END of every loop iter to be current for the next iter
@@ -217,31 +217,25 @@ void update_speciation_local_meta(int i, int dead_index, roleDataCpp &d, rolePar
 void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int speciation_sp){
     
     // set easy named variables for phylogeny speciation
-    arma::imat e = d.edgesP;
-    arma::vec l = d.lengthsP;
+    //arma::imat e = d.edgesP;
+    //arma::vec l = d.lengthsP;
     int n = d.nTipsP(0);
     LogicalVector alive = d.aliveP;
     
     // nrows of the edge matrix
     //int eMax = e.nrow();
-    //Rcout << "Getting emax";
-    int eMax = arma::size(e)[0];
+    int eMax = arma::size(d.edgesP)[0];
 
-    // NOTE - this could be made into a separate function
     // find index of where unrealized edges in edge matrix start
     // equivalent to eNew <- min(which(e[, 1] == -1))
-    //int eNew = -1;
+    int eNew = -1;
     
-    //for (int k = 0; k < eMax; k++) {
-    //    if (e(k, 0) == -2) {
-    //        eNew = k;
-    //        break;
-    //   }
-    //}
-    
-    // index of where unrealized edges in edge matrix start
-    // an unrealized edge is the next un-utilized edge, used to avoid augmenting
-    int eNew = eMax - 2; // 2* eMax -2
+    for (int k = 0; k < eMax; k++) {
+        if (d.edgesP(k, 0) == -2) {
+            eNew = k;
+            break;
+       }
+    }
     
     //Rcout << "index of the edge matrix of where to add new edge";
     // index of the edge matrix of where to add new edge
@@ -249,41 +243,80 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
     //int j = inds(0);
     int j = -1;
     for (int k = 0; k < eMax; k++) {
-       if (e(k, 1) == speciation_sp) {
+       if (d.edgesP(k, 1) == speciation_sp) {
             j = k;
             break;
         }
     }
     
+    // add one to internal node indices
+    for (int r = 0; r < eNew; r++) {
+        for (int c = 0; c < 2; c++){
+            if (d.edgesP(r, c) >= n) {
+                d.edgesP(r, c) ++;
+            }
+        }
+    }
     
-    //Rcout << "add one to internal nodes";
+    // add new internal node
+    //int newNode = 2 * eMax + 1; // index of new node n+1
+    int newNode = 2 * n; // this worked with prev approach
+    d.edgesP(eNew, 0) = newNode;
+    d.edgesP(1 + eNew, 0) = newNode;
+    
+    // add tips
+    d.edgesP(eNew, 1) = d.edgesP(j, 1); // replace old tip
+    d.edgesP(eNew + 1, 1) = n; // add new tip
+    
+    // update ancestry of internal nodes
+    d.edgesP(j, 1) = newNode;
+    
+    // set new edge lengths to 0
+    d.lengthsP[eNew] = 0;
+    d.lengthsP[1 + eNew] = 0;
+    
+    // increase all tip edge lengths by 1 time step
+    for (int r = 0; r <= eNew + 1; r++) {
+        if (d.edgesP(r, 1) <= n + 1) { //n+1
+            d.lengthsP(r) ++;
+        }
+    }
+    
+    // update alive vector
+    alive(n) = TRUE; //  - double check that this updates properly
+    
+    // increment nTipsP
+    d.nTipsP(0) = d.nTipsP(0) + 1;
+}
+
+// call the phylo aspect of speciation
+void update_speciation_phylo_new(int i, roleDataCpp &d, roleParamsCpp &p, int speciation_sp){
+    
+    // set easy named variables for phylogeny speciation
+    arma::imat e = d.edgesP;
+    arma::vec l = d.lengthsP;
+    int n = d.nTipsP(0);
+    LogicalVector alive = d.aliveP;
+    
+    // nrows of the edge matrix
+    int eMax = arma::size(e)[0];
+    
+    // index of where unrealized edges in edge matrix start
+    // an unrealized edge is the next un-utilized edge, used to avoid augmenting
+    int eNew = 2* eMax - 2; // 2* eMax -2
+    
+    // find index of the edge matrix of where to add new edge
+    arma::uvec inds = find(e.col(1) == i);
+    int j = inds(0);
     
     // add one to internal nodes
     arma::uvec internalNode = find(e > eMax); // should it be > or >=??????
     e.elem(internalNode) += 1;
     
-    // NOTE - possible strategy for augmentation
+    //  - possible strategy for augmentation
     // add if statement to catch whether eNew >= eMax
     // if eNew >= eMax, augment e with addition eMax rows
     // else leave as is
-    
-    // NOTE - this could be made into a separate function
-    // get index of the edge matrix of where to add new edge
-    // equivalent to j <- which(e[, 2] == i)
-    
-    // add one to internal node indices
-    // equivalent to e[e > n] <- e[e > n] + 1
-    //for (int r = 0; r < eNew; r++) {
-    //    for (int c = 0; c < 2; c++){
-    //        if (e(r, c) >= n) {
-    //            e(r, c) ++;
-    //        }
-    //    }
-    //}
-    
-    //Rcout << "add new internal node";
-    //Rcout << "eNew" << eNew;
-    //Rcout << "e size" << arma::size(e);
     
     // add new internal node
     //int newNode = 2 * eMax + 1; // index of new node n+1
@@ -291,31 +324,22 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
     e(eNew, 0) = newNode;
     e(1 + eNew, 0) = newNode;
     
-    //Rcout << "add tips";
     // add tips
     e(eNew, 1) = e(j, 1); // replace old tip
     e(eNew + 1, 1) = n; // add new tip
     
-    //Rcout << "update ancestry of internal nodes";
     // update ancestry of internal nodes
     e(j, 1) = newNode;
     
-    //Rcout << "augment edge lengths";
     // augment edge lengths
     l[eNew] = 0;
     l[1 + eNew] = 0;
     
-    //Rcout << "increase all tip edge lengths by 1 time step";
     // increase all tip edge lengths by 1 time step
     l(find(e.col(1) <= eNew + 1)) += 1;
-    //for (int r = 0; r <= eNew + 1; r++) {
-    //    if (e(r, 1) <= n + 1) { //n+1
-    //        l(r) ++;
-    //    }
-    //}
     
     // update alive vector
-    alive(n) = TRUE; // NOTE - double check that this updates properly
+    alive(n) = TRUE; //  - double check that this updates properly
     
     // increment nTipsP
     d.nTipsP(0) = d.nTipsP(0) + 1;
@@ -357,7 +381,7 @@ void update_trait_diffs_sq(int dead_index, roleDataCpp &d, roleParamsCpp &p){
 }
 
 // update a vector containing every local trait raised to the power of 2
-// JACOB NOTe - don't think we need this as we are updating the index specifically in update_env_filter_probs
+// JACOB  - don't think we need this as we are updating the index specifically in update_env_filter_probs
 void update_trait_pow(int dead_index, roleDataCpp &d, roleParamsCpp &p){
     
     // update traitPow using two for loops 
@@ -420,7 +444,7 @@ S4 role_data_from_cpp(roleDataCpp &d){
     // All failed to deep copy, possibly some quirk of Rcpp where it would normally work in C++
     // take a bit of a closer look at clone
     
-    // ANDY NOTE - snip off augmented data when cloning 
+    // ANDY  - snip off augmented data when cloning 
     
     // construct S4 object, cloning each member of roleDataCpp directly to slots
     S4 out_l("localComm");
@@ -463,7 +487,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     roleParamsCpp p = roleParamsCpp(params,niter); // constructor samples/stretches
     
     // setup rng distr using params
-    // JACOB NOTE - allow these to time vary - make new distr every iteration when any of these params change
+    // JACOB  - allow these to time vary - make new distr every iteration when any of these params change
     //  change to unorm and multiple by stdev
     //d.tnorm = std::normal_distribution<double>(0, p.trait_sigma[0] / (p.speciation_meta[0] + p.extinction_meta[0]));
     //d.sptnorm = std::normal_distribution<double>(0, p.trait_sigma[0]);
@@ -568,6 +592,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
 // these funs, one per return data type, are R wrappers around multiple Cpp functions
 // these avoid having to wrap all ~20 functions individually 
 // ONLY used for testing and nothing else
+// [[Rcpp::export]]
 int intFunCpp(Rcpp::StringVector fun_name,
                 NumericVector probs=NULL, int x=NULL) {
     std::string fn = Rcpp::as<std::string>(fun_name(0));
@@ -580,6 +605,7 @@ int intFunCpp(Rcpp::StringVector fun_name,
         return(sample_zero_to_x(x));
     }
 }
+// [[Rcpp::export]]
 S4 dataFunCpp(Rcpp::StringVector fun_name, 
                        RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, //used universally
                        RObject params=NULL, int niter=NULL, int i=NULL, //used universally
@@ -620,6 +646,7 @@ S4 dataFunCpp(Rcpp::StringVector fun_name,
     }
 }
 
+// [[Rcpp::export]]
 NumericVector vectFunCpp(Rcpp::StringVector fun_name,
                          RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, // used universally 
                          RObject params=NULL, int niter=NULL, int i = NULL){ // used universally 

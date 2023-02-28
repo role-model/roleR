@@ -27,7 +27,7 @@ cFun <- function(type="int",fun_name="sample_index_using_probs",
                           params=params,niter=niter,i=i,
                           dead_index=dead_index,
                           parent_indv=parent_indv,
-                          probs=probs,
+                          #probs=probs,
                           dispersed_this_iter=dispersed_this_iter,
                           speciation_sp=speciation_sp))}
 }
