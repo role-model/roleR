@@ -22,12 +22,69 @@
     <loc>/index.html</loc>
   </url>
   <url>
+    <loc>/reference/createPredModel.html</loc>
+  </url>
+  <url>
+    <loc>/reference/div-sumStats.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getFinalState.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getSumStats.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getTimeseries.html</loc>
+  </url>
+  <url>
     <loc>/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>/reference/localComm.html</loc>
+  </url>
+  <url>
+    <loc>/reference/metaComm.html</loc>
+  </url>
+  <url>
+    <loc>/reference/raw-sumStats.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleData.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleExperiment.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleIterFuns.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleModel.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleParams.html</loc>
   </url>
   <url>
     <loc>/reference/rolePhylo-class.html</loc>
   </url>
   <url>
     <loc>/reference/rolePhylo.html</loc>
+  </url>
+  <url>
+    <loc>/reference/rolePriors.html</loc>
+  </url>
+  <url>
+    <loc>/reference/runRoLE.html</loc>
+  </url>
+  <url>
+    <loc>/reference/setExpMetadata.html</loc>
+  </url>
+  <url>
+    <loc>/reference/simGen.html</loc>
+  </url>
+  <url>
+    <loc>/reference/simulateSpeciesGenDiv.html</loc>
+  </url>
+  <url>
+    <loc>/reference/writeRoLE.html</loc>
   </url>
 </urlset>

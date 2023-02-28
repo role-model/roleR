@@ -75,7 +75,8 @@
 <h2 id="setup">Setup<a class="anchor" aria-label="anchor" href="#setup"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">roleR</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">roleR</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="highlevel-overview">Highlevel overview<a class="anchor" aria-label="anchor" href="#highlevel-overview"></a>
@@ -93,7 +94,7 @@ class <code>roleModel</code>.</p>
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">roleR</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># set-up parameters</span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">roleParams</span><span class="op">(</span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/roleParams.html">roleParams</a></span><span class="op">(</span></span>
 <span>  individuals_local <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>  individuals_meta <span class="op">=</span> <span class="fl">10000</span>,</span>
 <span>  species_meta <span class="op">=</span> <span class="fl">50</span>,</span>
@@ -113,7 +114,7 @@ class <code>roleModel</code>.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># initialize the model</span></span>
-<span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu">roleModel</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
+<span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/roleModel.html">roleModel</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># run the model</span></span>
 <span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu">iterModel</span><span class="op">(</span><span class="va">m</span><span class="op">)</span></span>
@@ -123,70 +124,10 @@ class <code>roleModel</code>.</p>
 <span></span>
 <span><span class="co"># experiments have a nice data.frame summary of all the params</span></span>
 <span><span class="va">e</span><span class="op">@</span><span class="va">experimentMeta</span></span>
-<span><span class="co">#&gt;    mod_id individuals_local individuals_meta species_meta speciation_local</span></span>
-<span><span class="co">#&gt; 1       1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 2       1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 3       1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 4       1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 5       1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 6       1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 7       1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 8       1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 9       1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 10      1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt; 11      1              1000            10000           50              0.5</span></span>
-<span><span class="co">#&gt;    speciation_meta extinction_meta trait_sigma env_sigma comp_sigma neut_delta</span></span>
-<span><span class="co">#&gt; 1                1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 2                1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 3                1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 4                1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 5                1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 6                1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 7                1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 8                1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 9                1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 10               1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt; 11               1             0.8           2         1          1          0</span></span>
-<span><span class="co">#&gt;    env_comp_delta dispersal_prob mutation_rate equilib_escape alpha</span></span>
-<span><span class="co">#&gt; 1               0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 2               0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 3               0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 4               0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 5               0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 6               0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 7               0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 8               0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 9               0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 10              0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt; 11              0            0.5          0.01              1     0</span></span>
-<span><span class="co">#&gt;    num_basepairs      init_type iterations generations</span></span>
-<span><span class="co">#&gt; 1            250 oceanic_island          0         0.0</span></span>
-<span><span class="co">#&gt; 2            250 oceanic_island        100         0.2</span></span>
-<span><span class="co">#&gt; 3            250 oceanic_island        200         0.4</span></span>
-<span><span class="co">#&gt; 4            250 oceanic_island        300         0.6</span></span>
-<span><span class="co">#&gt; 5            250 oceanic_island        400         0.8</span></span>
-<span><span class="co">#&gt; 6            250 oceanic_island        500         1.0</span></span>
-<span><span class="co">#&gt; 7            250 oceanic_island        600         1.2</span></span>
-<span><span class="co">#&gt; 8            250 oceanic_island        700         1.4</span></span>
-<span><span class="co">#&gt; 9            250 oceanic_island        800         1.6</span></span>
-<span><span class="co">#&gt; 10           250 oceanic_island        900         1.8</span></span>
-<span><span class="co">#&gt; 11           250 oceanic_island       1000         2.0</span></span>
 <span></span>
 <span><span class="co"># we can extract summary statistics; note: rows of summary statistic</span></span>
 <span><span class="co"># output match rows of `e@experimentMeta`</span></span>
-<span><span class="fu">getSumStats</span><span class="op">(</span><span class="va">e</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>rich <span class="op">=</span> <span class="va">richness</span>, hill <span class="op">=</span> <span class="va">hillAbund</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    rich    hill_1   hill_2   hill_3   hill_4 run_num</span></span>
-<span><span class="co">#&gt; 1     1  1.000000 1.000000 1.000000 1.000000       1</span></span>
-<span><span class="co">#&gt; 2    63  1.799524 1.181156 1.133229 1.117591       2</span></span>
-<span><span class="co">#&gt; 3   117  3.060663 1.402544 1.289683 1.253747       3</span></span>
-<span><span class="co">#&gt; 4   165  4.871719 1.665329 1.468497 1.407165       4</span></span>
-<span><span class="co">#&gt; 5   210  7.743507 2.009469 1.692806 1.596744       5</span></span>
-<span><span class="co">#&gt; 6   253 11.730673 2.411545 1.943735 1.805584       6</span></span>
-<span><span class="co">#&gt; 7   288 17.352767 2.991128 2.292704 2.091391       7</span></span>
-<span><span class="co">#&gt; 8   328 25.649820 3.763247 2.735767 2.447678       8</span></span>
-<span><span class="co">#&gt; 9   362 36.611834 4.794737 3.298245 2.891127       9</span></span>
-<span><span class="co">#&gt; 10  402 52.477874 6.294772 4.081930 3.496960      10</span></span>
-<span><span class="co">#&gt; 11  428 70.130690 8.335139 5.113919 4.279221      11</span></span></code></pre></div>
+<span><span class="fu"><a href="../reference/getSumStats.html">getSumStats</a></span><span class="op">(</span><span class="va">e</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>rich <span class="op">=</span> <span class="va">richness</span>, hill <span class="op">=</span> <span class="va">hillAbund</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

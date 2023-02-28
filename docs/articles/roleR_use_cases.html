@@ -84,14 +84,14 @@ implementation of roleR</p>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">roleR</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">roleParams</span><span class="op">(</span>individuals_local <span class="op">=</span> <span class="fl">100</span>, individuals_meta <span class="op">=</span> <span class="fl">1000</span>,</span>
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/roleParams.html">roleParams</a></span><span class="op">(</span>individuals_local <span class="op">=</span> <span class="fl">100</span>, individuals_meta <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>                         species_meta <span class="op">=</span> <span class="fl">50</span>, speciation_local <span class="op">=</span> <span class="fl">0.05</span>, </span>
 <span>                         speciation_meta <span class="op">=</span> <span class="fl">0.05</span>, extinction_meta <span class="op">=</span> <span class="fl">0.05</span>, env_sigma <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>                         trait_sigma<span class="op">=</span><span class="fl">1</span>,comp_sigma <span class="op">=</span> <span class="fl">0.5</span>, dispersal_prob <span class="op">=</span> <span class="fl">0.1</span>, mutation_rate <span class="op">=</span> <span class="fl">0.01</span>,</span>
 <span>                         equilib_escape <span class="op">=</span> <span class="fl">1</span>, num_basepairs <span class="op">=</span> <span class="fl">250</span>,</span>
 <span>                         init_type <span class="op">=</span> <span class="st">'oceanic_island'</span>, niter <span class="op">=</span> <span class="fl">1000</span>, niterTimestep <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">runRoLE</span><span class="op">(</span><span class="fu">roleModel</span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu">getSumStats</span><span class="op">(</span><span class="va">model</span>,funs<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>rich<span class="op">=</span><span class="va">richness</span><span class="op">)</span><span class="op">)</span> <span class="co">#TODO add default where all existing sumstats are added</span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runRoLE.html">runRoLE</a></span><span class="op">(</span><span class="fu"><a href="../reference/roleModel.html">roleModel</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getSumStats.html">getSumStats</a></span><span class="op">(</span><span class="va">model</span>,funs<span class="op">=</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>rich<span class="op">=</span><span class="va">richness</span><span class="op">)</span><span class="op">)</span> <span class="co">#TODO add default where all existing sumstats are added</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">stats</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">iteration</span>, <span class="va">rich</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> </span>
 <span>    <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p><img src="roleR_use_cases_files/figure-html/overview-1.png" width="700"></p>
@@ -101,7 +101,7 @@ implementation of roleR</p>
 </h2>
 <p>Create a set of parameters specifying every one</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu">roleParams</span><span class="op">(</span>individuals_local <span class="op">=</span> <span class="fl">100</span>, individuals_meta <span class="op">=</span> <span class="fl">1000</span>,</span>
+<code class="sourceCode R"><span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/roleParams.html">roleParams</a></span><span class="op">(</span>individuals_local <span class="op">=</span> <span class="fl">100</span>, individuals_meta <span class="op">=</span> <span class="fl">1000</span>,</span>
 <span>                         species_meta <span class="op">=</span> <span class="fl">50</span>, speciation_local <span class="op">=</span> <span class="fl">0.05</span>, </span>
 <span>                         speciation_meta <span class="op">=</span> <span class="fl">0.05</span>, extinction_meta <span class="op">=</span> <span class="fl">0.05</span>, env_sigma <span class="op">=</span> <span class="fl">0.5</span>,</span>
 <span>                         trait_sigma<span class="op">=</span><span class="fl">1</span>,comp_sigma <span class="op">=</span> <span class="fl">0.5</span>, dispersal_prob <span class="op">=</span> <span class="fl">0.1</span>, mutation_rate <span class="op">=</span> <span class="fl">0.01</span>,</span>
@@ -126,15 +126,15 @@ what should the defaults be? </span></p>
 </h2>
 <p>Create a model (not yet run) using the params, then run it</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">roleModel</span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
-<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">runRoLE</span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/roleModel.html">roleModel</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/runRoLE.html">runRoLE</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span></code></pre></div>
 <p>Create an experiment (not yet run) containing two models created
 using both sets of params, then run it. Experiment running can be
 parallelized on Windows, Mac, &amp; Linux by specifying the number of
 cores to use. When you run an experiment, it runs every model within
 it.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu">roleExperiment</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">p</span>,<span class="va">p_untb</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">exp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/roleExperiment.html">roleExperiment</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">p</span>,<span class="va">p_untb</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#library(parallel)</span></span>
 <span><span class="co">#exp &lt;- runRoLE(exp,cores=2)</span></span></code></pre></div>
 <p>Experiments are intended to encapsulate one or more hypotheses
@@ -152,7 +152,7 @@ rawSpAbundance, rawTraits, rawGenDiv, rawBranchLengths, and rawApePhylo.
 Available transformed stats are hillAbund, hillGenetic, hillTrait,
 hillPhylo, and richness.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu">getSumStats</span><span class="op">(</span><span class="va">model</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>rich <span class="op">=</span> <span class="va">richness</span>,hill_abund<span class="op">=</span><span class="va">hillAbund</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">stats</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/getSumStats.html">getSumStats</a></span><span class="op">(</span><span class="va">model</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>rich <span class="op">=</span> <span class="va">richness</span>,hill_abund<span class="op">=</span><span class="va">hillAbund</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">stats</span></span></code></pre></div>
 <pre><code><span><span class="co">##    rich hill_abund_1 hill_abund_2 hill_abund_3 hill_abund_4 iteration</span></span>
 <span><span class="co">## 1     1     1.000000     1.000000     1.000000     1.000000         0</span></span>
