@@ -7,17 +7,25 @@ output:
   pdf_document: default
 ---
 
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
 This document shows off various use cases using the current implementation of roleR
 
 ## Overview
 
+Install from GitHub
+
 ```{r role, cache = TRUE}
 
-#devtools::install_github("role-model/roleR",dependencies=TRUE)
+devtools::install_github("role-model/roleR",dependencies=TRUE)
 
 library(roleR)
 library(ggplot2)
 ```
+
+Run a model and plot species richness over time
 
 ```{r overview, cache = TRUE}
 
