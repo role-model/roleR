@@ -1,0 +1,1 @@
+rmarkdown::render("vignettes/roleR_use_cases.Rmd")

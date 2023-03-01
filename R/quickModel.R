@@ -9,5 +9,5 @@ quickModel <- function(){
                     equilib_escape = 1, num_basepairs = 250,
                     init_type = 'oceanic_island', niter = 100, niterTimestep = 10)
     
-    return(runRoLE(roleModel(p))) 
+    return(runRole(roleModel(p))) 
 }

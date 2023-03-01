@@ -1,3 +1,12 @@
+# helper function that returns the default list of summary stats and names
+# used in the constructor of getSumStats
+getDefaultSumStatsFuns <- function(){
+    return(list(hill_abund=hillAbund, hill_gen=hillGenetic, hill_trait = hillTrait, hill_phy = hillPhylo,richness=richness,
+                abund=rawAbundance,sp_abund=rawSpAbundance,sp_id=rawSppID,traits=rawTraits,
+                gen_div=rawGenDiv,seqs=rawSeqs,branch_len = rawBranchLengths,phy = rawApePhylo))
+    
+}
+
 #' @title Get summary statistics for RoLE objects
 #' @description Applies different summary stats functions to `roleExperiment`,
 #'     `roleModel`, or `roleData`
@@ -17,9 +26,8 @@
 #' @export
 
 setGeneric('getSumStats', 
-           def = function(x, funs, moreArgs, ...) standardGeneric('getSumStats'), 
+           def = function(x, funs=getDefaultSumStatsFuns(), moreArgs, ...) standardGeneric('getSumStats'), 
            signature = 'x')
-
 
 # method for roleData
 #' @rdname getSumStats
@@ -33,7 +41,6 @@ setMethod('getSumStats',
               return(bigFun(x))
           }
 )
-
 
 # method for roleModel
 #' @rdname getSumStats
@@ -139,3 +146,4 @@ getSumStatsMean <- function(x, funs){
     # above code
     return(newFun)
 }
+
