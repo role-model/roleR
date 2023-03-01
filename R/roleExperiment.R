@@ -1,4 +1,5 @@
-#' @title A RoLE experiment: one or more models used collectively to ask a question or probe a hypothesis 
+#' @title A RoLE experiment: one or more models used collectively to ask a 
+#'     question or probe a hypothesis 
 #' 
 #' @description An S4 class to represent a complete self-enclosed experiment (a 
 #'     model run or set of runs with associated meta data). Contains one or more 
