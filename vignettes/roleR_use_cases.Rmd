@@ -19,7 +19,7 @@ Install from GitHub
 
 ```{r role, cache = TRUE}
 
-devtools::install_github("role-model/roleR",dependencies=TRUE)
+# devtools::install_github("role-model/roleR")
 
 library(roleR)
 library(ggplot2)
