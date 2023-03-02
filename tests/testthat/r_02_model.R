@@ -18,7 +18,7 @@ test_that("big model with high speciation runs without error", {
         niterTimestep = 10
     )
     
-    m <- runRoLE(roleModel(params))
+    m <- runRole(roleModel(params))
 })
 
 test_that("model copying in C++ does not result in all timesteps being equal", {
@@ -28,3 +28,35 @@ test_that("model copying in C++ does not result in all timesteps being equal", {
     #m@modelSteps[[10]]@localComm@indSpecies
     expect_false(setequal(m@modelSteps[[1]]@localComm@indSpecies,m@modelSteps[[10]]@localComm@indSpecies))
 })
+
+test_that("testing the limits of how many iterations we can run"){
+    params <- untbParams(
+        individuals_local = 1000,
+        individuals_meta = 10000,
+        species_meta = 50,
+        speciation = 0, # might break
+        dispersal_prob = 0.1,
+        init_type = "oceanic_island",
+        niter = 100000000, 
+        niterTimestep = 1000000
+    )
+    
+    m <- runRole(roleModel(params))
+}
+
+test_that("comparing runtime of R implementation in a simple example"){
+    x <- proc.time()
+    params <- untbParams(
+        individuals_local = 1000,
+        individuals_meta = 10000,
+        species_meta = 50,
+        speciation = 0, # might break
+        dispersal_prob = 0.1,
+        init_type = "oceanic_island",
+        niter = 1000000, 
+        niterTimestep = 100000
+    )
+    m <- runRole(roleModel(params))
+    proc.time() - x
+    # takes 17.5 seconds relative to 45 in base R with missing functionality
+}

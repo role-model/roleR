@@ -1,16 +1,18 @@
-#' @title RoLE phylogeny
+#' @title A phylogeny of all the species of a `roleData`
 #' 
-#' @description An S4 class to specify a phylogeny in a way that can be easily
-#'     evolved through simulation
+#' @description An S4 class to specify a phylogeny for the purpose of the RoLE model
 #'
-#' @slot n number of tips
-#' @slot e edge matrix; two columns give ancestor, child pair
-#' @slot l numeric vector of edge lengths (in units of time steps = 1/J
-#'     generations)
-#' @slot alive vector indicating whether tips are extant or not
-#' @slot tipNames vector of tip names
-#' @slot scale time scale translation to years
-#'
+#' @slot n the number of tips in the phylogeny
+#' @slot e the numeric edge matrix of the phylogeny
+#' Each row contains an ancestor-child pair where the 1st column is the ancestor and the 2nd is the child
+#' @slot l a numeric vector of edge lengths 
+#' The units of l are the time steps (iterations) of the model
+#' Each time step unit is equal to 1/J generations where J is the number of individuals in the local community
+#' @slot alive a logical vector indicating whether each tips is extant or not
+#' @slot tipNames a character vector of the names of each tip 
+#' @slot scale a single numeric value of time scale translation to years
+#' 
+#' @rdname rolePhylo
 #' @export
 
 setClass('rolePhylo',
@@ -21,17 +23,17 @@ setClass('rolePhylo',
                    tipNames = 'character',
                    scale = 'numeric'))
 
-
-#' @title Specify a RoLE model phylogeny
+#' @title Create a rolePhylo
 #'
-#' @param n number of tips
-#' @param e edge matrix; two columns give ancestor, child pair
-#' @param l numeric vector of edge lengths (in units of time steps = 1/J
-#' generations)
-#' @param alive vector indicating whether tips are extant or not
-#' @param tipNames vector of tip names
-#' @param scale time scale translation to years
-#'
+#' @param n 
+#' @param e 
+#' @param l 
+#' @param alive 
+#' @param tipNames 
+#' @param scale
+#' @return a `rolePhylo` object
+#' 
+#' @rdname rolePhylo
 #' @export
 
 rolePhylo <- function(n, e, l, alive, tipNames, scale) {
@@ -40,8 +42,6 @@ rolePhylo <- function(n, e, l, alive, tipNames, scale) {
 }
 
 # checker function for validation
-#' @param object an object of class localComm
-
 checkRolePhylo <- function(object) {
     checks <- c()
     
@@ -103,18 +103,8 @@ setAs(from = 'phylo', to = 'rolePhylo',
           alive <- rep(TRUE, n)
           alive[tipAge < max(tipAge)] <- FALSE
           
-          
           # set default scale
           scale <- 1
-          
-          
-          # buffer objects so we can add new species without augmenting objects
-          addOn <- n + 10000 #n * 2000
-          e <- rbind(e, matrix(-1, nrow = addOn, ncol = 2))
-          l <- c(l, rep(0, addOn))
-          alive <- c(alive, rep(FALSE, addOn))
-          tipNames <- c(tipNames, rep('', addOn))
-          
           
           return(rolePhylo(n = n, e = e, l = l, alive = alive,
                            tipNames = tipNames, scale = scale))

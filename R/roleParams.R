@@ -1,28 +1,40 @@
 #' @title Parameters of one roleModel
 #' @description An S4 class containing params for population sizes, rates of processes, the number of iterations
-#' to run, and more 
+#' to run, and much more 
 #' 
-#' @slot individuals_local number of individuals in local community
+#' @slot individuals_local number of individuals in local community (J)
+#' Determines the length of individual-level data vectors
+#' When the model is initialized, all individuals are of a single species from the metacommunity
 #' @slot individuals_meta number of individuals in meta community
+#' Used in generating a log series of the initial abundances of species in the meta
 #' @slot species_meta number of species in meta community
-#' @slot speciation_local local speciation probability
-#' @slot speciation_meta speciation rate in meta community
-#' @slot extinction_meta extinction rate in meta community
+#' Determines the initial size of the phylogeny
+#' @slot speciation_local probability of speciation occurring in the local comm each time step
+#' The new local species can be either from a birth in the local comm or an immigration from the meta comm
+#' @slot speciation_meta rate of speciation in meta community
+#' This is used during the simulation of the start phylogeny before the model is run
+#' The sum of speciation_meta and extinction_meta is the average lifetime of phylo branches, and the larger this value the less new individual traits will deviate
+#' @slot extinction_meta rate of extinction in meta community
+#' Like speciation_meta, used in the starting phylo simulation and in relation to traits
 #' @slot trait_sigma rate of Brownian trait evolution in the meta community
-#' @slot env_sigma selectivity of environmental filter # might need another parameter for death rate in the face of neutrality
+#' Determines how much the trait of a new individual deviates from its parent; how fast traits change
+#' @slot env_sigma selectivity of environmental filter; how strongly the environment selects which trait values are a good match for it
+#' The larger the value, the less chance an individual will survive if it's far from the trait optimum (which is 0)
 #' @slot comp_sigma selectivity of competition
-#' @slot dispersal_prob local dispersal probability
+#' @slot dispersal_prob probability of dispersal (immigration) occurring from the meta to the local
+#' Every time step, either birth or immigration happens, so the probability of birth is 1 minus the dispersal_prob
 #' 
-#' @slot mutation_rate mutation rate
-#' @slot equilib_escape proportion of equilibrium achieved
-#' @slot num_basepairs number of basepairs
+#' @slot mutation_rate rate of sequence mutation to use in genetic simulations
+#' @slot equilib_escape proportion of equilibrium required to halt the model as it is running and return it
+#' @slot num_basepairs number of basepairs to use in genetic simulations
 #' 
-#' @slot init_type initialization routine; a single character string either 
-#'     "oceanic_island" or "bridge_island"
-#'     
-#' @slot niter an integer specifying the number of iterations 
+#' @slot init_type the biological model used to initialize; a single character string that can be either "oceanic_island" or "bridge_island"
+#' The bridge island model has the initial individuals in the local comm arriving through a land bridge, while the oceanic has no bridge and is populated by a single dispersal
+#' Thus in oceanic island all individuals are of a SINGLE species sampled proportional to meta comm species abunds, 
+#' while in bridge island species individuals are sampled of MANY species proportional to their abundances
+#' @slot niter an integer specifying the number of time steps for the model to run
 #' @slot niterTimestep an integer specifying the frequency (in numbers of 
-#'     iterations) at which the model state is saved
+#'     iterations) at which the model state is snapshotted and saved in a model's model steps object
 #' 
 #' @details Params `init_type`, `niter`, `niterTimestep`, 
 #'     `mutation_rate`,`equilib_escape`,and `num_basepairs` take a single value.
@@ -46,128 +58,141 @@
 #' @export
 
 roleParams <- setClass('roleParams',
+                        # slots that are 'functions' are allowed to time-vary across the simulation - all others are not
                        slots = c(
-                           individuals_local = "numeric",
-                           individuals_meta = "numeric",
-                           species_meta = "numeric",
-                           speciation_local = "numeric",
-                           speciation_meta = "numeric",
-                           extinction_meta = "numeric",
-                           trait_sigma = "numeric",
-                           env_sigma = "numeric",
-                           comp_sigma = "numeric",
-                           neut_delta = "numeric",
-                           env_comp_delta = "numeric",
-                           dispersal_prob = "numeric",
-                           mutation_rate = "numeric" ,
-                           equilib_escape = "numeric",
-                           alpha = "numeric",
-                           num_basepairs = "numeric",
-                           init_type = "character", 
+                           # number of individuals and species in the local and meta
+                           individuals_local = 'function',
+                           individuals_meta = 'integer',
+                           species_meta = 'integer',
+                           
+                           # probs of speciation, extinction, dispersal
+                           speciation_local = 'function',
+                           speciation_meta = 'numeric',
+                           extinction_meta = 'numeric',
+                           dispersal_prob = 'function',
+                           
+                           trait_sigma = 'numeric',
+                           env_sigma = 'numeric',
+                           comp_sigma = 'numeric',
+                           neut_delta = 'numeric',
+                           env_comp_delta = 'numeric',
+                           
+                           # gene evolution simulations
+                           mutation_rate = 'numeric',
+                           equilib_escape = 'numeric',
+                           alpha = 'function',
+                           num_basepairs = 'integer',
+                           
+                           init_type = 'character', 
+                           
+                           # iterations
                            niter = 'integer', 
                            niterTimestep = 'integer'
                        )
-                       )
+)
 
 
-
-# constructor
+#' @title Create a roleParams object with 
+#' @description 
+#' @param individuals_local a single numeric value or an iter function
+#' @param individuals_meta number of individuals in meta community
+#' Used in generating a log series of the initial abundances of species in the meta
+#' @param species_meta number of species in meta community
+#' Determines the initial size of the phylogeny
+#' @param speciation_local probability of speciation occurring in the local comm each time step
+#' The new local species can be either from a birth in the local comm or an immigration from the meta comm
+#' @param speciation_meta rate of speciation in meta community
+#' This is used during the simulation of the start phylogeny before the model is run
+#' The sum of speciation_meta and extinction_meta is the average lifetime of phylo branches, and the larger this value the less new individual traits will deviate
+#' @param extinction_meta rate of extinction in meta community
+#' Like speciation_meta, used in the starting phylo simulation and in relation to traits
+#' @param trait_sigma rate of Brownian trait evolution in the meta community
+#' Determines how much the trait of a new individual deviates from its parent; how fast traits change
+#' @param env_sigma selectivity of environmental filter; how strongly the environment selects which trait values are a good match for it
+#' The larger the value, the less chance an individual will survive if it's far from the trait optimum (which is 0)
+#' @param comp_sigma selectivity of competition
+#' @param dispersal_prob probability of dispersal (immigration) occurring from the meta to the local
+#' Every time step, either birth or immigration happens, so the probability of birth is 1 minus the dispersal_prob
+#' 
+#' @param mutation_rate rate of sequence mutation to use in genetic simulations
+#' @param equilib_escape proportion of equilibrium required to halt the model as it is running and return it
+#' @param num_basepairs number of basepairs to use in genetic simulations
+#' 
+#' @param init_type the biological model used to initialize; a single character string that can be either "oceanic_island" or "bridge_island"
+#' The bridge island model has the initial individuals in the local comm arriving through a land bridge, while the oceanic has no bridge and is populated by a single dispersal
+#' Thus in oceanic island all individuals are of a SINGLE species sampled proportional to meta comm species abunds, 
+#' while in bridge island species individuals are sampled of MANY species proportional to their abundances
+#' @param niter an integer specifying the number of time steps for the model to run
+#' @param niterTimestep an integer specifying the frequency (in numbers of 
+#'     iterations) at which the model state is snapshotted and saved in a model's model steps object
+#' @return a `roleParams` object 
+#' 
 #' @rdname roleParams
 #' @export
 
 roleParams <- function(individuals_local,
                        individuals_meta,
                        species_meta,
+                       
                        speciation_local,
                        speciation_meta,
                        extinction_meta,
+                       dispersal_prob,
+                       
                        trait_sigma,
                        env_sigma,
                        comp_sigma,
                        neut_delta=NA,
                        env_comp_delta=NA,
-                       dispersal_prob,
+                       
                        mutation_rate=NA,
                        equilib_escape=NA,
                        alpha=NA,
                        num_basepairs=NA,
+                       
                        init_type, 
                        niter, 
                        niterTimestep) {
-    # set defaults - doesnt work right now 
-    if(is.na(neut_delta)){neut_delta <- 0}
-    if(is.na(env_comp_delta)){env_comp_delta <- 0.5}
-    if(is.na(alpha)){alpha <- 1}
-    if(is.na(equilib_escape)){equilib_escape <- 1}
-    if(is.na(mutation_rate)){mutation_rate <- 0.001}
-    if(is.na(num_basepairs)){num_basepairs <- 250}
     
     # check that `niter` is given correctly
-    if(missing(niter) | length(niter) > 1) {
-        stop('must supply a single value for `niter`')
+    if(missing(niter) | length(niter) > 1 | missing(niterTimestep) | length(niterTimestep) > 1) {
+        stop('must supply a single value for `niter`and niterTimestep')
     }
     
-    # check for missing params
-    allParams <- as.list(environment())
-    withVal <- names(as.list(match.call())[-1])
-    noVal <- names(allParams[!(names(allParams) %in% withVal)])
+    # get a list of all the user supplied parameters 
+    # old way of doing this is all_params <- list(individuals_local,...
+    all_params <- as.list(environment())
     
-    # loop over params:
-    # those that need to be `niter` long, make them that
-    # those that are missing, make them `NA`
-    singleValParams <- c('individuals_meta', 'species_meta',
-                         'speciation_meta', 'extinction_meta', 'trait_sigma',
-                         'equilib_escape', 'num_basepairs', 'init_type', 
-                         'niter', 'niterTimestep')
+    # get the types (i,e. 'function','numeric') of the slots of the roleParams class
+    slot_types <- getSlots("roleParams")
+    # get the names of each slot
+    slot_names <- slotNames("roleParams")
     
-    for(i in 1:length(allParams)) {
-        if(names(allParams[i]) %in% noVal) {
-            allParams[[i]] <- 0 #NA
-        }
-        
-        if(names(allParams[i]) %in% singleValParams) {
-            if(length(allParams[[i]]) > 1) {
-                stop(sprintf('`%s` must be a single value'))
-            } 
-        } else {
-            if(length(allParams[[i]]) == 1) {
-                allParams[[i]] <- rep(allParams[[i]], niter)
-            } else if(length(allParams[[i]]) < niter) {
-                stop(sprintf('`%s` must be a single value', names(allParams[i])), 
-                     'or a vector of values exactly `niter` long')
-            }
+    # for every slot in the list of slots
+    for(i in 1:length(all_params)){
+        # if the slot type is a function, and the user input is NOT a function...
+        if(slot_types[i] == "function" & typeof(all_params[i]) != "function"){
+            # replace the single user-supplied value with the function
+            all_params[[i]] <- buildFun(all_params[[i]])
         }
     }
     
-    # if `niterTimestep` was missing, make it a meaningful multiple of `niter`
-    if(is.na(allParams$niterTimestep)) {
-        if(allParams$niter < 10 * allParams$individuals_local[1]) {
-            allParams$niterTimestep <- allParams$niter
-        } else {
-            allParams$niterTimestep <- 10 * allParams$individuals_local[1]
+    # singleValParams <- c('individuals_meta', 'species_meta',
+    #                      'speciation_meta', 'extinction_meta', 'trait_sigma', 'env_sigma', 'comp_sigma',
+    #                      'equilib_escape', 'num_basepairs', 'init_type', 
+    #                      'niter', 'niterTimestep', 'neut_delta', 'env_comp_delta')
+    
+    # create params to return and populate with updated values (values that are replaced with functions)
+    out_params <-  new('roleParams')
+    for(i in 1:length(getSlots('roleParams'))){ # for each slot
+        val <- all_params[[i]] # get value to assign
+        if(slot_types[i] == "integer"){ # if slot needs an integer, coerce
+            val <- as.integer(val)
         }
+        slot(out_params,slot_names[i]) <- val # add the value to the corresponding slot name in out
     }
     
-    return(new('roleParams', 
-               individuals_local = as.numeric(allParams$individuals_local),
-               individuals_meta = as.numeric(allParams$individuals_meta),
-               species_meta = as.numeric(allParams$species_meta),
-               speciation_local = as.numeric(allParams$speciation_local),
-               speciation_meta = as.numeric(allParams$speciation_meta),
-               extinction_meta = as.numeric(allParams$extinction_meta),
-               trait_sigma = as.numeric(allParams$trait_sigma),
-               env_sigma = as.numeric(allParams$env_sigma),
-               comp_sigma = as.numeric(allParams$comp_sigma),
-               neut_delta = as.numeric(allParams$neut_delta),
-               env_comp_delta = as.numeric(allParams$env_comp_delta),
-               dispersal_prob = as.numeric(allParams$dispersal_prob),
-               mutation_rate = as.numeric(allParams$mutation_rate),
-               equilib_escape = as.numeric(allParams$equilib_escape),
-               alpha = as.numeric(allParams$alpha),
-               num_basepairs = as.numeric(allParams$num_basepairs),
-               init_type = as.character(allParams$init_type), 
-               niter = as.integer(allParams$niter),
-               niterTimestep = as.integer(allParams$niterTimestep)))
+    return(out_params)
 }
 
 # constructor
@@ -184,42 +209,35 @@ untbParams <- function(individuals_local,
                        niterTimestep) {
     
     return(roleParams(
-               individuals_local = individuals_local,
-               individuals_meta = individuals_meta,
-               species_meta = species_meta,
-               speciation_local = speciation,
-               speciation_meta = 0.8,
-               extinction_meta = 0.05,
-               trait_sigma = 1,
-               env_sigma = 1,
-               comp_sigma = 1,
-               neut_delta = 1, # makes the model neutral by ignoring env and comp sigmas
-               env_comp_delta = 1,
-               dispersal_prob = dispersal_prob,
-               mutation_rate = 0.01,
-               equilib_escape = 1,
-               alpha = 10,
-               num_basepairs = 250,
-               init_type = init_type, 
-               niter = niter,
-               niterTimestep = niterTimestep))
+        individuals_local = individuals_local,
+        individuals_meta = individuals_meta,
+        species_meta = species_meta,
+        speciation_local = speciation,
+        speciation_meta = 0.8,
+        extinction_meta = 0.05,
+        trait_sigma = 1,
+        env_sigma = 1,
+        comp_sigma = 1,
+        neut_delta = 1, # makes the model neutral by ignoring env and comp sigmas
+        env_comp_delta = 1,
+        dispersal_prob = dispersal_prob,
+        mutation_rate = 0.01,
+        equilib_escape = 1,
+        alpha = 10,
+        num_basepairs = 250,
+        init_type = init_type, 
+        niter = niter,
+        niterTimestep = niterTimestep))
 }
 
-
-checkRoleParams <- function(object) {
-    checks <- c()
-    
-    if(object@niter < object@niterTimestep) {
-        checks <- c(checks, 
-                    '`niter` must be greater than or equal to `niterTimestep`')
+# helper that, given a single value, builds a function
+#   that returns that value stretched to niter in a vectorized fashion
+buildFun <- function(p) {
+    print(p) # what in the name of god why does this work
+    f <- function(i) {
+        out <- rep(p, length(i))
+        
+        return(out)
     }
-    
-    if(length(checks) > 0) {
-        return(checks)
-    } else {
-        return(TRUE)
-    }
+    return(f)
 }
-
-setValidity('roleParams', checkRoleParams)
-

@@ -1,20 +1,20 @@
-#' @title Run a roleModel or roleExperiment object 
-#' @description Return a RoLE object run to completion using the params contained within it
-#' @param x the `roleModel` or `roleExperiment` object to run
+#' @title Run a `roleModel` or `roleExperiment`
+#' @description Iterate a RoLE object to completion using its parameters
+#' @param x the `roleModel` or `roleModel` object to run
 #' @param print whether to print step information as the model runs
-#' @return a run `roleModel` or `roleExperiment`
+#' @return a `roleModel` or `roleExperiment` run to completion
 #' 
 #' @examples 
 #' Create and run a model
 #' model <- roleModel(roleParams())
-#' model <- runRoLE(model)
+#' model <- runRole(model)
 #' 
 #' Create and run an experiment
 #' p1 <- roleParams(speciation_local=0.2)
 #' p2 <- roleParams(speciation_local=0.3)
 #' p3 <- roleParams(speciation_local=0.4)
 #' exp <- roleExperiment(list(p1,p2,p3))
-#' exp <- runRoLE(exp)
+#' exp <- runRole(exp)
 #' 
 #' @rdname runRole
 #' @export
@@ -26,7 +26,8 @@ setGeneric('runRole',
 setMethod('runRole', 
           signature = 'roleModel', 
           definition = function(x, print = F) {
-              # library(rlang)
+              # necessary because iterating a model in C++ does not support copy-on-write
+              # if duplicate is not used, the original model will be modified in place 
               m <- rlang::duplicate(x)
  
               for(i in 2:length(x@modelSteps))
@@ -36,18 +37,21 @@ setMethod('runRole',
                       stop("Models can only be run once and this model has already been run")
                   }
               }
-              #if(length(x@modelSteps) > 1)
-              # m <- model
-              # init the first data step of the model using params 
-              #model <- initModel(model)
-              # start_data <- m@modelSteps[[1]]
-              # iterate the model using its params 
               
+              pvals <- .getValuesFromParams(m@params)
+              
+              # augment the data in the model based on the params
+              m <- .bufferModelData(m)
+                  
               # returns the new modelSteps (a list of roleData)
               m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
                                            slot(m@modelSteps[[1]],"metaComm"),
                                            slot(m@modelSteps[[1]],"phylo"),
-                                           m@params,print)
+                                           pvals,print=FALSE) #m@params
+              # trim data, removing the unused buffer
+              m <- .trimModelData(m)
+              
+              # increment species ids and edges to shift indexing from Cpp to R
               for(d in 1:length(m@modelSteps))
               {
                   m@modelSteps[[d]]@localComm@indSpecies <- m@modelSteps[[d]]@localComm@indSpecies + 1
@@ -60,102 +64,120 @@ setMethod('runRole',
 setMethod('runRole', 
           signature = 'roleExperiment', 
           definition = function(x, cores = 1, print = F) {
-              experiment <- x
-              library(roleR)
+             
               if(cores == 1){
-                  experiment@modelRuns <- lapply(experiment@modelRuns, iterModel)
+                  x@modelRuns <- lapply(x@modelRuns, runRole)
               }
               else{
-                  cl <- makeCluster(cores,type="SOCK")
-                  experiment@modelRuns <- clusterApply(cl, experiment@modelRuns, iterModel)
+                  cl <- parallel::makeCluster(cores,type="SOCK")
+                  x@modelRuns <- clusterApply(cl, x@modelRuns, iterModel)
                   stopCluster(cl)
               }
-              return(experiment)
+              return(x)
           }
 )
-#runs <- as.list(experiment@modelRuns)
-#runs <- experiment@modelRuns
-#print=F
-iterModel <- function(model,print=F) {
+
+# user-inaccessible helper to augment the data of the not-yet-run model based on
+#   what is expected from the params 
+# called right before the model is run in Cpp
+.bufferModelData <- function(model){
+    p <- model@params 
     
-    #ibrary(rlang)
-    m <- rlang::duplicate(model)
-    # m <- model
-    # init the first data step of the model using params 
-    #model <- initModel(model)
-    # start_data <- m@modelSteps[[1]]
-    # iterate the model using its params 
+    # calculate expected number of new species as the speciation rate times the
+    #   number of iterations
+    expec_n_spec <- p@speciation_local(1) * p@niter
+    # add a small additional buffer
+    phylo_add <- expec_n_spec + 500
     
-    # returns the new modelSteps (a list of roleData)
-    m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
-                                 slot(m@modelSteps[[1]],"metaComm"),
-                                 slot(m@modelSteps[[1]],"phylo"),
-                                 m@params,print)
-    for(d in 1:length(m@modelSteps))
-    {
-        m@modelSteps[[d]]@localComm@indSpecies <- m@modelSteps[[d]]@localComm@indSpecies + 1
-        m@modelSteps[[d]]@phylo@e <- m@modelSteps[[d]]@phylo@e + 1
-    }
-    return(m)
+    # buffer phylo 
+    model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e, matrix(-1, nrow = phylo_add, ncol = 2)) # edges get -1s
+    model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l, rep(0, phylo_add)) # lengths get 0s
+    model@modelSteps[[1]]@phylo@alive <- c(model@modelSteps[[1]]@phylo@alive, rep(FALSE, phylo_add)) # alives get FALSE
+    model@modelSteps[[1]]@phylo@tipNames <- c(model@modelSteps[[1]]@phylo@tipNames, rep('', phylo_add)) # tipNames get ''
+    
+    # calc buffer size for local species vects 
+    # 1 is the expected number of new species plus a small add
+    # 2 is the initial number of species plus the expected number of new species plus a small add
+    local_add1 <- expec_n_spec + 500 
+    local_add2 <- p@species_meta + expec_n_spec + 500 
+    
+    # buffer local species vectors with 0s
+    model@modelSteps[[1]]@localComm@spAbund <- c(model@modelSteps[[1]]@localComm@spAbund,rep(0,local_add1))
+    model@modelSteps[[1]]@localComm@spTrait <- c(model@modelSteps[[1]]@localComm@spAbund,rep(0,local_add1))
+    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  rep(0,local_add2)
+    model@modelSteps[[1]]@localComm@spLastOriginStep <-  rep(0,local_add2)
+    model@modelSteps[[1]]@localComm@spExtinctionStep <-  rep(0,local_add2)
+    
+    return(model)
 }
 
-iterExperiment <- function(experiment, cores=1){
-    if(cores == 1){
-        experiment@modelRuns <- lapply(experiment@modelRuns, iterModel)
+# user-inaccessible helper to trim the data of unused indices after the model is run
+.trimModelData <- function(model){
+    
+    for(i in 1:length(model@modelSteps)){
+        # trim phylo
+        model@modelSteps[[i]]@phylo@e <- model@modelSteps[[i]]@phylo@e[model@modelSteps[[i]]@phylo@e[,1] != -1,]
+        model@modelSteps[[i]]@phylo@l <- model@modelSteps[[i]]@phylo@l[model@modelSteps[[i]]@phylo@l != 0] 
+        last_alive_index <- tail(which(model@modelSteps[[i]]@phylo@alive == TRUE), n = 1)
+        model@modelSteps[[i]]@phylo@alive <- model@modelSteps[[i]]@phylo@alive[1:last_alive_index]
+        model@modelSteps[[i]]@phylo@tipNames <- model@modelSteps[[i]]@phylo@tipNames[model@modelSteps[[i]]@phylo@tipNames != ''] # this MAY cause errors
+        
+        # trim local
+        # find place where augmented 0s started, which is the number of species to ever have existed 
+        # I think this is the last alive index??
+        model@modelSteps[[i]]@localComm@spAbund <- model@modelSteps[[i]]@localComm@spAbund[1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spTrait <- model@modelSteps[[i]]@localComm@spTrait[1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spAbundHarmMean  <- model@modelSteps[[i]]@localComm@spAbundHarmMean [1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spLastOriginStep <- model@modelSteps[[i]]@localComm@spLastOriginStep[1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spExtinctionStep <- model@modelSteps[[i]]@localComm@spExtinctionStep[1:last_alive_index]
     }
-    else{
-        cl <- makeCluster(cores,type="SOCK")
-        experiment@modelRuns <- clusterApply(cl, experiment@modelRuns, iterModel)
-        stopCluster(cl)
-    }
-    return(experiment)
+    
+    return(model)
 }
 
-# take a roleModel and init it's first data before giving to iterSim 
-# initModel <- function(model) {
-#     
-#     pars <- model@params
-#         
-#     # simulate phylogeny
-#     phy <- TreeSim::sim.bd.taxa(pars@species_meta[1], numbsim = 1,
-#                                 lambda = pars@speciation_meta[1],
-#                                 mu = pars@extinction_meta[1], complete = FALSE)[[1]]
-#     
-#     # create metaComm object using relative abundances and traits generated across the phylo 
-#     meta <- metaComm(cbind(lseriesFromSN(pars@species_meta[1],pars@individuals_meta[1]),
-#                            ape::rTraitCont(phy, sigma = pars@trait_sigma[1])))
-#     
-#     # initialize vector of 0 species abundances
-#     abundance_l_sp <- rep(0, params@species_meta[1])
-#     
-#     # oceanic island model assigns all abundance to one species
-#     if(type == "oceanic_island"){
-#         # index of the species that will initially have all abundance
-#         i <- sample(pars@species_meta[1], 1, prob = meta@spAbundTrt[,1])
-#         # passing all abundance to that species
-#         abundance_l_sp[i] <- pars@individuals_local[1]
-#     }
-#     # bridge island model assigns abundances to all species proportional to species abundance
-#     else if(type == "bridge_island"){
-#         # vector of species
-#         abundance_l_sp <- sample(pars@species_meta[1], prob = meta@spAbundTrt[,1])
-#     }
-#     
-#     # reshape to individual
-#     # init local species traits
-#     traits_l_sp <- traits_m
-#     
-#     # create localCommCpp object
-#     local <- new(localCommCpp, abundance_l_sp, traits_l_sp, pi_l, naug)
-#     
-#     # convert ape phylo to rolePhylo
-#     phy <- apeToRolePhylo(phy)
-#     
-#     # convert rolePhylo to rolePhyloCpp
-#     phy <- rolePhyloToCpp(phy)
-#     
-#     # create roleModelCpp object of local comm, meta comm, phylogeny, and args
-#     out <- new(roleModelCpp,local,meta,phy,parlist)
-#     
-#     return(model)
-# }
+# make class and object to hold paramValues - it is identical to roleParams 
+#   EXCEPT that all slots are numeric instead of functions
+paramValues <- setClass('paramValues',
+                        slots = c(
+                            individuals_local = "numeric",
+                            individuals_meta = "numeric",
+                            species_meta = "numeric",
+                            speciation_local = "numeric",
+                            speciation_meta = "numeric",
+                            extinction_meta = "numeric",
+                            trait_sigma = "numeric",
+                            env_sigma = "numeric",
+                            comp_sigma = "numeric",
+                            neut_delta = "numeric",
+                            env_comp_delta = "numeric",
+                            dispersal_prob = "numeric",
+                            mutation_rate = "numeric" ,
+                            equilib_escape = "numeric",
+                            alpha = "numeric",
+                            num_basepairs = "numeric",
+                            init_type = "character", 
+                            niter = 'integer', 
+                            niterTimestep = 'integer'
+                        )
+)
+# run iter functions over params to generate a new object of class paramValues that contains ONLY vectors of values and no functions
+getValuesFromParams <- function(p){
+    pvals <- new('paramValues')
+    
+    niter <- p@niter # save niter
+        
+    # for every slot
+    slot_names <- slotNames("roleParams")
+    slot_types <- getSlots("roleParams")
+    for(i in 1:length(slot_names)){
+        
+        # if the slot type is a function, run the function over the iters
+        if(slot_types[i] == "function"){
+            slot(pvals,slot_names[i]) <- slot(p,slot_names[i])(1:niter) # apply the function across 1:niter
+        }
+        else{
+            slot(pvals,slot_names[i]) <- slot(p,slot_names[i]) # if not a function just set the value
+        }
+    }
+    return(pvals)
+}

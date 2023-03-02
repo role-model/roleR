@@ -13,7 +13,8 @@ cFun <- function(type="int",fun_name="sample_index_using_probs",
         phy <- data@phylo
     }
     if(!is.null(params)){
-        niter <- length(params@individuals_local)
+        niter <- p@niter
+        params <- getValuesFromParams(params)
     }
     
     if(type == "int"){
@@ -22,7 +23,6 @@ cFun <- function(type="int",fun_name="sample_index_using_probs",
         return(vectFunCpp(fun_name=fun_name,local=l,meta=m,phylo=phy
                             ,params=params,niter=niter,i=i))}
     if(type == "data"){
-        print("calling dataFunCpp")
         return(dataFunCpp(fun_name=fun_name,local=l,meta=m,phylo=phy,
                           params=params,niter=niter,i=i,
                           dead_index=dead_index,

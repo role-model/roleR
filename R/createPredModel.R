@@ -1,15 +1,15 @@
-#' @title createPredModel
+#' @title createRolePredModel
 #' 
 #' @description create a random forest model to predict a parameter value using summary statistics
 
-#' @param exp a roleExperiment to use as the training set 
-#' @param paramName the parameter to predict 
+#' @param exp a `roleExperiment` to use models from for training and validation
+#' @param predParam the parameter to predict 
 #'     
 #' @rdname createPredModel
 #' @export
 
 # returns a random forest to predict a parameter value using summary stats 
-createPredModel <- function(exp,paramName)
+createRolePredModel <- function(exp,predParamName)
 {
   # each row of all_stats_params will be a timestep iteration of a model, each column is a param
   param_all_stats <- getSumStats(exp, funs = list(hillAbund = hillAbund, 
