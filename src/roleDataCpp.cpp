@@ -53,27 +53,27 @@ public:
 
         // parse slots
         //indSpTrtL = Rcpp::as<NumericMatrix>(local.slot("indSppTrt"));
-        indTraitL = Rcpp::as<NumericVector>(local.slot("indTrait"));
-        indSpeciesL =  Rcpp::as<NumericVector>(local.slot("indSpecies"));
+        indTraitL = Rcpp::clone(Rcpp::as<NumericVector>(local.slot("indTrait")));
+        indSpeciesL = Rcpp::clone(Rcpp::as<NumericVector>(local.slot("indSpecies")));
         
         //spAbundTrtL = Rcpp::as<NumericMatrix>(local.slot("spAbundTrt"));
-        spAbundL = Rcpp::as<NumericVector>(local.slot("spAbund"));
-        spTraitL = Rcpp::as<NumericVector>(local.slot("spTrait"));
+        spAbundL = Rcpp::clone(Rcpp::as<NumericVector>(local.slot("spAbund")));
+        spTraitL = Rcpp::clone(Rcpp::as<NumericVector>(local.slot("spTrait")));
         
-        spAbundHarmMeanL = Rcpp::as<NumericVector>(local.slot("spAbundHarmMean"));
-        spLastOriginStepL = Rcpp::as<NumericVector>(local.slot("spLastOriginStep"));
-        spExtinctionStepL = Rcpp::as<NumericVector>(local.slot("spExtinctionStep"));
+        spAbundHarmMeanL = Rcpp::clone(Rcpp::as<NumericVector>(local.slot("spAbundHarmMean")));
+        spLastOriginStepL = Rcpp::clone(Rcpp::as<NumericVector>(local.slot("spLastOriginStep")));
+        spExtinctionStepL = Rcpp::clone(Rcpp::as<NumericVector>(local.slot("spExtinctionStep")));
         
         spReciprSumL = NumericVector(10000); // given a 10000 len 
         
         //spAbundTrtM = Rcpp::as<NumericMatrix>(meta.slot("sppAbundTrt"));
-        spAbundM = Rcpp::as<NumericVector>(meta.slot("spAbund"));
-        spTraitM = Rcpp::as<NumericVector>(meta.slot("spTrait"));
+        spAbundM = Rcpp::clone(Rcpp::as<NumericVector>(meta.slot("spAbund")));
+        spTraitM = Rcpp::clone(Rcpp::as<NumericVector>(meta.slot("spTrait")));
         
         
         //NumericVector nTipsP_vect = Rcpp::as<NumericVector>(phylo.slot("n"));
         //nTipsP = nTipsP_vect
-        nTipsP = Rcpp::as<NumericVector>(phylo.slot("n"));
+        nTipsP = Rcpp::clone(Rcpp::as<NumericVector>(phylo.slot("n")));
         edgesP = Rcpp::as<arma::imat>(phylo.slot("e"));
         edgesP = edgesP - 1; //subtract one from edges to make them start at 0 
         // fix -1s 
@@ -84,9 +84,9 @@ public:
         //    }
         //}
         lengthsP = Rcpp::as<arma::vec>(phylo.slot("l"));
-        aliveP = Rcpp::as<LogicalVector>(phylo.slot("alive"));
-        tipNamesP = Rcpp::as<CharacterVector>(phylo.slot("tipNames"));
-        scaleP = Rcpp::as<NumericVector>(phylo.slot("scale"));
+        aliveP = Rcpp::clone(Rcpp::as<LogicalVector>(phylo.slot("alive")));
+        tipNamesP = Rcpp::clone(Rcpp::as<CharacterVector>(phylo.slot("tipNames")));
+        scaleP = Rcpp::clone(Rcpp::as<NumericVector>(phylo.slot("scale")));
         
         // subtract one from each species to start species at 0 
         indSpeciesL = indSpeciesL - 1;

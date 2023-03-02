@@ -26,19 +26,17 @@ setGeneric('runRole',
 setMethod('runRole', 
           signature = 'roleModel', 
           definition = function(x, print = F) {
-              # necessary because iterating a model in C++ does not support copy-on-write
-              # if duplicate is not used, the original model will be modified in place 
-              m <- rlang::duplicate(x)
- 
-              for(i in 2:length(x@modelSteps))
+                m <- x
+                
+              for(i in 2:length(m@modelSteps))
               {
-                  if(!is.null(x@modelSteps[[i]]))
+                  if(!is.null(m@modelSteps[[i]]))
                   {
                       stop("Models can only be run once and this model has already been run")
                   }
               }
               
-              pvals <- .getValuesFromParams(m@params)
+              pvals <- getValuesFromParams(m@params)
               
               # augment the data in the model based on the params
               m <- .bufferModelData(m)

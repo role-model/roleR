@@ -60,3 +60,11 @@ test_that("comparing runtime of R implementation in a simple example"){
     proc.time() - x
     # takes 17.5 seconds relative to 45 in base R with missing functionality
 }
+
+test_that("when a model is run the supplied model is NOT modified in place"){
+    m <- quickModelNonRun()
+    mrun <- runRole(m)
+    
+    expect_true(is.null(m@modelSteps[[2]]))
+    expect_false(is.null(mrun@modelSteps[[2]]))
+}
