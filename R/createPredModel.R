@@ -11,9 +11,10 @@
 # returns a random forest to predict a parameter value using summary stats 
 createRolePredModel <- function(exp,predParamName)
 {
+    
   # each row of all_stats_params will be a timestep iteration of a model, each column is a param
-  param_all_stats <- getSumStats(exp, funs = list(hillAbund = hillAbund, 
-                                                          hillTrait = hillTrait))
+  param_all_stats <- getSumStats(exp)
+  
   param_vect <- c()
   # exp@modelRuns
   for(m in 1:length(exp@modelRuns))
