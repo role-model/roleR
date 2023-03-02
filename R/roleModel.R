@@ -27,7 +27,7 @@ setClass('roleModel',
 #' @export
 
 roleModel <- function(params) {
-    J <- params@individuals_local(1) # ITERFUN CHANGE
+    J <- params@individuals_local(1)
     Sm <- params@species_meta
 
     phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)

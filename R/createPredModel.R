@@ -3,48 +3,41 @@
 #' @description create a random forest model to predict a parameter value using summary statistics
 
 #' @param exp a `roleExperiment` to use models from for training and validation
-#' @param predParam the parameter to predict 
-#'     
-#' @rdname createPredModel
+#' @param predParam the name of the parameter to predict 
+#' 
+#' @examples 
+# m <- quickExp()
+# p <- quickParams()
+# expr <- roleExperiment(repS4(p,100))
+# expr <- runRole(expr)
+# rf <- createRolePredModel(expr,pred_param_name="env_sigma")
+#' 
+#' @rdname createRolePredModel
 #' @export
 
 # returns a random forest to predict a parameter value using summary stats 
-createRolePredModel <- function(exp,predParamName)
+createRolePredModel <- function(expr,pred_param_name)
 {
-    
   # each row of all_stats_params will be a timestep iteration of a model, each column is a param
-  param_all_stats <- getSumStats(exp)
-  
-  param_vect <- c()
-  # exp@modelRuns
-  for(m in 1:length(exp@modelRuns))
+  all_stats <- getSumStats(expr)[,1:16]
+  is.nan.data.frame <- function(x){do.call(cbind, lapply(x, is.nan))}
+  all_stats[is.nan(all_stats)] <- 0
+
+  # initialize empty vector of param to predict (could lapply this)
+  pred_param_vect <- c()
+  # for each model in expr
+  for(m in 1:length(expr@modelRuns))
   {
-      param_vect <- c(param_vect, exp@allParams[[m]]@comp_sigma)
+      pred_param_vect <- c(pred_param_vect, slot(expr@allParams[[m]],pred_param_name))
   }
-  param_all_stats <- cbind(param_all_stats,param_vect)
-  
-  rf <- randomForest(param ~ hillAbund_1 + hillAbund_2 + hillAbund_3 + hillAbund_4 + hillTrait_1 + hillTrait_2 + 
-                         hillTrait_3 + hillTrait_4, data=param_all_stats, na.action=na.omit)
-  
-  # gradient boosting
-  
-  # babys first machine learning
-  
-  # model assembly
-  
-  # model selection 
-  
-  # generate 10000 sims for neutral comand filtering 
-  
-  # classify with trained model 
-  
-  # model 3 model
-  
-  # continuous and discrete 
-  
-  # caret 
-  
-  # parameter estimation 
-  
+    
+  all_stats_and_param <- cbind(all_stats,pred_param_vect)
+  names(all_stats_and_param)[17] <- "pred_param"
+
+  rf <- ranger::ranger(pred_param ~ hill_abund_1 + hill_abund_2 + hill_abund_3 + hill_abund_4 + 
+                         hill_gen_1 + hill_gen_2 + hill_gen_3 + hill_gen_4 + 
+                         hill_trait_1 + hill_trait_2 + hill_trait_3 + hill_trait_4 + 
+                         hill_phy_1 + hill_phy_2 + hill_phy_3 + hill_phy_4,
+                         data=all_stats_and_param)
   return(rf)
 }
