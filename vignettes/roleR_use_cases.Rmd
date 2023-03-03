@@ -29,12 +29,12 @@ Run a model and plot species richness over time
 
 ```{r overview, cache = TRUE}
 
-p <- roleParams(individuals_local = 100, individuals_meta = 1000,
-                         species_meta = 50, speciation_local = 0.05, 
-                         speciation_meta = 0.05, extinction_meta = 0.05, env_sigma = 0.5,
-                         trait_sigma=1,comp_sigma = 0.5, dispersal_prob = 0.1, mutation_rate = 0.01,
-                         equilib_escape = 1, num_basepairs = 250,
-                         init_type = 'oceanic_island', niter = 1000, niterTimestep = 100)
+p <- roleParams(individuals_local = 100, individuals_meta = 1000, species_meta = 100, 
+                    speciation_local = 0.1, speciation_meta = 0.1, extinction_meta = 0.05, dispersal_prob = 0.1,
+                    trait_sigma=1, env_sigma=1, comp_sigma = 0.5, neut_delta=1, env_comp_delta=1,
+                    mutation_rate=0,equilib_escape = 1, alpha=50, num_basepairs = 250,
+                    init_type = 'oceanic_island', niter = 1000, niterTimestep = 10)
+
 model <- runRole(roleModel(p))
 stats <- getSumStats(model,funs=list(rich=richness)) #TODO add default where all existing sumstats are added
 ggplot(stats, aes(iteration, rich)) + 
@@ -47,12 +47,11 @@ Create a set of parameters specifying every one
 
 ```{r params, cache = TRUE}
 
-p <- roleParams(individuals_local = 100, individuals_meta = 1000,
-                         species_meta = 50, speciation_local = 0.05, 
-                         speciation_meta = 0.05, extinction_meta = 0.05, env_sigma = 0.5,
-                         trait_sigma=1,comp_sigma = 0.5, dispersal_prob = 0.1, mutation_rate = 0.01,
-                         equilib_escape = 1, num_basepairs = 250,
-                         init_type = 'oceanic_island', niter = 1000, niterTimestep = 100)
+p <- roleParams(individuals_local = 100, individuals_meta = 1000, species_meta = 100, 
+                    speciation_local = 0.1, speciation_meta = 0.1, extinction_meta = 0.05, dispersal_prob = 0.1,
+                    trait_sigma=1, env_sigma=1, comp_sigma = 0.5, neut_delta=1, env_comp_delta=1,
+                    mutation_rate=0,equilib_escape = 1, alpha=50, num_basepairs = 250,
+                    init_type = 'oceanic_island', niter = 1000, niterTimestep = 10)
 ```
 
 Create a set of params per the Unified Neutral Theory of Biodiversity (UNTB).
@@ -171,7 +170,7 @@ Change one parameter to be sampled from a normal distribution every iteration
 
 ```{r priors, cache = TRUE} 
 
-# p@speciation_local <- function(){return(rnorm(1,mean=0.05,sd=0.01))} 
+p@speciation_local <- function(){return(rnorm(1,mean=0.05,sd=0.01))} 
 
 ``` 
 
@@ -181,7 +180,7 @@ Change one parameter to increase linearly every iteration
 
 ```{r iterfuns, cache = TRUE} 
 
-#p@speciation_local <- function(iter){return(iter * 0.001)} 
+p@speciation_local <- function(iter){return(iter * 0.001)} 
 plot(1:1000 * 0.001,xlab = "iteration",ylab = "speciation rate") 
 
 ``` 
@@ -230,7 +229,7 @@ Set metadata of experiment within the object, which is exported when saving
 
 ```{r adv2, cache = TRUE} 
 
-exp <- setExpMetadata(exp, author="Jacob Idec", date="10/18/22", description="A test experiment") 
+exp@authorMeta <- c("author"="Jacob Idec","description"="dummy model")
 
 ``` 
 
@@ -243,7 +242,7 @@ Write and load models, experiments, and params
 ```{r saving, cache = TRUE} 
 
 writeRole(exp,dir="",filename="test",save_txt = T) 
-exp <- readRDS("test.roleexperiment") 
+#exp <- readRDS("test.roleexperiment") 
 
 ``` 
 

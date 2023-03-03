@@ -67,9 +67,9 @@ setMethod('runRole',
                   x@modelRuns <- lapply(x@modelRuns, runRole)
               }
               else{
-                  cl <- parallel::makeCluster(cores,type="SOCK")
-                  x@modelRuns <- clusterApply(cl, x@modelRuns, iterModel)
-                  stopCluster(cl)
+                  cl <- snow::makeCluster(cores,type="SOCK")
+                  x@modelRuns <- snow::clusterApply(cl, x@modelRuns, runRole)
+                  snow::stopCluster(cl)
               }
               return(x)
           }
