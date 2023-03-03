@@ -1,13 +1,15 @@
-#' @title Hill number summary statistics for `roleData` objects
-#' @description These funcitons calculate numbers. The naming convention 
-#'     indicates what type of hill number each function caculates; e.g. 
-#'     `hillAbund` calcualtes abundance-based Hill numbers, while `hillTrait` 
-#'     calculates trait-based Hill numbers
-#' @param x the `roleData` object to calculate Hill numbers or richness from
-#' @param q the Hill number exponents
+#' @title Hill number summary statistics for `roleData` objects.
+#' @description These functions calculate Hill numbers. The naming convention 
+#'     indicates what type of Hill number each function calculates; e.g. 
+#'     `hillAbund` calculates abundance-based Hill numbers, while `hillTrait` 
+#'     calculates trait-based Hill numbers.
+#' @param x The `roleData` object to calculate Hill numbers or richness from
+#' @param q The Hill number exponents. Can be a single value or a vector of integers.  
 #' @param ... additional parameters, ignored
 #' 
-#' 
+#' @details See Gaggiotti et al. 2018 for an overview of Hill numbers in the context of ecology and evolution. 
+#' @references Gaggiotti, Oscar E, Anne Chao, Pedro Peres-Neto, Chun-Huo Chiu, Christine Edwards, Marie-Josée Fortin, Lou Jost, Christopher M Richards, and Kimberly A Selkoe. “Diversity from Genes to Ecosystems: A Unifying Framework to Study Variation across Biological Metrics and Scales.” Evol. Appl. 11, no. 7 (2018): 1176–93. https://doi.org/10.1111/eva.12593.
+
 #' @rdname div-sumStats
 #' @export
 

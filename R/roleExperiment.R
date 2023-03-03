@@ -1,4 +1,5 @@
-#' @title A complete experiment containing one or more models
+#' @title A RoLE experiment: one or more models used collectively to ask a 
+#'     question or probe a hypothesis 
 #' 
 #' @description An S4 class to represent a self-enclosed modeling experiment or intentioned set of models
 #' It contains a list of `roleModel`objects, a list of `roleParams` to use for each model, a data.frame summary of the models, and some author metadata
@@ -11,27 +12,27 @@
 #' @slot experimentMeta data.frame of summarizing metadata for all the models of the experiment 
 #' (Need to chat with Andy about the exact intentions of this before writing more here)
 #' 
-#' @examples 
-#' Create and run a roleExperiment that will contain three models with three different degrees of neutrality
-#' NOTE - this does not work yet as defaults have not yet been discussed and implemented
-#' p1 <- roleParams(neut_delta=0.3)
-#' p2 <- roleParams(neut_delta=0.6)
-#' p3 <- roleParams(neut_delta=1)
-#' expr <- roleExperiment(list(p1,p2,p3))
-#' 
-#' TEMPORARY WORKAROUND
-#' m <- quickModel()
-#' p1 <- m@params
-#' p2 <- p1
-#' p3 <- p1
-#' p1@neut_delta <- 0.3
-#' p2@neut_delta <- 0.6
-#' p3@neut_delta <- 1
-#' expr <- roleExperiment(list(p1,p2,p3))
-#' expr <- runRole(expr)
-#' 
-#' Attach author metadata to the experiment
-#' (in flux, could either make method to attach manually OR force attaching in constructor, which I like more)
+# @examples 
+# Create and run a roleExperiment that will contain three models with three different degrees of neutrality
+# NOTE - this does not work yet as defaults have not yet been discussed and implemented
+# p1 <- roleParams(neut_delta=0.3)
+# p2 <- roleParams(neut_delta=0.6)
+# p3 <- roleParams(neut_delta=1)
+# expr <- roleExperiment(list(p1,p2,p3))
+# 
+# TEMPORARY WORKAROUND
+# m <- quickModel()
+# p1 <- m@params
+# p2 <- p1
+# p3 <- p1
+# p1@neut_delta <- 0.3
+# p2@neut_delta <- 0.6
+# p3@neut_delta <- 1
+# expr <- roleExperiment(list(p1,p2,p3))
+# expr <- runRole(expr)
+# 
+# Attach author metadata to the experiment
+# (in flux, could either make method to attach manually OR force attaching in constructor, which I like more)
 #' 
 #' @rdname roleExperiment
 #' @export

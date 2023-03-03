@@ -233,7 +233,7 @@ untbParams <- function(individuals_local,
 # helper that, given a single value, builds a function
 #   that returns that value stretched to niter in a vectorized fashion
 buildFun <- function(p) {
-    print(p) # what in the name of god why does this work
+    p # what in the name of god why does this work
     f <- function(i) {
         out <- rep(p, length(i))
         
