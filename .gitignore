@@ -5,7 +5,10 @@
 .DS_Store
 *.dll
 *.Rd
+*.RData
 *.RDataTmp1
 *.RDataTmp2
+*.rdb
+*.rdx
 data/gen3sis
 data/config_southamerica

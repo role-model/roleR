@@ -83,10 +83,16 @@ setMethod('runRole',
     
     # calculate expected number of new species as the speciation rate times the
     #   number of iterations
-    expec_n_spec <- p@speciation_local(1) * p@niter
-    # add a small additional buffer
-    phylo_add <- expec_n_spec + 500
+    niter <- p@niter
+    sp_rate <- mean(p@speciation_local(1:niter))
+    expec_n_spec <- sp_rate * niter
     
+    sd <- sqrt(niter * sp_rate * (1 - sp_rate))
+    expec_n_spec <- expec_n_spec + sd
+    
+    phylo_add <- expec_n_spec + 1000
+    
+    # bug here that gets worse the larger the species_meta
     # buffer phylo 
     model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e, matrix(-1, nrow = phylo_add, ncol = 2)) # edges get -1s
     model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l, rep(0, phylo_add)) # lengths get 0s
@@ -96,8 +102,8 @@ setMethod('runRole',
     # calc buffer size for local species vects 
     # 1 is the expected number of new species plus a small add
     # 2 is the initial number of species plus the expected number of new species plus a small add
-    local_add1 <- expec_n_spec + 500 
-    local_add2 <- p@species_meta + expec_n_spec + 500 
+    local_add1 <- expec_n_spec + 500
+    local_add2 <- p@species_meta + expec_n_spec + 500
     
     # buffer local species vectors with 0s
     model@modelSteps[[1]]@localComm@spAbund <- c(model@modelSteps[[1]]@localComm@spAbund,rep(0,local_add1))

@@ -130,33 +130,44 @@ roleParams <- setClass('roleParams',
 #' @rdname roleParams
 #' @export
 
-roleParams <- function(individuals_local,
-                       individuals_meta,
-                       species_meta,
+roleParams <- function(individuals_local=100,
+                       individuals_meta=1000,
+                       species_meta=10,
                        
-                       speciation_local,
-                       speciation_meta,
-                       extinction_meta,
-                       dispersal_prob,
+                       speciation_local=0,
+                       speciation_meta=1,
+                       extinction_meta=0.8,
+                       dispersal_prob=0.1,
                        
-                       trait_sigma,
-                       env_sigma,
-                       comp_sigma,
-                       neut_delta=NA,
-                       env_comp_delta=NA,
+                       trait_sigma=1,
+                       env_sigma=0,
+                       comp_sigma=0,
+                       neut_delta=1,
+                       env_comp_delta=0.5,
                        
-                       mutation_rate=NA,
-                       equilib_escape=NA,
-                       alpha=NA,
-                       num_basepairs=NA,
+                       mutation_rate=0,
+                       equilib_escape=0,
+                       alpha=0,
+                       num_basepairs=0,
                        
-                       init_type, 
-                       niter, 
-                       niterTimestep) {
+                       init_type='oceanic_island', 
+                       niter=10, 
+                       niterTimestep=NULL) {
     
-    # check that `niter` is given correctly
-    if(missing(niter) | length(niter) > 1 | missing(niterTimestep) | length(niterTimestep) > 1) {
-        stop('must supply a single value for `niter`and niterTimestep')
+    # if niterTimestep unspecified calculate one as rounded 1/10 of the iter plus 1
+    if(is.null(niterTimestep)){
+        niterTimestep <- as.integer(niter/10)
+        if(niterTimestep <= 1){
+            niterTimestep <- 2
+        }
+    }
+    
+    # check that iters and timesteps are correct
+    if(!niter%%1==0 | !niterTimestep%%1==0){ # check integer
+        stop('niter and niterTimestep must be numeric integers (cannot be decimal)')
+    }
+    if(length(niter) > 1 | length(niterTimestep) > 1 | niterTimestep > niter) {
+        stop('must supply a single value for `niter`and niterTimestep, and niter cannot be less than niterTimestep')
     }
     
     # get a list of all the user supplied parameters 
