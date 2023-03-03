@@ -52,7 +52,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">getSumStats</span><span class="op">(</span><span class="va">x</span>, <span class="va">funs</span>, <span class="va">moreArgs</span>, <span class="va">...</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">getSumStats</span><span class="op">(</span><span class="va">x</span>, funs <span class="op">=</span> <span class="fu">.getDefaultSumStatsFuns</span><span class="op">(</span><span class="op">)</span>, <span class="va">moreArgs</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S4 method for roleData</span></span>
 <span><span class="fu">getSumStats</span><span class="op">(</span><span class="va">x</span>, <span class="va">funs</span>, <span class="va">moreArgs</span><span class="op">)</span></span>
@@ -67,11 +67,11 @@
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
     <dl><dt>x</dt>
-<dd><p>the object to calculate sum stats across</p></dd>
+<dd><p>the object to calculate summary stats across</p></dd>
 
 
 <dt>funs</dt>
-<dd><p>a named list of function to calculate the sum stats; can be a 
+<dd><p>a named list of functions to calculate the sum stats; can be a 
 named list with a single function or many functions, but must be a 
 named list of functions</p></dd>
 

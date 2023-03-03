@@ -1,17 +1,17 @@
-#' @title Get summary statistics for RoLE objects
-#' @description Applies different summary stats functions to `roleExperiment`,
-#'     `roleModel`, or `roleData`
-#' @param x the object to calculate summary stats across
-#' @param funs a named list of functions to calculate the sum stats; can be a 
+#' @title Get summary statistics for RoLE objects.
+#' @description Applies different summary statistics functions to `roleExperiment`,
+#'     `roleModel`, or `roleData` objects.
+#' @param x The object to calculate summary statistics on. 
+#' @param funs A named list of functions to calculate the summary statistics; can be a 
 #'     named list with a single function or many functions, but must be a 
-#'     named list of functions
-#' @param moreArgs an optional named list of additional arguments to pass to the
-#'     functions listed in `funs`; if given, list names must match those in 
+#'     named list of functions. 
+#' @param moreArgs An optional named list of additional arguments to pass to the
+#'     functions listed in `funs`. If given, list names must match those in 
 #'     `funs`. Note: not all names in `funs` need to appear in `moreArgs`
 #' @param ... ignored
 #' 
-#' @details users can define their own functions, so long as they work on any
-#'     object of class `roleData`
+#' @details Users can define their own functions, so long as they work on any
+#'     object of class `roleData`. 
 #' 
 #' @rdname getSumStats
 #' @export
