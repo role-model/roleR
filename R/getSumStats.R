@@ -1,17 +1,8 @@
-# helper function that returns the default list of summary stats and names
-# used in the constructor of getSumStats
-getDefaultSumStatsFuns <- function(){
-    return(list(hill_abund=hillAbund, hill_gen=hillGenetic, hill_trait = hillTrait, hill_phy = hillPhylo,richness=richness,
-                abund=rawAbundance,sp_abund=rawSpAbundance,sp_id=rawSppID,traits=rawTraits,
-                gen_div=rawGenDiv,seqs=rawSeqs,branch_len = rawBranchLengths,phy = rawApePhylo))
-    
-}
-
 #' @title Get summary statistics for RoLE objects
 #' @description Applies different summary stats functions to `roleExperiment`,
 #'     `roleModel`, or `roleData`
-#' @param x the object to calculate sum stats across
-#' @param funs a named list of function to calculate the sum stats; can be a 
+#' @param x the object to calculate summary stats across
+#' @param funs a named list of functions to calculate the sum stats; can be a 
 #'     named list with a single function or many functions, but must be a 
 #'     named list of functions
 #' @param moreArgs an optional named list of additional arguments to pass to the
@@ -26,7 +17,7 @@ getDefaultSumStatsFuns <- function(){
 #' @export
 
 setGeneric('getSumStats', 
-           def = function(x, funs=getDefaultSumStatsFuns(), moreArgs, ...) standardGeneric('getSumStats'), 
+           def = function(x, funs=.getDefaultSumStatsFuns(), moreArgs, ...) standardGeneric('getSumStats'), 
            signature = 'x')
 
 # method for roleData
@@ -147,3 +138,11 @@ getSumStatsMean <- function(x, funs){
     return(newFun)
 }
 
+# helper function that returns the default list of summary stats and names
+# used in the constructor of getSumStats
+.getDefaultSumStatsFuns <- function(){
+    return(list(hill_abund=hillAbund, hill_gen=hillGenetic, hill_trait = hillTrait, hill_phy = hillPhylo,richness=richness,
+                abund=rawAbundance,sp_abund=rawSpAbundance,sp_id=rawSppID,traits=rawTraits,
+                gen_div=rawGenDiv,seqs=rawSeqs,branch_len = rawBranchLengths,phy = rawApePhylo))
+    
+}

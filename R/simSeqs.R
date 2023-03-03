@@ -105,14 +105,14 @@ simSeqs <- function(model){
         #first_nonzero <- min(which(sp_abundance_vect > 0))
     }
         #model@modelSteps[[i]]@timeseries[[niter_timestep]]@localComm@gdiversitiesSp <- g_diversities
-    }
+}
 
 
 #msprime <- import('msprime')
 simSeqs2 <- function(model){
     library(plyr)
     
-    diem_scalar <- 1
+    # diem_scalar <- 1 
     
     # convert to ape phy
     phy <- as(model@modelSteps[[length(model@modelSteps)]]@phylo, 'phylo')
@@ -124,8 +124,6 @@ simSeqs2 <- function(model){
     d <- msprime$Demography$from_species_tree(ape::write.tree(phy), 
                                               time_units = 'gen', 
                                               initial_size = 1000, growth_rate = 0)
-    
-    #stats <- getSumStats(model, list(abunds=rawAbundance))
     
     # create sp abundance matrix
     abundance_ts_mat <- matrix(data=0,nrow=(model@params@niter/model@params@niterTimestep) + 1,ncol=10000)
@@ -177,6 +175,7 @@ simSeqs2 <- function(model){
         # for each unique origin
         uniq_origins <- unique(origin_vect)
         for(o in uniq_origins){
+            
             # get the following extinction
             ext_index <- getNextPositiveIndexAfterIndex(ext_vect,o)
             

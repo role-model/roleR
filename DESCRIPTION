@@ -17,8 +17,7 @@ Imports:
     ape,
     pika, 
     methods,
-    rlang,
-    parallel,
+    snow,
     reticulate,
     testthat
 Remotes:

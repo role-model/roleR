@@ -27,9 +27,9 @@ setMethod('writeRole',
                   info_tag <- ".roleexperimentinfo"
                   title_line <- "Metadata for RoLE experiment R object - load into R using readRDS(file_location_and_name)"
                   info_line <- paste("Contains", length(x@modelRuns), "model runs")
-                  author_line <- paste("Author:", x@auxMeta["author"])
-                  date_line <- paste("Date:", x@auxMeta["date"])
-                  desc_line <- paste("Description:", x@auxMeta["description"])
+                  author_line <- paste("Author:", x@authorMeta["author"])
+                  date_line <- paste("Date:", x@authorMeta["date"])
+                  desc_line <- paste("Description:", x@authorMeta["description"])
               }
               else{
               }

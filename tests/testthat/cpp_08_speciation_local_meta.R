@@ -5,7 +5,7 @@ test_that("update_speciation_local_meta sets the new trait", {
 test_that("update_speciation_local_meta sets the indv that was birthed or immigrated to the new species", {
     # create a test model and get data from a step and the params
     m <- quickModel()
-    d <- m@modelSteps[[2]]
+    d <- m@modelSteps[[1]]
     p <- m@params
 
     # duplicate the data for comparison after the call_birth method

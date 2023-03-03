@@ -1,6 +1,6 @@
 
-# used ONLY on Jacob's computer before rebuilding package
-prepRebuild <- function()
+# used ONLY on Jacob's computer before rebuilding package to resolve a bug
+.prepRebuild <- function()
 {
   # uninstall previous version
   remove.packages("roleR")

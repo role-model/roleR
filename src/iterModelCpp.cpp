@@ -186,7 +186,7 @@ void call_dispersal(int i, int dead_index, int parent_indv, roleDataCpp &d, role
 NumericVector get_speciation_probs(int i, roleDataCpp &d, roleParamsCpp &p){
     
     // get dispersal prob
-    double dp = p.dispersal_prob(i);
+    double dp = p.dispersal_prob[i];
     
     // calculate speciation probs as sum of local and meta abundances weighted by dispersal prob
     NumericVector probs = dp * (d.spAbundM / sum(d.spAbundM)) + 
@@ -478,10 +478,14 @@ S4 role_data_from_cpp(roleDataCpp &d){
 
 // [[Rcpp::export]]
 List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bool print) {
+    
+    if(print){ Rcout << "save niter and niterTimestep"<< "\n";}
+    
     // save niter and niterTimestep
-    int niter = params.slot("niter");
-    int niter_timestep = params.slot("niterTimestep");
-
+    int niter = as<IntegerVector>(params.slot("niter"))[0];
+    int niter_timestep = as<IntegerVector>(params.slot("niterTimestep"))[0];
+    
+    if(print){ Rcout << "make cpp objects for data and params"<< "\n";}
     // make cpp objects for data and params
     roleDataCpp d(local,meta,phylo);
     roleParamsCpp p = roleParamsCpp(params,niter); // constructor samples/stretches
@@ -512,20 +516,23 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
     // save the initial state to index 0 
     out[0] = role_data_from_cpp(d);
     
+    if(print){ Rcout << "loop from 0 to niter - 1" << "\n";}
     // loop from 0 to niter - 1 
-    for(int i = 0; i < (int) params.slot("niter"); i++) {
+    for(int i = 0; i < niter; i++) {
 
+        if(print){ Rcout << "call death" << "\n";}
         // METHOD - call death
         int dead_index = call_death(i,d,p);
         
         // set dispersal var for use in speciation, which is slightly different depending
         bool dispersed_this_iter = false; 
-
+        
+        if(print){ Rcout << "call birth or dispersal" << "\n";}
         // check for birth (prob = 1 - dispersal_prob) 
-        if(d.unif(d.rng) >= p.dispersal_prob(i)){ //R::runif(0,1)
+        if(d.unif(d.rng) >= p.dispersal_prob[i]){ //R::runif(0,1)
 
             // sample for the parent
-            int parent_indv = sample_zero_to_x(p.individuals_local(i));
+            int parent_indv = sample_zero_to_x(p.individuals_local[i]);
             
             // METHOD - call birth
             call_birth(i, dead_index, parent_indv, d, p, print);
@@ -540,13 +547,15 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             call_dispersal(i,dead_index, parent_index, d, p, print);
         }
         
+        if(print){ Rcout << "call speciation if it occurs" << "\n";}
         // randomly decide if speciation occurs
-        if(d.unif(d.rng) < p.speciation_local(i))
+        if(d.unif(d.rng) < p.speciation_local[i])
         {
             // METHOD - call speciation and get the chosen species 
             call_speciation(i, dead_index, d, p, dispersed_this_iter, print);
         }
         
+        if(print){ Rcout << "if non-neutral, update objects used for comp and filtering" << "\n";}
         // if non-neutral, update objects used for comp and filtering
         if(p.neut_delta[0] < 1){
             

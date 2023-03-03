@@ -1,18 +1,17 @@
-#' @title One run of the RoLE model
+#' @title A single RoLE model
 #'
-#' @description An S4 class to hold one model run of the RoLE model
+#' @description An S4 class that holds a RoLE eco-evolutionary process model
+#' A model is first initialized using a set of parameters, then run using those parameters
 #' 
-#' @details A model is first initialized using a set of params, then iterated using iterModel(modeL)
-#' roleExperiments consist of many roleModels with different parameters
-#' 
-#' @slot modelSteps a list of roleData objects, one for each recorded time step
-#' `niterTimestep` param defines recording interval
-#' @slot params a `roleParams` object defining the model params
+#' @slot modelSteps a list of `roleData` objects, one for each snapshot of the model that was recorded as the model ran
+#' For example, the 3rd saved snapshot is accessed at modelSteps[[3]]
+#' Models that are not yet run only have one timestep in modelSteps[[1]]
+#' @slot params a `roleParams` object containing the params to use when the model is run
 #' 
 #' @examples 
 #' Create a model using a default set of params, then run it
-#' model <- roleModel(roleParams())
-#' run <- iterModel(model)
+#' m <- roleModel(roleParams())
+#' m <- runRole(m)
 #' 
 #' @rdname roleModel
 #' @export
@@ -20,12 +19,15 @@
 setClass('roleModel',
          slots = c(params = 'roleParams', modelSteps = 'list'))
 
-# constructor for roleModel
+#' @title Create a roleModel
+#' @param params the params to use when the model is run
+#' @return a ready-to-run `roleModel`
+#' 
 #' @rdname roleModel
 #' @export
 
 roleModel <- function(params) {
-    J <- params@individuals_local[1]
+    J <- params@individuals_local(1)
     Sm <- params@species_meta
 
     phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)

@@ -5,8 +5,8 @@ test_that("birth sets the new indv to the parent species", {
     d <- m@modelSteps[[2]]
     p <- m@params
     
-    # set the species of individual at index 1 to 1000
-    d@localComm@indSpecies[1] <- 1000
+    # set the species of individual at index 1 to 10
+    d@localComm@indSpecies[1] <- 10
     
     # duplicate the data for comparison after the call_birth method
     d_start <- rlang::duplicate(d)
@@ -16,7 +16,7 @@ test_that("birth sets the new indv to the parent species", {
     out <- cFun(type="data",fun_name="call_birth",data=d,params=p,i=1, dead_index=1, parent_indv=0)
     
     # compare these two - the species of the new individual should be the same as the parent
-    expect_true((out@localComm@indSpecies + 1)[2] == 1000)
+    expect_true((out@localComm@indSpecies + 1)[2] == 10)
 })
 
 test_that("birth adds 1 to the correct spot in the species matrix", {

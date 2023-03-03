@@ -61,8 +61,6 @@ setMethod("$", "roleExperiment", function(x, name) {
     }
 })
 
-
-
 # print method for `roleExperiment`
 #' @export
 
