@@ -177,7 +177,8 @@ getValuesFromParams <- function(p){
         
         # if the slot type is a function, run the function over the iters
         if(slot_types[i] == "function"){
-            slot(pvals,slot_names[i]) <- slot(p,slot_names[i])(1:niter) # apply the function across 1:niter
+            fun <- slot(p,slot_names[i])
+            slot(pvals,slot_names[i]) <- fun(1:niter) # apply the function across 1:niter
         }
         else{
             slot(pvals,slot_names[i]) <- slot(p,slot_names[i]) # if not a function just set the value

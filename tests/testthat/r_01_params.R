@@ -22,4 +22,20 @@ test_that("roleParams constructor returns error if timestep or niter are >1 leng
     expect_error(roleParams(niter=c(10,1),niterTimestep = c(1,100)))
     expect_error(roleParams(niter=10.1,niterTimestep = 1.1))
 })
+test_that("roleParams with a user-supplied iterfun works in runRole", {
     
+    f <- function(i) {
+        return(i / 1000)
+    }
+    
+    p <- roleParams(speciation_local = f)
+    expect_error(runRole(roleModel(p)),NA)
+})
+
+test_that("roleParams with init_type = 'bridge_island' works", {
+    
+    p <- roleParams(init_type = 'bridge_island', niter = 1000, niterTimestep = 10)
+    m <- runRole(roleModel(p))
+    expect_error(runRole(roleModel(p)),NA)
+})
+

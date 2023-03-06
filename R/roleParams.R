@@ -172,17 +172,42 @@ roleParams <- function(individuals_local=100,
     
     # get a list of all the user supplied parameters 
     # old way of doing this is all_params <- list(individuals_local,...
-    all_params <- as.list(environment())
+    # all_params <- as.list(environment())
+    all_params <- list(individuals_local,
+                       individuals_meta,
+                       species_meta,
+                       
+                       speciation_local,
+                       speciation_meta,
+                       extinction_meta,
+                       dispersal_prob,
+                       
+                       trait_sigma,
+                       env_sigma,
+                       comp_sigma,
+                       neut_delta,
+                       env_comp_delta,
+                       
+                       mutation_rate,
+                       equilib_escape,
+                       alpha,
+                       num_basepairs,
+                       
+                       init_type, 
+                       niter, 
+                       niterTimestep)
     
     # get the types (i,e. 'function','numeric') of the slots of the roleParams class
     slot_types <- getSlots("roleParams")
     # get the names of each slot
     slot_names <- slotNames("roleParams")
     
+    
     # for every slot in the list of slots
     for(i in 1:length(all_params)){
+
         # if the slot type is a function, and the user input is NOT a function...
-        if(slot_types[i] == "function" & typeof(all_params[i]) != "function"){
+        if(slot_types[i] == "function" & (typeof(all_params[[i]]) != "closure")){
             # replace the single user-supplied value with the function
             all_params[[i]] <- buildFun(all_params[[i]])
         }

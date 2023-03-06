@@ -44,7 +44,7 @@ roleModel <- function(params) {
                               prob = meta@spAbund), 
                        J)
     } else if(params@init_type == 'bridge_island') {
-        initSpp <- sample(params@speciation_meta, J, 
+        initSpp <- sample(params@species_meta, J, 
                           replace = TRUE, prob = meta@spAbund)
     } else {
         stop('`init_type` must be one of `"oceanic_island"` or `"bridge_island"`')
