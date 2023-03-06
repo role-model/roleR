@@ -32,10 +32,19 @@ test_that("roleParams with a user-supplied iterfun works in runRole", {
     expect_error(runRole(roleModel(p)),NA)
 })
 
-test_that("roleParams with init_type = 'bridge_island' works", {
+test_that("roleParams with init_type = 'bridge_island' runs a model without error", {
     
     p <- roleParams(init_type = 'bridge_island', niter = 1000, niterTimestep = 10)
     m <- runRole(roleModel(p))
     expect_error(runRole(roleModel(p)),NA)
 })
+
+test_that("roleParams with very high speciation rate runs a model without error", {
+    
+    # bug scales with niter and speciation rate
+    p <- roleParams(speciation_local=0.3, niter=100)
+    m <- runRole(roleModel(p))
+    expect_error(runRole(roleModel(p)),NA)
+})
+
 
