@@ -42,8 +42,7 @@ test_that("roleParams with init_type = 'bridge_island' runs a model without erro
 test_that("roleParams with very high speciation rate runs a model without error", {
     
     # bug scales with niter and speciation rate
-    p <- roleParams(speciation_local=0.3, niter=100)
-    m <- runRole(roleModel(p))
+    p <- roleParams(speciation_local=0.99, niter=1000)
     expect_error(runRole(roleModel(p)),NA)
 })
 

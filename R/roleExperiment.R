@@ -1,13 +1,12 @@
-#' @title A RoLE experiment: one or more models used collectively to ask a 
-#'     question or probe a hypothesis 
+#' @title roleExperiment - one or more models bundled collectively 
 #' 
-#' @description An S4 class to represent a self-enclosed modeling experiment or intentioned set of models
+#' @description An S4 class to represent a self-enclosed modeling experiment or intentioned set of models.
 #' It contains a list of `roleModel`objects, a list of `roleParams` to use for each model, a data.frame summary of the models, and some author metadata
 #' 
 #' @slot modelRuns a list of `roleModel`objects
 #' @slot allParams a list of `roleParams` to use for each model
 #' @slot authorMeta a named string vector that keep track of author metadata
-#' It contains values for "author", "date", "description", "info", where each element is named by its respective string
+#' It contains values for "author", "date", "description", "info", where each element is named by its respective string.
 #' When the model is saved with `writeRole` a text file is generated using this metadata
 #' @slot experimentMeta data.frame of summarizing metadata for all the models of the experiment 
 #' (Need to chat with Andy about the exact intentions of this before writing more here)

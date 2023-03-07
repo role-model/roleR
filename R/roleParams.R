@@ -28,10 +28,12 @@
 #' @slot equilib_escape proportion of equilibrium required to halt the model as it is running and return it
 #' @slot num_basepairs number of basepairs to use in genetic simulations
 #' 
-#' @slot init_type the biological model used to initialize; a single character string that can be either "oceanic_island" or "bridge_island"
+#' @slot init_type the biological model used to initialize; a single character string that can be either "oceanic_island", "bridge_island", or "bare_island"
 #' The bridge island model has the initial individuals in the local comm arriving through a land bridge, while the oceanic has no bridge and is populated by a single dispersal
 #' Thus in oceanic island all individuals are of a SINGLE species sampled proportional to meta comm species abunds, 
 #' while in bridge island species individuals are sampled of MANY species proportional to their abundances
+#' Bare island is related to oceanic, but instead of starting with "individuals_local" individuals of the sole sampled species, only 1 individual 
+#' of that species appears and the rest of the space is filled with placeholder "rocks" representing unfilled space
 #' @slot niter an integer specifying the number of time steps for the model to run
 #' @slot niterTimestep an integer specifying the frequency (in numbers of 
 #'     iterations) at which the model state is snapshotted and saved in a model's model steps object
@@ -246,6 +248,55 @@ untbParams <- function(individuals_local,
     
     return(roleParams(
         individuals_local = individuals_local,
+        individuals_meta = individuals_meta,
+        species_meta = species_meta,
+        speciation_local = speciation,
+        speciation_meta = 0.8,
+        extinction_meta = 0.05,
+        trait_sigma = 1,
+        env_sigma = 1,
+        comp_sigma = 1,
+        neut_delta = 1, # makes the model neutral by ignoring env and comp sigmas
+        env_comp_delta = 1,
+        dispersal_prob = dispersal_prob,
+        mutation_rate = 0.01,
+        equilib_escape = 1,
+        alpha = 10,
+        num_basepairs = 250,
+        init_type = init_type, 
+        niter = niter,
+        niterTimestep = niterTimestep))
+}
+
+# constructor
+#' @rdname untbParams
+#' @export
+
+sp1_gr = 0.1
+sp2_gr = 0.6
+sp1_k = 50
+sp2_k = 70
+alpha12 = 0.1
+alpha21 = 0.2
+niter = 1000
+lvParams <- function(sp1_n,sp2_n,sp1_gr,sp2_gr,sp1_k,sp2_k,alpha12,alpha21,niter) {
+    max_gr_sp <- which.max(c(sp1_gr,sp2_gr))
+    max_gr <- max(sp1_gr,sp2_gr)
+    
+    mu10 <- ifelse(max_gr_sp == 1, 0, max_gr - sp1_gr)
+    mu20 <- ifelse(max_gr_sp == 2, 0, max_gr - sp2_gr)
+    
+    la10 <- sp1_gr + mu10
+    la20 <- sp2_gr + mu20
+    
+    mu11 <- sp1_gr / sp1_k
+    mu22 <- sp2_gr / sp2_k
+    
+    mu12 <- sp1_gr * alpha12 / sp1_k
+    mu21 <- sp2_gr * alpha21 / sp2_k
+    
+    return(roleParams(
+        individuals_local = sp1_k + sp2_k, # J (number of indv + rocks) = the total carrying capacity
         individuals_meta = individuals_meta,
         species_meta = species_meta,
         speciation_local = speciation,

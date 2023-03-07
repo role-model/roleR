@@ -83,8 +83,8 @@ setMethod('runRole',
     
     # calculate expected number of new species using binom
     expec_n_spec <- qbinom(0.9,p@niter,prob = mean(p@speciation_local(1:niter)))
-    el_add <- expec_n_spec * 2 - 1
-    at_add <- expec_n_spec
+    el_add <- (expec_n_spec * 2 - 1) + 1
+    at_add <- expec_n_spec + 1
     
     # buffer phylo 
     model@modelSteps[[1]]@phylo@e

@@ -3,10 +3,10 @@
 #' @description An S4 class to specify a phylogeny for the purpose of the RoLE model
 #'
 #' @slot n the number of tips in the phylogeny
-#' @slot e the numeric edge matrix of the phylogeny
+#' @slot e the numeric edge matrix of the phylogeny.
 #' Each row contains an ancestor-child pair where the 1st column is the ancestor and the 2nd is the child
-#' @slot l a numeric vector of edge lengths 
-#' The units of l are the time steps (iterations) of the model
+#' @slot l a numeric vector of edge lengths.
+#' The units of l are the time steps (iterations) of the model.
 #' Each time step unit is equal to 1/J generations where J is the number of individuals in the local community
 #' @slot alive a logical vector indicating whether each tips is extant or not
 #' @slot tipNames a character vector of the names of each tip 

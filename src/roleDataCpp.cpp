@@ -17,7 +17,9 @@ public:
     NumericVector spLastOriginStepL;
     NumericVector spExtinctionStepL; 
     NumericVector spReciprSumL;
-
+    
+    NumericVector founderFlagL; 
+    
     NumericVector spAbundM;
     NumericVector spTraitM;
     
@@ -105,6 +107,9 @@ public:
                 traitDiffsSq(i,j) = pow(indTraitL(i) - indTraitL(j),2);
             }
         }
+        
+        // initialize founder flag for equilib escape as a vector of 0s of length n_indv 
+        founderFlagL = NumericVector(n_indv);
         
         // initialize random number generators
         rng = std::mt19937(std::random_device{}());

@@ -1,10 +1,10 @@
-#' @title A single RoLE model
+#' @title roleModel - a single RoLE model
 #'
-#' @description An S4 class that holds a RoLE eco-evolutionary process model
+#' @description An S4 class that holds a RoLE eco-evolutionary process model.
 #' A model is first initialized using a set of parameters, then run using those parameters
 #' 
-#' @slot modelSteps a list of `roleData` objects, one for each snapshot of the model that was recorded as the model ran
-#' For example, the 3rd saved snapshot is accessed at modelSteps[[3]]
+#' @slot modelSteps a list of `roleData` objects, one for each snapshot of the model that was recorded as the model ran.
+#' For example, the 3rd saved snapshot is accessed at modelSteps[[3]].
 #' Models that are not yet run only have one timestep in modelSteps[[1]]
 #' @slot params a `roleParams` object containing the params to use when the model is run
 #' 
@@ -39,17 +39,26 @@ roleModel <- function(params) {
     
     # initialize indSpecies from random draw from meta (based on oceanic or
     # bridge island)
-    if(params@init_type == 'oceanic_island') {
+    # ROCKS NOTE - indSpecies and indTrait get n rocks added on where n is empty_niche_space param
+    if(params@init_type == 'oceanic_island'){
         initSpp <- rep(sample(params@species_meta, 1, 
                               prob = meta@spAbund), 
                        J)
-    } else if(params@init_type == 'bridge_island') {
+    } 
+    else if(params@init_type == 'bridge_island'){
         initSpp <- sample(params@species_meta, J, 
                           replace = TRUE, prob = meta@spAbund)
-    } else {
+    } 
+    else if(params@init_type == 'bare_island'){
+        initSpp <- rep(sample(params@species_meta, 1, 
+                              prob = meta@spAbund), 
+                       J)
+        initSpp[2:length(initSpp)] <- 0
+    }
+    else{
         stop('`init_type` must be one of `"oceanic_island"` or `"bridge_island"`')
     }
-    
+
     # initialize traits based on spp ID
     initTrait <- meta@spTrait[initSpp]
     
