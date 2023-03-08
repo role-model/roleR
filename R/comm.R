@@ -32,7 +32,8 @@ setClass('localComm',
                    spAbund = 'numeric',
                    spAbundHarmMean = 'numeric',
                    spLastOriginStep = 'numeric',
-                   spExtinctionStep = 'numeric'
+                   spExtinctionStep = 'numeric',
+                   equilibProp = 'numeric'
          ))
 
 

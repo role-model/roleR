@@ -180,6 +180,9 @@ void call_dispersal(int i, int dead_index, int parent_indv, roleDataCpp &d, role
     
     // add new trait value
     d.indTraitL(dead_index) = d.spTraitM(parent_index) + trait_change;
+    
+    // set founderFlag of dead indv to 1 
+    d.founderFlagL(dead_index) = 1; 
 }
 
 // get the probs of speciation, determines by weighted local and meta abundance
@@ -198,6 +201,59 @@ NumericVector get_speciation_probs(int i, roleDataCpp &d, roleParamsCpp &p){
     return(probs);
 }
 
+// // helper functions to augment vectors if an index out of range is about to happen despite the buffering
+// Rcpp::NumericVector bufferNumericVector(Rcpp::NumericVector v, int value, int n) {
+//     int vsize = v.size(); // get the size of vec1
+//     Rcpp::NumericVector result(vsize + n, value); // create a new vector of the appropriate size
+//     std::copy(v.begin(), v.end(), result.begin()); // copy the elements of vec1 to the beginning of result
+//     std::copy(v.begin(), v.end(), result.begin() + vsize); // copy the elements of vec2 to the end of result
+//     return result;
+// }
+Rcpp::NumericVector buffer_numeric_vector(Rcpp::NumericVector vec, int value, int n) {
+    int len = vec.length() + n; // calculate the new length of the vector
+    Rcpp::NumericVector result(len); // create a new vector with the new length
+    std::fill(result.begin(), result.end(), value); // fill the new vector with zeroes
+    std::copy(vec.begin(), vec.end(), result.begin() + n); // copy the original vector to the new vector, starting at the nth position
+    return result; // return the new vector
+}
+Rcpp::LogicalVector buffer_logical_vector(Rcpp::LogicalVector vec, bool value, int n) {
+    int len = vec.length() + n; // calculate the new length of the vector
+    Rcpp::LogicalVector result(len); // create a new vector with the new length
+    std::fill(result.begin(), result.end(), value); // fill the new vector with zeroes
+    std::copy(vec.begin(), vec.end(), result.begin() + n); // copy the original vector to the new vector, starting at the nth position
+    return result; // return the new vector
+}
+Rcpp::CharacterVector buffer_character_vector(Rcpp::CharacterVector vec, std::string value, int n) {
+    int len = vec.length() + n; // calculate the new length of the vector
+    Rcpp::CharacterVector result(len); // create a new vector with the new length
+    std::fill(result.begin(), result.end(), value); // fill the new vector with zeroes
+    std::copy(vec.begin(), vec.end(), result.begin() + n); // copy the original vector to the new vector, starting at the nth position
+    return result; // return the new vector
+}
+arma::imat buffer_arma_mat(arma::imat imat, int value, int n) {
+    arma::mat mat = arma::conv_to<arma::mat>::from(imat);
+    int n_rows = mat.n_rows + n; // calculate the new number of rows of the matrix
+    int n_cols = mat.n_cols; // keep the same number of columns
+    arma::mat result(n_rows, n_cols, arma::fill::zeros); // create a new matrix with the new number of rows, filled with zeroes
+    result.submat(n, 0, n_rows - 1, n_cols - 1) = mat; // copy the original matrix to the new matrix, starting at the (n+1)th row
+    result.submat(0, 0, n - 1, n_cols - 1).fill(value); // fill the top n rows of the new matrix with -1
+    return(arma::conv_to<arma::imat>::from(result)); // return the new matrix
+}
+// Rcpp::LogicalVector bufferLogicalVector(Rcpp::LogicalVector v, bool value, int n) {
+//     int vsize = v.size(); // get the size of vec1
+//     Rcpp::LogicalVector result(vsize + n, value); // create a new vector of the appropriate size
+//     std::copy(v.begin(), v.end(), result.begin()); // copy the elements of vec1 to the beginning of result
+//     std::copy(v.begin(), v.end(), result.begin() + vsize); // copy the elements of vec2 to the end of result
+//     return result;
+// }
+// Rcpp::CharacterVector bufferCharacterVector(Rcpp::CharacterVector v,  std::string value, int n) {
+//     int vsize = v.size(); // get the size of vec1
+//     Rcpp::CharacterVector result(vsize + n,value); // create a new vector of the appropriate size
+//     std::copy(v.begin(), v.end(), result.begin()); // copy the elements of vec1 to the beginning of result
+//     std::copy(v.begin(), v.end(), result.begin() + vsize); // copy the elements of vec2 to the end of result
+//     return result;
+// }
+
 // call the local and meta aspects of speciation
 void update_speciation_local_meta(int i, int dead_index, roleDataCpp &d, roleParamsCpp &p, bool dispersed_this_iter, int speciation_sp, bool print){
     
@@ -205,21 +261,41 @@ void update_speciation_local_meta(int i, int dead_index, roleDataCpp &d, rolePar
     double trait_dev = d.norm(d.rng) * p.trait_sigma(i);
     double parent_trait_val = d.indTraitL(dead_index);
     d.indTraitL(dead_index) = parent_trait_val + trait_dev;
-
+    
     // the indv that was birthed or immigrated becomes the new species
     d.indSpeciesL(dead_index) = d.nTipsP(0); 
     
     // update time of last origin
     d.spLastOriginStepL(d.indSpeciesL(dead_index)) = i;
+    
+    // augment vectors by a set amount if the id of the new species (the n tips in the phylo)
+    //  exceeds the size of the local sp vectors
+    if(d.nTipsP(0) > d.spAbundL.length()){
+        d.spAbundL = buffer_numeric_vector(d.spAbundL,0,100);
+        d.spTraitL = buffer_numeric_vector(d.spTraitL,0,100);
+    }
+    
+    // set founderFlag of dead indv to 1 
+    d.founderFlagL(dead_index) = 1; 
 }
 
 // call the phylo aspect of speciation
 void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int speciation_sp){
     
+    // augment vectors by a set amount if the id of the new species (the n tips in the phylo)
+    //  exceeds the size of the local sp vectors
+    if(d.nTipsP(0) > d.aliveP.length()){
+        d.aliveP = buffer_logical_vector(d.aliveP,"FALSE",100); // buffer alive
+        d.tipNamesP = buffer_character_vector(d.tipNamesP,"",100); // buffer tip names
+        // get buffered arma vectors (coercing to use bufferNumericVector), and use as cols in new edgesP matrix
+        d.edgesP = buffer_arma_mat(d.edgesP,-1,100);
+    }
+    
     // set easy named variables for phylogeny speciation
     //arma::imat e = d.edgesP;
     //arma::vec l = d.lengthsP;
     int n = d.nTipsP(0);
+    
     LogicalVector alive = d.aliveP;
     
     // nrows of the edge matrix
@@ -432,6 +508,7 @@ void update_local_sp_sum_recipr(int i, int dead_index, roleDataCpp &d, roleParam
 }
 
 // copy a roleDataCpp object to it's R side S4 equivalent
+// also calculate equilibProp before the copy 
 S4 role_data_from_cpp(roleDataCpp &d){
     
     // ANDY NOTE - clone each element of d or clone d and extract elements
@@ -444,8 +521,9 @@ S4 role_data_from_cpp(roleDataCpp &d){
     // All failed to deep copy, possibly some quirk of Rcpp where it would normally work in C++
     // take a bit of a closer look at clone
     
-    // ANDY  - snip off augmented data when cloning 
-    
+    // calculate equilib prop as the sum of the 0/1 numeric founderFlagL / J 
+    double equilib_prop = sum(d.founderFlagL) / d.indSpeciesL.length();
+
     // construct S4 object, cloning each member of roleDataCpp directly to slots
     S4 out_l("localComm");
     out_l.slot("indSpecies") = Rcpp::clone(d.indSpeciesL);
@@ -455,6 +533,7 @@ S4 role_data_from_cpp(roleDataCpp &d){
     out_l.slot("spAbundHarmMean") = Rcpp::clone(d.spAbundHarmMeanL);
     out_l.slot("spLastOriginStep") = Rcpp::clone(d.spLastOriginStepL);
     out_l.slot("spExtinctionStep") = Rcpp::clone(d.spExtinctionStepL);
+    out_l.slot("equilibProp") = equilib_prop;
 
     S4 out_m("metaComm");
     out_m.slot("spAbund") = Rcpp::clone(d.spAbundM);
@@ -537,7 +616,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             // METHOD - call birth
             call_birth(i, dead_index, parent_indv, d, p, print);
         }
-        else{
+        else{ // ROCKS NOTE - add new param for birth_prob where b + d <= 1, then dispersal/birth are allowed to NOT happen, leaving a rock
             dispersed_this_iter = true;
             
             // sample a parent index using species abundances as probs
@@ -546,6 +625,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             // METHOD - call dispersal
             call_dispersal(i,dead_index, parent_index, d, p, print);
         }
+        // ROCKS NOTE - else add a rock to the dead_index and prevent speciation from occurring
         
         if(print){ Rcout << "call speciation if it occurs" << "\n";}
         // randomly decide if speciation occurs
@@ -562,7 +642,7 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
             // JACOB NOTE - changed this as part of new death ifs 
             // if filtering only
             if(p.env_comp_delta[0] == 1){
-                // METHOD - update the probs of enviromental filtering ONLY if non-neutral and either for all indv or just the new one
+                // METHOD - update the probs of environmental filtering ONLY if non-neutral and either for all indv or just the new one
                 update_env_filter_probs(i, dead_index,d,p);
             }
             else if(p.env_comp_delta[0] == 0){ // if competition only 
@@ -592,6 +672,8 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
                 out[(i + 1) / niter_timestep] = role_data_from_cpp(d); 
             }
         }
+        
+        // JACOB NOTE - if a certain amount of equilibrium achieved, return(out)
     } 
     
     return(out);

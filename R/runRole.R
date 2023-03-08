@@ -82,30 +82,46 @@ setMethod('runRole',
 .bufferModelData <- function(model){
     p <- model@params 
     
-    # calculate expected number of new species as the speciation rate times the
-    #   number of iterations
-    expec_n_spec <- p@speciation_local(1) * p@niter
-    # add a small additional buffer
-    phylo_add <- expec_n_spec + 500
+    # calculate expected number of new species using binom
+    expec_n_spec <- qbinom(0.9,p@niter,prob = mean(p@speciation_local(1:niter)))
+    el_add <- (expec_n_spec * 2 - 1) + 1
+    at_add <- expec_n_spec + 1
     
     # buffer phylo 
-    model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e, matrix(-1, nrow = phylo_add, ncol = 2)) # edges get -1s
-    model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l, rep(0, phylo_add)) # lengths get 0s
-    model@modelSteps[[1]]@phylo@alive <- c(model@modelSteps[[1]]@phylo@alive, rep(FALSE, phylo_add)) # alives get FALSE
-    model@modelSteps[[1]]@phylo@tipNames <- c(model@modelSteps[[1]]@phylo@tipNames, rep('', phylo_add)) # tipNames get ''
+    model@modelSteps[[1]]@phylo@e
+    model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e, matrix(-1, nrow = el_add, ncol = 2)) # edges get -1s
+    model@modelSteps[[1]]@phylo@e
+    model@modelSteps[[1]]@phylo@l
+    model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l, rep(0, el_add)) # lengths get 0s
+    model@modelSteps[[1]]@phylo@l
+    model@modelSteps[[1]]@phylo@alive
+    model@modelSteps[[1]]@phylo@alive <- c(model@modelSteps[[1]]@phylo@alive, rep(FALSE, at_add)) # alives get FALSE
+    model@modelSteps[[1]]@phylo@alive
+    model@modelSteps[[1]]@phylo@tipNames
+    model@modelSteps[[1]]@phylo@tipNames <- c(model@modelSteps[[1]]@phylo@tipNames, rep('', at_add)) # tipNames get ''
+    model@modelSteps[[1]]@phylo@tipNames
     
     # calc buffer size for local species vects 
     # 1 is the expected number of new species plus a small add
     # 2 is the initial number of species plus the expected number of new species plus a small add
-    local_add1 <- expec_n_spec + 500 
-    local_add2 <- p@species_meta + expec_n_spec + 500 
+    local_add <- p@species_meta + expec_n_spec
     
     # buffer local species vectors with 0s
-    model@modelSteps[[1]]@localComm@spAbund <- c(model@modelSteps[[1]]@localComm@spAbund,rep(0,local_add1))
-    model@modelSteps[[1]]@localComm@spTrait <- c(model@modelSteps[[1]]@localComm@spAbund,rep(0,local_add1))
-    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  rep(0,local_add2)
-    model@modelSteps[[1]]@localComm@spLastOriginStep <-  rep(0,local_add2)
-    model@modelSteps[[1]]@localComm@spExtinctionStep <-  rep(0,local_add2)
+    model@modelSteps[[1]]@localComm@spAbund
+    model@modelSteps[[1]]@localComm@spAbund <- c(model@modelSteps[[1]]@localComm@spAbund,rep(0,local_add))
+    model@modelSteps[[1]]@localComm@spAbund
+    model@modelSteps[[1]]@localComm@spTrait
+    model@modelSteps[[1]]@localComm@spTrait <- c(model@modelSteps[[1]]@localComm@spTrait,rep(0,local_add))
+    model@modelSteps[[1]]@localComm@spTrait
+    model@modelSteps[[1]]@localComm@spAbundHarmMean
+    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  rep(0,local_add)
+    model@modelSteps[[1]]@localComm@spAbundHarmMean
+    model@modelSteps[[1]]@localComm@spLastOriginStep
+    model@modelSteps[[1]]@localComm@spLastOriginStep <-  rep(0,local_add)
+    model@modelSteps[[1]]@localComm@spLastOriginStep
+    model@modelSteps[[1]]@localComm@spExtinctionStep
+    model@modelSteps[[1]]@localComm@spExtinctionStep <-  rep(0,local_add)
+    model@modelSteps[[1]]@localComm@spExtinctionStep
     
     return(model)
 }
@@ -172,7 +188,8 @@ getValuesFromParams <- function(p){
         
         # if the slot type is a function, run the function over the iters
         if(slot_types[i] == "function"){
-            slot(pvals,slot_names[i]) <- slot(p,slot_names[i])(1:niter) # apply the function across 1:niter
+            fun <- slot(p,slot_names[i])
+            slot(pvals,slot_names[i]) <- fun(1:niter) # apply the function across 1:niter
         }
         else{
             slot(pvals,slot_names[i]) <- slot(p,slot_names[i]) # if not a function just set the value

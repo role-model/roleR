@@ -28,10 +28,12 @@
 #' @slot equilib_escape proportion of equilibrium required to halt the model as it is running and return it
 #' @slot num_basepairs number of basepairs to use in genetic simulations
 #' 
-#' @slot init_type the biological model used to initialize; a single character string that can be either "oceanic_island" or "bridge_island"
+#' @slot init_type the biological model used to initialize; a single character string that can be either "oceanic_island", "bridge_island", or "bare_island"
 #' The bridge island model has the initial individuals in the local comm arriving through a land bridge, while the oceanic has no bridge and is populated by a single dispersal
 #' Thus in oceanic island all individuals are of a SINGLE species sampled proportional to meta comm species abunds, 
 #' while in bridge island species individuals are sampled of MANY species proportional to their abundances
+#' Bare island is related to oceanic, but instead of starting with "individuals_local" individuals of the sole sampled species, only 1 individual 
+#' of that species appears and the rest of the space is filled with placeholder "rocks" representing unfilled space
 #' @slot niter an integer specifying the number of time steps for the model to run
 #' @slot niterTimestep an integer specifying the frequency (in numbers of 
 #'     iterations) at which the model state is snapshotted and saved in a model's model steps object
@@ -130,7 +132,50 @@ roleParams <- setClass('roleParams',
 #' @rdname roleParams
 #' @export
 
-roleParams <- function(individuals_local,
+roleParams <- function(individuals_local=100,
+                       individuals_meta=1000,
+                       species_meta=10,
+                       
+                       speciation_local=0,
+                       speciation_meta=1,
+                       extinction_meta=0.8,
+                       dispersal_prob=0.1,
+                       
+                       trait_sigma=1,
+                       env_sigma=0,
+                       comp_sigma=0,
+                       neut_delta=1,
+                       env_comp_delta=0.5,
+                       
+                       mutation_rate=0,
+                       equilib_escape=0,
+                       alpha=0,
+                       num_basepairs=0,
+                       
+                       init_type='oceanic_island', 
+                       niter=10, 
+                       niterTimestep=NULL) {
+    
+    # if niterTimestep unspecified calculate one as rounded 1/10 of the iter plus 1
+    if(is.null(niterTimestep)){
+        niterTimestep <- as.integer(niter/10)
+        if(niterTimestep <= 1){
+            niterTimestep <- 2
+        }
+    }
+    
+    # check that iters and timesteps are correct
+    if(!niter%%1==0 | !niterTimestep%%1==0){ # check integer
+        stop('niter and niterTimestep must be numeric integers (cannot be decimal)')
+    }
+    if(length(niter) > 1 | length(niterTimestep) > 1 | niterTimestep > niter) {
+        stop('must supply a single value for `niter`and niterTimestep, and niter cannot be less than niterTimestep')
+    }
+    
+    # get a list of all the user supplied parameters 
+    # old way of doing this is all_params <- list(individuals_local,...
+    # all_params <- as.list(environment())
+    all_params <- list(individuals_local,
                        individuals_meta,
                        species_meta,
                        
@@ -142,36 +187,29 @@ roleParams <- function(individuals_local,
                        trait_sigma,
                        env_sigma,
                        comp_sigma,
-                       neut_delta=NA,
-                       env_comp_delta=NA,
+                       neut_delta,
+                       env_comp_delta,
                        
-                       mutation_rate=NA,
-                       equilib_escape=NA,
-                       alpha=NA,
-                       num_basepairs=NA,
+                       mutation_rate,
+                       equilib_escape,
+                       alpha,
+                       num_basepairs,
                        
                        init_type, 
                        niter, 
-                       niterTimestep) {
-    
-    # check that `niter` is given correctly
-    if(missing(niter) | length(niter) > 1 | missing(niterTimestep) | length(niterTimestep) > 1) {
-        stop('must supply a single value for `niter`and niterTimestep')
-    }
-    
-    # get a list of all the user supplied parameters 
-    # old way of doing this is all_params <- list(individuals_local,...
-    all_params <- as.list(environment())
+                       niterTimestep)
     
     # get the types (i,e. 'function','numeric') of the slots of the roleParams class
     slot_types <- getSlots("roleParams")
     # get the names of each slot
     slot_names <- slotNames("roleParams")
     
+    
     # for every slot in the list of slots
     for(i in 1:length(all_params)){
+
         # if the slot type is a function, and the user input is NOT a function...
-        if(slot_types[i] == "function" & typeof(all_params[i]) != "function"){
+        if(slot_types[i] == "function" & (typeof(all_params[[i]]) != "closure")){
             # replace the single user-supplied value with the function
             all_params[[i]] <- buildFun(all_params[[i]])
         }
@@ -210,6 +248,55 @@ untbParams <- function(individuals_local,
     
     return(roleParams(
         individuals_local = individuals_local,
+        individuals_meta = individuals_meta,
+        species_meta = species_meta,
+        speciation_local = speciation,
+        speciation_meta = 0.8,
+        extinction_meta = 0.05,
+        trait_sigma = 1,
+        env_sigma = 1,
+        comp_sigma = 1,
+        neut_delta = 1, # makes the model neutral by ignoring env and comp sigmas
+        env_comp_delta = 1,
+        dispersal_prob = dispersal_prob,
+        mutation_rate = 0.01,
+        equilib_escape = 1,
+        alpha = 10,
+        num_basepairs = 250,
+        init_type = init_type, 
+        niter = niter,
+        niterTimestep = niterTimestep))
+}
+
+# constructor
+#' @rdname untbParams
+#' @export
+
+sp1_gr = 0.1
+sp2_gr = 0.6
+sp1_k = 50
+sp2_k = 70
+alpha12 = 0.1
+alpha21 = 0.2
+niter = 1000
+lvParams <- function(sp1_n,sp2_n,sp1_gr,sp2_gr,sp1_k,sp2_k,alpha12,alpha21,niter) {
+    max_gr_sp <- which.max(c(sp1_gr,sp2_gr))
+    max_gr <- max(sp1_gr,sp2_gr)
+    
+    mu10 <- ifelse(max_gr_sp == 1, 0, max_gr - sp1_gr)
+    mu20 <- ifelse(max_gr_sp == 2, 0, max_gr - sp2_gr)
+    
+    la10 <- sp1_gr + mu10
+    la20 <- sp2_gr + mu20
+    
+    mu11 <- sp1_gr / sp1_k
+    mu22 <- sp2_gr / sp2_k
+    
+    mu12 <- sp1_gr * alpha12 / sp1_k
+    mu21 <- sp2_gr * alpha21 / sp2_k
+    
+    return(roleParams(
+        individuals_local = sp1_k + sp2_k, # J (number of indv + rocks) = the total carrying capacity
         individuals_meta = individuals_meta,
         species_meta = species_meta,
         speciation_local = speciation,
