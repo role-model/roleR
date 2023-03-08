@@ -1,48 +1,48 @@
 #' @title Parameters of one roleModel
 #' @description An S4 class containing params for population sizes, rates of processes, the number of iterations
-#' to run, and much more 
+#' to run, and much more. 
 #' 
-#' @slot individuals_local number of individuals in local community (J)
-#' Determines the length of individual-level data vectors
-#' When the model is initialized, all individuals are of a single species from the metacommunity
-#' @slot individuals_meta number of individuals in meta community
-#' Used in generating a log series of the initial abundances of species in the meta
-#' @slot species_meta number of species in meta community
-#' Determines the initial size of the phylogeny
-#' @slot speciation_local probability of speciation occurring in the local comm each time step
-#' The new local species can be either from a birth in the local comm or an immigration from the meta comm
-#' @slot speciation_meta rate of speciation in meta community
-#' This is used during the simulation of the start phylogeny before the model is run
-#' The sum of speciation_meta and extinction_meta is the average lifetime of phylo branches, and the larger this value the less new individual traits will deviate
-#' @slot extinction_meta rate of extinction in meta community
-#' Like speciation_meta, used in the starting phylo simulation and in relation to traits
-#' @slot trait_sigma rate of Brownian trait evolution in the meta community
-#' Determines how much the trait of a new individual deviates from its parent; how fast traits change
-#' @slot env_sigma selectivity of environmental filter; how strongly the environment selects which trait values are a good match for it
-#' The larger the value, the less chance an individual will survive if it's far from the trait optimum (which is 0)
-#' @slot comp_sigma selectivity of competition
-#' @slot dispersal_prob probability of dispersal (immigration) occurring from the meta to the local
-#' Every time step, either birth or immigration happens, so the probability of birth is 1 minus the dispersal_prob
+#' @slot individuals_local Number of individuals in the local community (J).
+#' Determines the length of individual-level data vectors.
+#' When the model is initialized, all individuals are of a single species from the metacommunity.
+#' @slot individuals_meta Number of individuals in the metacommunity.
+#' Used in generating a log series of the initial abundances of species in the metacommunity. 
+#' @slot species_meta Number of species in the metacommunity. 
+#' Determines the initial size of the phylogeny.
+#' @slot speciation_local Probability of speciation occurring in the local community at each time step.
+#' The new local species can be either from a birth in the local community or an immigration from the metacommunity.
+#' @slot speciation_meta Rate of speciation in meta community.
+#' This is used during the simulation of the initial phylogeny before the model is run.
+#' The sum of speciation_meta and extinction_meta is the average lifetime of phylogeny branches, and the larger this value the less new individual traits will deviate.
+#' @slot extinction_meta Rate of extinction in the metacommunity.
+#' Like speciation_meta, used in the initial phylogeny simulation and in relation to trait deviation.
+#' @slot trait_sigma Rate of Brownian trait evolution in the metacommunity. 
+#' Determines how much the trait of a new individual deviates from its parent, i.e. how fast traits change.
+#' @slot env_sigma Selectivity of the environmental filter, i.e. how strongly the environment selects which trait values are a good match for it.
+#' The larger the value, the less chance an individual will survive if it's far from the trait optimum (which is 0).
+#' @slot comp_sigma Selectivity of competition. 
+#' @slot dispersal_prob Probability of dispersal (immigration) occurring from the metacommunity to the local local community at each time step.
+#' Every time step, either birth or immigration happens, so the probability of birth is 1 minus the dispersal_prob.
 #' 
-#' @slot mutation_rate rate of sequence mutation to use in genetic simulations
-#' @slot equilib_escape proportion of equilibrium required to halt the model as it is running and return it
-#' @slot num_basepairs number of basepairs to use in genetic simulations
+#' @slot mutation_rate Rate of sequence mutation to use in genetic simulations.
+#' @slot equilib_escape Proportion of equilibrium required to halt the model as it is running and return it
+#' @slot num_basepairs Number of basepairs to use in genetic simulations. Genetic simulations are currently single-locus.
 #' 
-#' @slot init_type the biological model used to initialize; a single character string that can be either "oceanic_island", "bridge_island", or "bare_island"
-#' The bridge island model has the initial individuals in the local comm arriving through a land bridge, while the oceanic has no bridge and is populated by a single dispersal
-#' Thus in oceanic island all individuals are of a SINGLE species sampled proportional to meta comm species abunds, 
-#' while in bridge island species individuals are sampled of MANY species proportional to their abundances
-#' Bare island is related to oceanic, but instead of starting with "individuals_local" individuals of the sole sampled species, only 1 individual 
-#' of that species appears and the rest of the space is filled with placeholder "rocks" representing unfilled space
-#' @slot niter an integer specifying the number of time steps for the model to run
-#' @slot niterTimestep an integer specifying the frequency (in numbers of 
-#'     iterations) at which the model state is snapshotted and saved in a model's model steps object
+#' @slot init_type The biological model used to initialize; a single character string that can be either "oceanic_island", "bridge_island", or "bare_island."
+#' The bridge island model has the initial individuals in the local community arriving through a land bridge, while the oceanic has no bridge and is populated by a single dispersal event.
+#' Thus, for oceanic island models, all individuals are of a SINGLE species sampled proportional to meta community species abundances, 
+#' while in bridge island models, individuals are sampled of MANY species proportional to their abundances.
+#' The bare island model is related to the oceanic island model, but instead of starting with "individuals_local" individuals of the sole sampled species, only 1 individual 
+#' of that species appears and the rest of the space is filled with placeholder "rocks" representing unfilled space.
+#' @slot niter An integer specifying the number of time steps for the model to run.
+#' @slot niterTimestep An integer specifying the frequency (in numbers of 
+#'     iterations) at which the model state is snapshot and saved in a model's model steps object.
 #' 
 #' @details Params `init_type`, `niter`, `niterTimestep`, 
 #'     `mutation_rate`,`equilib_escape`,and `num_basepairs` take a single value.
 #'      All other params are numeric vectors containing either one value or `niter` values.
-#'      If one value that value is used for all iterations of the model.
-#'      If `niter`values a different sequential value is used for each iteration 
+#'      If one value is supplied, that value is used for all iterations of the model.
+#'      If `niter`values are supplied, a different sequential value in the `niter` vector is used for each iteration.
 #'      
 #' @examples 
 #' Create a set of params
