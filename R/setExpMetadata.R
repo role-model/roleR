@@ -1,6 +1,10 @@
 
-#' @title Set metadata from an experiment
-#' @param x the object set metadata to
+#' @title Set metadata from an experiment.
+#' @param x The `roleExperiment` object set metadata to. 
+#' @param author The author of the RoLE experiment.
+#' @param datestring The date the RoLE experiment was run.
+#' @param description A short description of the RoLE experiment.
+#' @details Each argument besides `x` should be a single string.
 
 #' @rdname setExpMetadata
 #' @export
