@@ -1,15 +1,16 @@
-#' @title A single RoLE model
+#' @title A single RoLE model.
 #'
-#' @description An S4 class that holds a RoLE eco-evolutionary process model
-#' A model is first initialized using a set of parameters, then run using those parameters
+#' @description An S4 class that holds a RoLE eco-evolutionary process model.
+#' A model is first initialized using a set of parameters, then run using those parameters.
 #' 
-#' @slot modelSteps a list of `roleData` objects, one for each snapshot of the model that was recorded as the model ran
-#' For example, the 3rd saved snapshot is accessed at modelSteps[[3]]
-#' Models that are not yet run only have one timestep in modelSteps[[1]]
-#' @slot params a `roleParams` object containing the params to use when the model is run
+#' @slot modelSteps A list of `roleData` objects, one for each snapshot of the model that were recorded as the model ran.
+#' For example, the 3rd saved snapshot is accessed at modelSteps[[3]].
+#' Models that are not yet run only have one timestep in modelSteps[[1]].
+#' @slot params A `roleParams` object containing the params to use when the model is run.
 #' 
+#' @details See the `roleR_intro` vignette for an example modeling workflow.
 #' @examples 
-#' Create a model using a default set of params, then run it
+#' Create a model using a default set of params, then run it.
 #' m <- roleModel(roleParams())
 #' m <- runRole(m)
 #' 
@@ -19,9 +20,9 @@
 setClass('roleModel',
          slots = c(params = 'roleParams', modelSteps = 'list'))
 
-#' @title Create a roleModel
-#' @param params the params to use when the model is run
-#' @return a ready-to-run `roleModel`
+#' @title Create a roleModel.
+#' @param params The params to use when the model is run.
+#' @return A ready-to-run `roleModel`.
 #' 
 #' @rdname roleModel
 #' @export

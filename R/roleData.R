@@ -1,10 +1,10 @@
-#' @title A collection of data representing one state of a roleModel
+#' @title A collection of data representing one state of a roleModel.
 #' 
-#' @description An S4 class to represent a roleModel state using a `localComm`,`metaComm`, & `phylo`
+#' @description An S4 class to represent a roleModel state using a `localComm`,`metaComm`, & `rolephylo`.
 #' 
-#' @slot localComm a `localComm` object containing the local community
-#' @slot metaComm a `metaComm` object containing the meta community
-#' @slot phylo a `rolePhylo` object containing the model phylogeny 
+#' @slot localComm A `localComm` object containing the local community.
+#' @slot metaComm A `metaComm` object containing the meta community.
+#' @slot phylo A `rolePhylo` object containing the model phylogeny. 
 #' 
 #' @rdname roleData
 #' @export
