@@ -1,5 +1,5 @@
 ---
-title: "roleR_intro"
+title: "Introduction and basic workflow"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{roleR_intro}
@@ -15,19 +15,20 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Setup
+## Motivation
+
+## Installation and setup
 
 ```{r setup}
 library(roleR)
 set.seed(1)
 ```
 
+## Basic workflow
 
-## Highlevel overview
+This is a quick demonstration of the structure of a `roleR` analysis... setting parameters, followed by initializing the model, running the model, optionally creating an experiment, viewing metadata, calculating sumstats... more detail... We will break these down in the following section
 
-An object of class `roleExperiment` contains multiple different model runs and the parameters used to do those model runs.  The parameters are held in an object of class `roleParams` and the model runs are in a list, each element of which is an object of class `roleModel`.
-
-## Dive right in!
+... An object of class `roleExperiment` contains multiple different model runs and the parameters used to do those model runs. The parameters are held in an object of class `roleParams` and the model runs are in a list, each element of which is an object of class `roleModel`.
 
 ```{r}
 library(roleR)
@@ -56,7 +57,7 @@ p <- roleParams(
 m <- roleModel(p)
 
 # run the model
-m <- iterModel(m)
+m <- runModel(m)
 
 # coerce to an experiment
 e <- as(m, 'roleExperiment')
@@ -67,6 +68,16 @@ e@experimentMeta
 # we can extract summary statistics; note: rows of summary statistic
 # output match rows of `e@experimentMeta`
 getSumStats(e, list(rich = richness, hill = hillAbund))
-
-
 ```
+
+## Setting parameters
+
+## Initializing a roleModel
+
+## Running a roleModel
+
+## RoLE Experiments
+
+## Calculating summary statistics
+
+## Analyzing output (machine learning?)
