@@ -17,7 +17,7 @@ This document shows off various use cases using the current implementation of ro
 
 Install from GitHub
 
-```{r role, cache = TRUE}
+```{r role, cache = TRUE, eval = FALSE}
 
 # devtools::install_github("role-model/roleR")
 
@@ -27,17 +27,32 @@ library(ggplot2)
 
 Run a model and plot species richness over time
 
-```{r overview, cache = TRUE}
 
-p <- roleParams(individuals_local = 100, individuals_meta = 1000, species_meta = 100, 
-                    speciation_local = 0.1, speciation_meta = 0.1, extinction_meta = 0.05, dispersal_prob = 0.1,
-                    trait_sigma=1, env_sigma=1, comp_sigma = 0.5, neut_delta=1, env_comp_delta=1,
-                    mutation_rate=0,equilib_escape = 1, alpha=50, num_basepairs = 250,
-                    init_type = 'oceanic_island', niter = 1000, niterTimestep = 10)
+```{r overview, cache = TRUE, eval = FALSE}
+
+p <- roleParams(
+    individuals_local = 100,
+    individuals_meta = 1000,
+    species_meta = 50,
+    speciation_local = 0.05,
+    speciation_meta = 0.05,
+    extinction_meta = 0.05,
+    env_sigma = 0.5,
+    trait_sigma = 1,
+    comp_sigma = 0.5,
+    dispersal_prob = 0.1,
+    mutation_rate = 0.01,
+    equilib_escape = 1,
+    num_basepairs = 250,
+    init_type = 'oceanic_island',
+    niter = 1000,
+    niterTimestep = 100
+)
 
 model <- runRole(roleModel(p))
-stats <- getSumStats(model,funs=list(rich=richness)) #TODO add default where all existing sumstats are added
-ggplot(stats, aes(iteration, rich)) + 
+stats <-
+    getSumStats(model, funs = list(rich = richness)) #TODO add default where all existing sumstats are added
+ggplot(stats, aes(iteration, rich)) +
     geom_line()
 ```
 
@@ -45,7 +60,7 @@ ggplot(stats, aes(iteration, rich)) +
 
 Create a set of parameters specifying every one
 
-```{r params, cache = TRUE}
+```{r params, cache = TRUE, eval = FALSE}
 
 p <- roleParams(individuals_local = 100, individuals_meta = 1000, species_meta = 100, 
                     speciation_local = 0.1, speciation_meta = 0.1, extinction_meta = 0.05, dispersal_prob = 0.1,
@@ -57,7 +72,7 @@ p <- roleParams(individuals_local = 100, individuals_meta = 1000, species_meta =
 Create a set of params per the Unified Neutral Theory of Biodiversity (UNTB).
 This creates a "UNTB-flavored" RoLE model 
 
-```{r untb_params, cache = TRUE}
+```{r untb_params, cache = TRUE, eval = FALSE}
 
 p_untb <- untbParams(individuals_local = 100, individuals_meta = 1000, 
                         species_meta = 50, 
@@ -75,7 +90,7 @@ See the roleParams documentation for descriptions of all available parameters
 
 Create a model (not yet run) using the params, then run it 
 
-```{r model, cache = TRUE}
+```{r model, cache = TRUE, eval = FALSE}
 
 model <- roleModel(p)
 model <- runRole(model)
@@ -86,7 +101,7 @@ Create an experiment (not yet run) containing two models created using both sets
 Experiment running can be parallelized on Windows, Mac, & Linux by specifying the number of cores to use. 
 When you run an experiment, it runs every model within it.
 
-```{r exp, cache = TRUE}
+```{r exp, cache = TRUE, eval = FALSE}
 
 exp <- roleExperiment(list(p,p_untb))
 library(parallel)
@@ -104,7 +119,7 @@ Get a summary stats over time for a single model, each row being a different sav
 Available raw stats are rawAbundance, rawSpAbundance, rawTraits, rawGenDiv, rawBranchLengths, and rawApePhylo.
 Available transformed stats are hillAbund, hillGenetic, hillTrait, hillPhylo, and richness.
 
-```{r series, cache = TRUE}
+```{r series, cache = TRUE, eval = FALSE}
 
 stats <- getSumStats(model, list(rich = richness,hill_abund=hillAbund))
 stats
@@ -113,14 +128,14 @@ stats
 
 Get summary stats over time for one model of an experiment 
 
-```{r series2, cache = TRUE} 
+```{r series2, cache = TRUE, eval = FALSE} 
 
 stats <- getSumStats(exp@modelRuns[[1]], list(hill_abund=hillAbund)) 
 ``` 
 
 Create a custom summary statistic and extract it 
 
-```{r series3, cache = TRUE} 
+```{r series3, cache = TRUE, eval = FALSE} 
 
 speciesWith5Indv <- function(x){return(sum(x@localComm@spAbund > 4))} 
 stats <- getSumStats(exp@modelRuns[[1]], list(sp_with_5=speciesWith5Indv)) 
@@ -135,7 +150,7 @@ stats <- getSumStats(exp@modelRuns[[1]], list(sp_with_5=speciesWith5Indv))
 
 Get a dataframe containing all saved timesteps of all models in the experiment 
 
-```{r data, cache = TRUE} 
+```{r data, cache = TRUE, eval = FALSE} 
 
 stats <- getSumStats(exp, list(hill_abund=hillAbund)) 
 
@@ -143,7 +158,7 @@ stats <- getSumStats(exp, list(hill_abund=hillAbund))
 
 Get a dataframe containing model metadata in the experiment, where each row is an experiment with its associated params 
 
-```{r data2, cache = TRUE} 
+```{r data2, cache = TRUE, eval = FALSE} 
 
 exp_model_params <- exp@experimentMeta 
 
@@ -151,7 +166,7 @@ exp_model_params <- exp@experimentMeta
 
 Get transformed summary stats (such as the mean of a stat at an iteration for multiple models) from an experiment (WIP) 
 
-```{r series4, cache = TRUE} 
+```{r series4, cache = TRUE, eval = FALSE} 
 
 # stats <- getSumStats(exp, list(hill_abund_itermean=hillAbundItermean)) 
 ## where hillAbundItermean is a function that applies across an experiment rather than across a roleData 
@@ -168,7 +183,7 @@ A prior is any function that takes no inputs and returns a parameter value
 
 Change one parameter to be sampled from a normal distribution every iteration 
 
-```{r priors, cache = TRUE} 
+```{r priors, cache = TRUE, eval = FALSE} 
 
 p@speciation_local <- function(){return(rnorm(1,mean=0.05,sd=0.01))} 
 
@@ -178,7 +193,7 @@ An iter-function takes an iteration number and returns a parameter value
 
 Change one parameter to increase linearly every iteration 
 
-```{r iterfuns, cache = TRUE} 
+```{r iterfuns, cache = TRUE, eval = FALSE} 
 
 p@speciation_local <- function(iter){return(iter * 0.001)} 
 plot(1:1000 * 0.001,xlab = "iteration",ylab = "speciation rate") 
@@ -187,7 +202,7 @@ plot(1:1000 * 0.001,xlab = "iteration",ylab = "speciation rate")
 
 Create a simple piecewise function where a param changes during some iterations 
 
-```{r iterfuns2, cache = TRUE} 
+```{r iterfuns2, cache = TRUE, eval = FALSE} 
 
 #p@env_sigma <- function(iter){ 
 #        if(iter > 400 & iter < 600){ 
@@ -209,7 +224,7 @@ Create a simple piecewise function where a param changes during some iterations
 
 Add genetic diversities to a run model by backwards time simulation using msprime 
 
-```{r gendiv, cache = TRUE} 
+```{r gendiv, cache = TRUE, eval = FALSE} 
 
 #model <- simulateSpeciesGenDiv(model) 
 
@@ -219,7 +234,7 @@ Add genetic diversities to a run model by backwards time simulation using msprim
 
 Tag models in an experiment for comparison between different tags 
 
-```{r adv, cache = TRUE} 
+```{r adv, cache = TRUE, eval = FALSE} 
 
 names(exp@modelRuns) <- c("basic","neut") 
 
@@ -227,7 +242,7 @@ names(exp@modelRuns) <- c("basic","neut")
 
 Set metadata of experiment within the object, which is exported when saving 
 
-```{r adv2, cache = TRUE} 
+```{r adv2, cache = TRUE, eval = FALSE} 
 
 exp@authorMeta <- c("author"="Jacob Idec","description"="dummy model")
 
@@ -239,7 +254,7 @@ exp@authorMeta <- c("author"="Jacob Idec","description"="dummy model")
 
 Write and load models, experiments, and params 
 
-```{r saving, cache = TRUE} 
+```{r saving, cache = TRUE, eval = FALSE} 
 
 writeRole(exp,dir="",filename="test",save_txt = T) 
 #exp <- readRDS("test.roleexperiment") 
@@ -250,7 +265,7 @@ writeRole(exp,dir="",filename="test",save_txt = T)
 
 Use a run experiment to make a model predicting a parameter from summary stats 
 
-```{r preds, cache = TRUE} 
+```{r preds, cache = TRUE, eval = FALSE} 
 
 #pred_model <- createPredModel(exp,param_name = "speciation_local", preds=c("hill_abund1","hill_abund2")) 
 

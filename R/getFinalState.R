@@ -1,12 +1,12 @@
-#' @title Get the final state of a model run
-#' @description gets the final state of a model from either a `roleExperiment` 
-#'     or a `roleModel`
-#' @param x the object to retrieve state from
-#' @param modID optional argument to retrieve state for specific model(s) in a
-#'     `roleExperiment` object; can be a vector of unique IDs
+#' @title Get the final state of a model run.
+#' @description Gets the final state of a model from either a `roleExperiment` 
+#'     or a `roleModel`.
+#' @param x The `roleExperiment` or `roleModel` object to retrieve the final state from.
+#' @param modID Optional argument to retrieve the final state for specific model(s) in a
+#'     `roleExperiment` object; can be a vector of unique IDs. 
 #' 
-#' @details if `modID` is not supplied and `x` is a `roleExperiment` then a 
-#'     list of `roleData` objects for each model run is returned
+#' @details If `modID` is not supplied and `x` is a `roleExperiment`, then a 
+#'     list of `roleData` objects for each model run is returned.
 #' 
 #' @export
 

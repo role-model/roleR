@@ -1,8 +1,8 @@
-#' @title Write a RoLE model, experiment, or params
-#' @param x the object to write
-#' @param dir directory (path) to write object to 
-#' @param filename the name of the file to save
-#' File will be called *filename*.roleexperiment 
+#' @title Write a roleModel, roleExperiment, or roleParams to disk.
+#' @param x The object to write.
+#' @param dir Directory (path) to write the object to.
+#' @param filename The name of the file to save.
+#' File will be called *filename*.roleexperiment. 
 #' @rdname writeRoLE
 #' @export
 

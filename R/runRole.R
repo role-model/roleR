@@ -1,8 +1,9 @@
-#' @title Run a `roleModel` or `roleExperiment`
-#' @description Iterate a RoLE object to completion using its parameters
-#' @param x the `roleModel` or `roleModel` object to run
-#' @param print whether to print step information as the model runs
-#' @return a `roleModel` or `roleExperiment` run to completion
+#' @title Run a `roleModel` or `roleExperiment`.
+#' @description Run a RoLE object to completion.
+#' @param x The `roleModel` or `roleModel` object to run.
+#' @param print A boolean indicating whether to print step information as the model runs.
+#' @return A `roleModel` or `roleExperiment` run to completion.
+#' @details Prior to running the RoLE model(s), the parameters must be specified inside the RoLE object with `roleParams()`.
 #' 
 #' @examples 
 #' Create and run a model

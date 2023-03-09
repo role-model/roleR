@@ -1,16 +1,16 @@
-#' @title Get raw data from `roleData` objects
-#' @description Gets raw data
-#' @param x the `roleData` object to get raw data from
-#' @param ... additional parameters, ignored
+#' @title Get raw data from `roleData` objects.
+#' @description Gets raw data according to the function specification.
+#' @param x A `roleData` object.
+#' @param ... Additional parameters, ignored.
 #' 
-#' @return a list with one element, inside that one element is a vector of the
-#'     raw data
+#' @return A list with one element. Inside that one element is a vector of the
+#'     raw data.
 #' 
-#' @details These functions return a list of length one (with summary statistics 
-#'     inside that list) because the summary stats themselves could be variable
-#'     length. This is distinct from other summary stat functions which will
-#'     always return a fixed length value.  When using raw summary stat 
-#'     functions in `getSumStats` they will be returned in a list column
+#' @details These functions return a list of length one (with summary statistics as a vector
+#'     inside that list) because the summary statistics themselves can be variable
+#'     length. This is distinct from other summary statistic functions which will
+#'     always return a fixed length value.  When using raw summary statistic
+#'     functions in `getSumStats` they will be returned in a list-column.
 #' 
 #' @rdname raw-sumStats
 #' @export

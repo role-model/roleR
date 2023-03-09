@@ -1,3 +1,4 @@
+#' @title Internal functions to facilitate vignette examples.
 
 quickParams <- function(){
     # its for some reason using the value of the last supplied non function in every fun 

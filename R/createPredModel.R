@@ -1,9 +1,10 @@
 #' @title createRolePredModel
 #' 
-#' @description create a random forest model to predict a parameter value using summary statistics
+#' @description Create a random forest model to predict a parameter value using summary statistics of simulation experiments.
 
-#' @param exp a `roleExperiment` to use models from for training and validation
-#' @param predParam the name of the parameter to predict 
+#' @param exp A `roleExperiment` that contains models with simulation data to use for training and validation,
+#' @param predParam The name of the parameter to predict. See the `roleParams` documentation for a list of possible parameter choices. 
+
 #' 
 #' @examples 
 # m <- quickExp()

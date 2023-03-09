@@ -1,16 +1,16 @@
-#' @title A phylogeny of all the species of a `roleData`
+#' @title A phylogeny of all the species in a `roleData` object.
 #' 
-#' @description An S4 class to specify a phylogeny for the purpose of the RoLE model
+#' @description An S4 class to specify a phylogeny for the purpose of the RoLE model.
 #'
-#' @slot n the number of tips in the phylogeny
-#' @slot e the numeric edge matrix of the phylogeny.
+#' @slot n The number of tips in the phylogeny
+#' @slot e The numeric edge matrix of the phylogeny.
 #' Each row contains an ancestor-child pair where the 1st column is the ancestor and the 2nd is the child
-#' @slot l a numeric vector of edge lengths.
+#' @slot l A numeric vector of edge lengths.
 #' The units of l are the time steps (iterations) of the model.
 #' Each time step unit is equal to 1/J generations where J is the number of individuals in the local community
-#' @slot alive a logical vector indicating whether each tips is extant or not
-#' @slot tipNames a character vector of the names of each tip 
-#' @slot scale a single numeric value of time scale translation to years
+#' @slot alive A logical vector indicating whether each tip is extant or not.
+#' @slot tipNames A character vector of the tip names.
+#' @slot scale A single numeric value of time scale translation to years.
 #' 
 #' @rdname rolePhylo
 #' @export
@@ -31,7 +31,7 @@ setClass('rolePhylo',
 #' @param alive 
 #' @param tipNames 
 #' @param scale
-#' @return a `rolePhylo` object
+#' @return A `rolePhylo` object.
 #' 
 #' @rdname rolePhylo
 #' @export
