@@ -47,6 +47,33 @@ setMethod('hillAbund',
 }
 
 
+
+# total abundance
+#' @rdname total-abundance
+#' @export
+
+setGeneric('totalN', 
+           def = function(x, ...) standardGeneric('totalN'), 
+           signature = 'x')
+
+
+setMethod('totalN', 
+          signature = 'roleData', 
+          definition = function(x) {
+              X <- rawAbundance(x)[[1]]
+              return(sum(X))
+          }
+)
+# function for total abundance
+#' @param n is a vector of species abundances
+
+.totalAbundSAD <- function(n) {
+    
+    return(sum(n))
+    
+}
+
+
 # genetic hill stats
 #' @rdname div-sumStats
 #' @export
