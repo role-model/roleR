@@ -12,9 +12,6 @@
 # expr <- roleExperiment(repS4(p,100))
 # expr <- runRole(expr)
 # rf <- createRolePredModel(expr,pred_param_name="env_sigma")
-#' 
-#' @rdname createRolePredModel
-#' @export
 
 # returns a random forest to predict a parameter value using summary stats 
 createRolePredModel <- function(expr,pred_param_name)

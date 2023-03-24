@@ -11,11 +11,13 @@
 #'     length. This is distinct from other summary statistic functions which will
 #'     always return a fixed length value.  When using raw summary statistic
 #'     functions in `getSumStats` they will be returned in a list-column.
+#'     rawAbundance gets the unordered abundance of species, 
+#'     while rawSpAbundance gets the ordered abundance of species which is a much longer vector
 #' 
 #' @rdname raw-sumStats
 #' @export
 
-# abundance
+# abundance of each 
 setGeneric('rawAbundance', 
            def = function(x, ...) standardGeneric('rawAbundance'), 
            signature = 'x')

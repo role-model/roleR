@@ -4,7 +4,12 @@
 #' @param x The object to calculate summary statistics on. 
 #' @param funs A named list of functions to calculate the summary statistics; can be a 
 #'     named list with a single function or many functions, but must be a 
-#'     named list of functions. 
+#'     named list of functions. If unspecified, defaults to including several standard stats. 
+#'     Included diversity index functions in roleR are: `hillAbund`, 
+#'     `hillGenetic`,`hillPhylo` & `richness`. Included raw stats functions are `rawAbundance`,
+#'     `rawSpAbundance`,`rawSppId`,`rawTraits`,`rawGenDiv`,`rawSeqs`,
+#'     `rawBranchLengths` & `rawApePhylo`.
+#'     
 #' @param moreArgs An optional named list of additional arguments to pass to the
 #'     functions listed in `funs`. If given, list names must match those in 
 #'     `funs`. Note: not all names in `funs` need to appear in `moreArgs`
@@ -12,6 +17,15 @@
 #' 
 #' @details Users can define their own functions, so long as they work on any
 #'     object of class `roleData`. 
+#' 
+#' @return data.frame containing summary stats where each row is a model snapshot
+#' and each column is a summary stat requested by a function provided to `funs`
+#' 
+#' @examples 
+#' # get the species richness 
+#' rich_stat <- getSumStats(model, funs = list(rich = richness))
+#' # get many default summary stats
+#' stats <- getSumStats(model)
 #' 
 #' @rdname getSumStats
 #' @export

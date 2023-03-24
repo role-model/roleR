@@ -1,16 +1,15 @@
 #' @title Run a `roleModel` or `roleExperiment`.
 #' @description Run a RoLE object to completion.
-#' @param x The `roleModel` or `roleModel` object to run.
-#' @param print A boolean indicating whether to print step information as the model runs.
-#' @return A `roleModel` or `roleExperiment` run to completion.
+#' @param x `roleModel` or `roleExperiment` object to run.
+#' @return `roleModel` or `roleExperiment` run to completion.
 #' @details Prior to running the RoLE model(s), the parameters must be specified inside the RoLE object with `roleParams()`.
 #' 
 #' @examples 
-#' Create and run a model
+#' # create and run a model
 #' model <- roleModel(roleParams())
 #' model <- runRole(model)
 #' 
-#' Create and run an experiment
+#' # create and run an experiment
 #' p1 <- roleParams(speciation_local=0.2)
 #' p2 <- roleParams(speciation_local=0.3)
 #' p3 <- roleParams(speciation_local=0.4)
@@ -21,12 +20,12 @@
 #' @export
 
 setGeneric('runRole', 
-           def = function(x, cores=1, print = F) standardGeneric('runRole'), 
+           def = function(x, cores=1) standardGeneric('runRole'), 
            signature = 'x')
 
 setMethod('runRole', 
           signature = 'roleModel', 
-          definition = function(x, print = F) {
+          definition = function(x) {
                 m <- x
                 
               for(i in 2:length(m@modelSteps))
@@ -46,7 +45,7 @@ setMethod('runRole',
               m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
                                            slot(m@modelSteps[[1]],"metaComm"),
                                            slot(m@modelSteps[[1]],"phylo"),
-                                           pvals,print=FALSE) #m@params
+                                           pvals,print=FALSE)
               # trim data, removing the unused buffer
               m <- .trimModelData(m)
               
@@ -62,7 +61,7 @@ setMethod('runRole',
 
 setMethod('runRole', 
           signature = 'roleExperiment', 
-          definition = function(x, cores = 1, print = F) {
+          definition = function(x, cores = 1) {
              
               if(cores == 1){
                   x@modelRuns <- lapply(x@modelRuns, runRole)

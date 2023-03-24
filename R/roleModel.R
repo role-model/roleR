@@ -11,7 +11,7 @@
 #' 
 #' @details See the `roleR_intro` vignette for an example modeling workflow.
 #' @examples 
-#' Create a model using a default set of params, then run it.
+#' # Create a model using a default set of params, then run it.
 #' m <- roleModel(roleParams())
 #' m <- runRole(m)
 #' 
@@ -41,7 +41,6 @@ roleModel <- function(params) {
     
     # initialize indSpecies from random draw from meta (based on oceanic or
     # bridge island)
-    # ROCKS NOTE - indSpecies and indTrait get n rocks added on where n is empty_niche_space param
     if(params@init_type == 'oceanic_island'){
         initSpp <- rep(sample(params@species_meta, 1, 
                               prob = meta@spAbund), 
@@ -74,7 +73,6 @@ roleModel <- function(params) {
                     phylo = as(phylo, 'rolePhylo'))
     
     niter <- params@niter
-    
     niterTimestep <- params@niterTimestep
     
     # output data

@@ -6,6 +6,8 @@
 #' @slot metaComm A `metaComm` object containing the meta community.
 #' @slot phylo A `rolePhylo` object containing the model phylogeny. 
 #' 
+#' @details access the `localComm`,`metaComm`, and `phylo` slots using `@`, 
+#' i.e. `data@localComm` for a `roleData` object called data 
 #' @rdname roleData
 #' @export
 

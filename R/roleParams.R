@@ -3,29 +3,41 @@
 #' to run, and much more. 
 #' 
 #' @slot individuals_local Number of individuals in the local community (J).
-#' Determines the length of individual-level data vectors.
+#' Determines the length of raw individual-level trait, abundance, and genetic data vectors returned for simulations.
 #' When the model is initialized, all individuals are of a single species from the metacommunity.
 #' @slot individuals_meta Number of individuals in the metacommunity.
 #' Used in generating a log series of the initial abundances of species in the metacommunity. 
 #' @slot species_meta Number of species in the metacommunity. 
 #' Determines the initial size of the phylogeny.
+#' 
 #' @slot speciation_local Probability of speciation occurring in the local community at each time step.
-#' The new local species can be either from a birth in the local community or an immigration from the metacommunity.
-#' @slot speciation_meta Rate of speciation in meta community.
-#' This is used during the simulation of the initial phylogeny before the model is run.
-#' The sum of speciation_meta and extinction_meta is the average lifetime of phylogeny branches, and the larger this value the less new individual traits will deviate.
+#' The new local species can be either from a birth in the local community or an immigration from the metacommunity -
+#' the `dispersal prob` param determines the chance of each of these scenarios.
+#' @slot speciation_meta rate of speciation in meta community.
+#' This is used during the simulation of the start phylogeny before the model is run
+#' The sum of speciation_meta and extinction_meta is the average lifetime of phylo branches, 
+#' and the larger this value the less new individual traits will deviate from
+#' the parent's individual trait (if parent is in the local comm) or the metacommunity mean (if parent in the metacomm)
 #' @slot extinction_meta Rate of extinction in the metacommunity.
 #' Like speciation_meta, used in the initial phylogeny simulation and in relation to trait deviation.
+#' @slot dispersal_prob Probability of dispersal (immigration) occurring from the metacommunity to the local local community at each time step.
+#' Every time step, either birth or immigration happens, so the probability of birth is 1 minus the dispersal_prob.
+#' 
 #' @slot trait_sigma Rate of Brownian trait evolution in the metacommunity. 
 #' Determines how much the trait of a new individual deviates from its parent, i.e. how fast traits change.
 #' @slot env_sigma Selectivity of the environmental filter, i.e. how strongly the environment selects which trait values are a good match for it.
 #' The larger the value, the less chance an individual will survive if it's far from the trait optimum (which is 0).
-#' @slot comp_sigma Selectivity of competition. 
-#' @slot dispersal_prob Probability of dispersal (immigration) occurring from the metacommunity to the local local community at each time step.
-#' Every time step, either birth or immigration happens, so the probability of birth is 1 minus the dispersal_prob.
+#' @slot comp_sigma the size of the competition kernel: how strongly distance from the traits of other species 
+#' selects which trait values are likely to survive.
+#' The larger the value, the greater the chance an individual will survive if it is close in trait space to others
+#' @slot neut_delta the degree of neutrality - if 1 there is no environmental filtering or competition, 
+#' if 0 there is full competition and filtering.
+#' @slot env_comp_delta a slider between environmental filtering and competition - if 1 there is full filtering and no competition,
+#' if 0 there is full competition and no filtering.
 #' 
 #' @slot mutation_rate Rate of sequence mutation to use in genetic simulations.
 #' @slot equilib_escape Proportion of equilibrium required to halt the model as it is running and return it
+#' @slot alpha
 #' @slot num_basepairs Number of basepairs to use in genetic simulations. Genetic simulations are currently single-locus.
 #' 
 #' @slot init_type The biological model used to initialize; a single character string that can be either "oceanic_island", "bridge_island", or "bare_island."
@@ -94,40 +106,48 @@ roleParams <- setClass('roleParams',
 )
 
 
-#' @title Create a roleParams object with 
-#' @description 
-#' @param individuals_local a single numeric value or an iter function
-#' @param individuals_meta number of individuals in meta community
-#' Used in generating a log series of the initial abundances of species in the meta
-#' @param species_meta number of species in meta community
-#' Determines the initial size of the phylogeny
-#' @param speciation_local probability of speciation occurring in the local comm each time step
-#' The new local species can be either from a birth in the local comm or an immigration from the meta comm
-#' @param speciation_meta rate of speciation in meta community
-#' This is used during the simulation of the start phylogeny before the model is run
-#' The sum of speciation_meta and extinction_meta is the average lifetime of phylo branches, and the larger this value the less new individual traits will deviate
-#' @param extinction_meta rate of extinction in meta community
-#' Like speciation_meta, used in the starting phylo simulation and in relation to traits
-#' @param trait_sigma rate of Brownian trait evolution in the meta community
-#' Determines how much the trait of a new individual deviates from its parent; how fast traits change
-#' @param env_sigma selectivity of environmental filter; how strongly the environment selects which trait values are a good match for it
-#' The larger the value, the less chance an individual will survive if it's far from the trait optimum (which is 0)
-#' @param comp_sigma selectivity of competition
-#' @param dispersal_prob probability of dispersal (immigration) occurring from the meta to the local
-#' Every time step, either birth or immigration happens, so the probability of birth is 1 minus the dispersal_prob
+#' @title Create a roleParams object 
+#' @description Parameters include population sizes, rates of processes, the number of iterations
+#' to run, and much more. 
 #' 
-#' @param mutation_rate rate of sequence mutation to use in genetic simulations
-#' @param equilib_escape proportion of equilibrium required to halt the model as it is running and return it
-#' @param num_basepairs number of basepairs to use in genetic simulations
+#' @param individuals_local a single numeric or an "iter function"
+#' @param individuals_meta a single integer
+#' @param species_meta a single integer
 #' 
-#' @param init_type the biological model used to initialize; a single character string that can be either "oceanic_island" or "bridge_island"
-#' The bridge island model has the initial individuals in the local comm arriving through a land bridge, while the oceanic has no bridge and is populated by a single dispersal
-#' Thus in oceanic island all individuals are of a SINGLE species sampled proportional to meta comm species abunds, 
-#' while in bridge island species individuals are sampled of MANY species proportional to their abundances
-#' @param niter an integer specifying the number of time steps for the model to run
-#' @param niterTimestep an integer specifying the frequency (in numbers of 
-#'     iterations) at which the model state is snapshotted and saved in a model's model steps object
+#' @param speciation_local a single numeric or an "iter function"
+#' @param speciation_meta a single numeric
+#' @param extinction_meta a single numeric
+#' @param dispersal_prob a single numeric or an "iter function"
+
+#' @param trait_sigma a single numeric 
+#' @param env_sigma a single numeric 
+#' @param comp_sigma a single numeric 
+#' @param neut_delta a single numeric 
+#' @param env_comp_delta a single numeric 
+#' 
+#' @param mutation_rate a single numeric 
+#' @param equilib_escape a single numeric 
+#' @param alpha a single numeric or an "iter function"
+#' @param num_basepairs a single integer
+#' 
+#' @param init_type a character vector either "oceanic_island" or "bridge_island"
+
+#' @param niter an integer
+#' @param niterTimestep an integer
+#' 
 #' @return a `roleParams` object 
+#' 
+#' @details `individuals_local`, `speciation_local` and `dispersal_prob`
+#' are unique in that they are allowed to time-vary over the course of the model run. 
+#' If you would like these to time-vary you can supply an "iter function" that takes a
+#' model iteration number and returns the value that that param should take at that iteration in the model. 
+#' 
+#' @examples 
+#' # create a default set of params but change the number of individuals in the local
+#' p <- roleParams(individuals_local=500)
+#' # create a new set of params but randomly deviating the speciation rate using an "iter function"
+#' spfun <- function(i){rnorm(1,mean=0.1,sd=0.01)}
+#' p <- roleParams(speciation_local=spfun)
 #' 
 #' @rdname roleParams
 #' @export
@@ -233,7 +253,10 @@ roleParams <- function(individuals_local=100,
     return(out_params)
 }
 
-# constructor
+#' @title Wrapper around roleParams to create a "untb-flavored" (Unified Neutral Theory of Biodiversity) roleModel
+#' @description Only arguments relevant to a UNTB neutral model is included
+#' 
+#' @return a `roleParams` object
 #' @rdname untbParams
 #' @export
 

@@ -46,4 +46,13 @@ test_that("roleParams with very high speciation rate runs a model without error"
     expect_error(runRole(roleModel(p)),NA)
 })
 
+test_that("roleParams with neut delta=1 runs", {
+        p <- roleParams(neut_delta=1)
+    expect_error(runRole(roleModel(p)),NA)
+})
 
+# fails!!
+test_that("roleParams with neut delta >0 <1  runs", {
+        p <- roleParams(neut_delta=0.5)
+    expect_error(runRole(roleModel(p)),NA)
+})
