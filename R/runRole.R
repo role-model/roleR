@@ -45,7 +45,7 @@ setMethod('runRole',
               m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
                                            slot(m@modelSteps[[1]],"metaComm"),
                                            slot(m@modelSteps[[1]],"phylo"),
-                                           pvals,print=FALSE)
+                                           pvals,print=F)
               # trim data, removing the unused buffer
               m <- .trimModelData(m)
               
@@ -113,13 +113,13 @@ setMethod('runRole',
     model@modelSteps[[1]]@localComm@spTrait <- c(model@modelSteps[[1]]@localComm@spTrait,rep(0,local_add))
     model@modelSteps[[1]]@localComm@spTrait
     model@modelSteps[[1]]@localComm@spAbundHarmMean
-    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  rep(0,local_add)
+    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  rep(0,length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
     model@modelSteps[[1]]@localComm@spAbundHarmMean
     model@modelSteps[[1]]@localComm@spLastOriginStep
-    model@modelSteps[[1]]@localComm@spLastOriginStep <-  rep(0,local_add)
+    model@modelSteps[[1]]@localComm@spLastOriginStep <-  rep(0,length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
     model@modelSteps[[1]]@localComm@spLastOriginStep
     model@modelSteps[[1]]@localComm@spExtinctionStep
-    model@modelSteps[[1]]@localComm@spExtinctionStep <-  rep(0,local_add)
+    model@modelSteps[[1]]@localComm@spExtinctionStep <-  rep(0,length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
     model@modelSteps[[1]]@localComm@spExtinctionStep
     
     return(model)

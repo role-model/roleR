@@ -239,6 +239,11 @@ arma::imat buffer_arma_mat(arma::imat imat, int value, int n) {
     result.submat(0, 0, n - 1, n_cols - 1).fill(value); // fill the top n rows of the new matrix with -1
     return(arma::conv_to<arma::imat>::from(result)); // return the new matrix
 }
+arma::vec buffer_arma_vec(arma::vec v, int value, int n) {
+    v.resize(v.n_elem + n);
+    v.tail(n).fill(value);
+    return(v); 
+}
 // Rcpp::LogicalVector bufferLogicalVector(Rcpp::LogicalVector v, bool value, int n) {
 //     int vsize = v.size(); // get the size of vec1
 //     Rcpp::LogicalVector result(vsize + n, value); // create a new vector of the appropriate size
@@ -257,24 +262,33 @@ arma::imat buffer_arma_mat(arma::imat imat, int value, int n) {
 // call the local and meta aspects of speciation
 void update_speciation_local_meta(int i, int dead_index, roleDataCpp &d, roleParamsCpp &p, bool dispersed_this_iter, int speciation_sp, bool print){
     
+    //if(print){ Rcout << "updating speciation local meta"<< "\n";}
+    
+    // augment vectors by a set amount if the id of the new species (the n tips in the phylo)
+    //  exceeds the size of the local sp vectors
+    if(d.nTipsP(0) > d.spAbundL.length() - 20){
+        d.spAbundL = buffer_numeric_vector(d.spAbundL,0,100);
+        d.spTraitL = buffer_numeric_vector(d.spTraitL,0,100);
+        d.spLastOriginStepL = buffer_numeric_vector(d.spLastOriginStepL,0,100);
+        d.founderFlagL = buffer_numeric_vector(d.founderFlagL,0,100);
+    }
+    
+    //if(print){ Rcout << "indTraitL" << "\n";}
+    
     // calculate deviation of trait from previous species trait and add new value
     double trait_dev = d.norm(d.rng) * p.trait_sigma(i);
     double parent_trait_val = d.indTraitL(dead_index);
     d.indTraitL(dead_index) = parent_trait_val + trait_dev;
     
+    //if(print){ Rcout << "indSpeciesL" << "\n";}
     // the indv that was birthed or immigrated becomes the new species
     d.indSpeciesL(dead_index) = d.nTipsP(0); 
     
+    //if(print){ Rcout << "spLastOriginStepL" << "\n";}
     // update time of last origin
     d.spLastOriginStepL(d.indSpeciesL(dead_index)) = i;
     
-    // augment vectors by a set amount if the id of the new species (the n tips in the phylo)
-    //  exceeds the size of the local sp vectors
-    if(d.nTipsP(0) > d.spAbundL.length()){
-        d.spAbundL = buffer_numeric_vector(d.spAbundL,0,100);
-        d.spTraitL = buffer_numeric_vector(d.spTraitL,0,100);
-    }
-    
+    //if(print){ Rcout << "founderFlagL" << "\n";}
     // set founderFlag of dead indv to 1 
     d.founderFlagL(dead_index) = 1; 
 }
@@ -284,11 +298,11 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
     
     // augment vectors by a set amount if the id of the new species (the n tips in the phylo)
     //  exceeds the size of the local sp vectors
-    if(d.nTipsP(0) > d.aliveP.length()){
+    if(d.nTipsP(0) > d.aliveP.length() - 20){
         d.aliveP = buffer_logical_vector(d.aliveP,"FALSE",100); // buffer alive
         d.tipNamesP = buffer_character_vector(d.tipNamesP,"",100); // buffer tip names
-        // get buffered arma vectors (coercing to use bufferNumericVector), and use as cols in new edgesP matrix
-        d.edgesP = buffer_arma_mat(d.edgesP,-1,100);
+        d.lengthsP = buffer_arma_vec(d.lengthsP,-2,100); // buffer edge lengths
+        d.edgesP = buffer_arma_mat(d.edgesP,-2,100); // buffer edges
     }
     
     // set easy named variables for phylogeny speciation
@@ -301,7 +315,7 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
     // nrows of the edge matrix
     //int eMax = e.nrow();
     int eMax = arma::size(d.edgesP)[0];
-
+    
     // find index of where unrealized edges in edge matrix start
     // equivalent to eNew <- min(which(e[, 1] == -1))
     int eNew = -1;
@@ -313,7 +327,24 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
        }
     }
     
-    //Rcout << "index of the edge matrix of where to add new edge";
+    //if(print){ Rcout << "safety buffer" << "\n";}
+    // additional safety check
+    if(eNew == -1){
+        //if(print){ Rcout << "do safety buffer" << "\n";}
+        d.lengthsP = buffer_arma_vec(d.lengthsP,-2,100); // buffer edge lengths
+        //if(print){ Rcout << "edgesP before" << "\n";}
+        //if(print){ Rcout << d.edgesP << "\n";}
+        d.edgesP = buffer_arma_mat(d.edgesP,-2,100); // buffer edges
+        //if(print){ Rcout << "edgesP after" << "\n";}
+        //if(print){ Rcout << d.edgesP << "\n";}
+        for (int k = 0; k < eMax; k++) {
+            if (d.edgesP(k, 0) == -2) {
+                eNew = k;
+                break;
+            }
+        }
+    }
+    
     // index of the edge matrix of where to add new edge
     //arma::uvec inds = find(e.col(1) == i);
     //int j = inds(0);
@@ -334,6 +365,10 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
         }
     }
     
+    //if(print){ Rcout << "edgesP" << "\n";}
+    //if(print){ Rcout << "J" << j << "\n";}
+    //if(print){ Rcout << "eNew" << eNew << "\n";}
+    
     // add new internal node
     //int newNode = 2 * eMax + 1; // index of new node n+1
     int newNode = 2 * n; // this worked with prev approach
@@ -347,6 +382,8 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
     // update ancestry of internal nodes
     d.edgesP(j, 1) = newNode;
     
+    //if(print){ Rcout << "lengthsP" << "\n";}
+    
     // set new edge lengths to 0
     d.lengthsP[eNew] = 0;
     d.lengthsP[1 + eNew] = 0;
@@ -358,6 +395,7 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
         }
     }
     
+    //if(print){ Rcout << "alive" << "\n";}
     // update alive vector
     alive(n) = TRUE; //  - double check that this updates properly
     
