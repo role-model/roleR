@@ -15,3 +15,20 @@ test_that("experiment runs two models with different params without error", {
     
     exp <- runRole(roleExperiment(list(p,pu)))
 })
+
+test_that("setContext changes a slot in roleExperiment", {
+    expr <- quickExp()
+    expr <- setContext(expr,author="Jacob Idec",datestring="4/13/23",description="example experiment for testing setContext and read/writeRole")
+    expect_false(is.na(expr@context[1]))
+})
+
+test_that("writeRole writes an experiment whether or not context was added and with or without any params specified, and readRDS reads it without error", {
+    expr <- quickExp()
+    writeRole(expr)
+    
+    expr_w_context <- setContext(expr,author="Jacob Idec",datestring="4/13/23",description="example experiment for testing setContext and read/writeRole")
+    writeRole(expr_w_context,dir="D:/GitProjects/roleR",filename="test_expr",save_txt = T)
+    
+    read_expr <- readRDS("test_expr.roleExperiment")
+})
+

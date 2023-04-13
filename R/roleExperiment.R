@@ -5,10 +5,10 @@
 #' 
 #' @slot modelRuns a list of `roleModel`objects
 #' @slot allParams a list of `roleParams` to use for each model
-#' @slot authorMeta a named string vector that keep track of author metadata
+#' @slot context a named string vector that keep track of author metadata
 #' It contains values for "author", "date", "description", "info", where each element is named by its respective string.
 #' When the model is saved with `writeRole` a text file is generated using this metadata
-#' @slot experimentMeta data.frame of summarizing metadata for all the models of the experiment 
+#' @slot info data.frame of summarizing metadata for all the models of the experiment 
 #' (Need to chat with Andy about the exact intentions of this before writing more here)
 #' 
 #' @examples 
@@ -24,8 +24,8 @@
 #' @export
 
 setClass('roleExperiment',
-         slots = c(authorMeta = 'character',
-                   experimentMeta = 'data.frame',
+         slots = c(context = 'character',
+                   info = 'data.frame',
                    modelRuns = 'list', 
                    allParams = 'list',
                    allFuns = 'list'))
@@ -84,7 +84,7 @@ roleExperiment <- function(allParams) {
     }
     
     return(new('roleExperiment', 
-               experimentMeta = data.frame(), 
+               info = data.frame(), 
                modelRuns = allModels,
                allParams=allParams,
                allFuns=allFuns))
@@ -128,7 +128,7 @@ setAs(from = 'roleModel', to = 'roleExperiment',
           pout <- cbind(mod_id = 1, pout)
           
           return(new('roleExperiment', 
-                     experimentMeta = pout,
+                     info = pout,
                      modelRuns = from@modelSteps, 
                      allParams = list(from@params), 
                      # iterFuns = list(from@iterFuns) # when iterFuns added to roleModel, uncomment this and delete line about `allFuns`
@@ -145,15 +145,15 @@ setMethod('rbind2', signature = c('roleExperiment', 'roleExperiment'),
               thisEx <- y
               
               # keep track of growing mod_id max index
-              j <- max(out@experimentMeta$mod_id)
+              j <- max(out@info$mod_id)
               
               # augment mod_id
-              thisEx@experimentMeta$mod_id <-
-                  thisEx@experimentMeta$mod_id + j
+              thisEx@info$mod_id <-
+                  thisEx@info$mod_id + j
               
               # combine with `out`
-              out@experimentMeta <- rbind(out@experimentMeta,
-                                          thisEx@experimentMeta)
+              out@info <- rbind(out@info,
+                                          thisEx@info)
               out@modelRuns <- c(out@modelRuns,
                                  thisEx@modelRuns)
               out@allParams <- c(out@allParams,
