@@ -5,8 +5,7 @@ set.seed(1988) #jbp
 ### Setting up a roleExperiment
 
 #### Replicates of the same parameter settings
-
-for(i in 1:100){
+for(i in 1:1000){
     print(i)
     params1 <- untbParams(individuals_local = 100, individuals_meta = 1000, 
                           species_meta = 50, 
