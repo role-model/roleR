@@ -1,13 +1,17 @@
 
 #' @title A single RoLE model.
 #'
-#' @description An S4 class that holds a RoLE eco-evolutionary process model.
-#' A model is first initialized using a set of parameters, then run using those parameters.
+#' @description An S4 class that holds one RoLE model realization. A model is 
+#'     first initialized using a set of parameters, then run using those 
+#'     parameters.
 #' 
-#' @slot modelSteps A list of `roleData` objects, one for each snapshot of the model that were recorded as the model ran.
-#' For example, the 3rd saved snapshot is accessed at modelSteps[[3]].
-#' Models that are not yet run only have one timestep in modelSteps[[1]].
-#' @slot params A `roleParams` object containing the params to use when the model is run.
+#' @slot modelSteps A list of `roleData` objects, one for each saved snapshot.
+#'     For example, the 3rd saved snapshot is accessed at `modelSteps[[3]]`.
+#'     Models that are not yet run only have one timestep, i.e. `modelSteps[[1]]`
+#' @slot params A `roleParams` object containing the params of the model
+#' @slot info a `data.frame` with one row for each saved snapshot (unrun models
+#'     will only have 1 row); columns are parameters, cells are parameter values 
+#'     at each snapshot
 #' 
 #' @details See the `roleR_intro` vignette for an example modeling workflow.
 #' @examples 
@@ -17,9 +21,11 @@
 #' 
 #' @rdname roleModel
 #' @export
-#' 
+
 setClass('roleModel',
-         slots = c(params = 'roleParams', modelSteps = 'list'))
+         slots = c(params = 'roleParams', 
+                   info = 'data.frame',
+                   modelSteps = 'list'))
 
 #' @title Create a roleModel.
 #' @param params The params to use when the model is run.
@@ -57,7 +63,7 @@ roleModel <- function(params) {
         initSpp[2:length(initSpp)] <- 0
     }
     else{
-        stop('`init_type` must be one of `"oceanic_island"` or `"bridge_island"`')
+        stop('`init_type` must be one of "oceanic_island" or "bridge_island"')
     }
 
     # initialize traits based on spp ID
