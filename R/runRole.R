@@ -149,31 +149,7 @@ setMethod('runRole',
     return(model)
 }
 
-# make class and object to hold paramValues - it is identical to roleParams 
-#   EXCEPT that all slots are numeric instead of functions
-paramValues <- setClass('paramValues',
-                        slots = c(
-                            individuals_local = "numeric",
-                            individuals_meta = "numeric",
-                            species_meta = "numeric",
-                            speciation_local = "numeric",
-                            speciation_meta = "numeric",
-                            extinction_meta = "numeric",
-                            trait_sigma = "numeric",
-                            env_sigma = "numeric",
-                            comp_sigma = "numeric",
-                            neut_delta = "numeric",
-                            env_comp_delta = "numeric",
-                            dispersal_prob = "numeric",
-                            mutation_rate = "numeric" ,
-                            equilib_escape = "numeric",
-                            alpha = "numeric",
-                            num_basepairs = "numeric",
-                            init_type = "character", 
-                            niter = 'integer', 
-                            niterTimestep = 'integer'
-                        )
-)
+
 # run iter functions over params to generate a new object of class paramValues 
 # that contains ONLY vectors of values and no functions
 #' @param p an object of class `roleParams`
