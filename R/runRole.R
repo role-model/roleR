@@ -36,7 +36,7 @@ setMethod('runRole',
                   }
               }
               
-              pvals <- getValuesFromParams(m@params)
+              pvals <- getValuesFromParams(m@params, 1:m@params@niter)
               
               # augment the data in the model based on the params
               m <- .bufferModelData(m)
@@ -178,6 +178,7 @@ paramValues <- setClass('paramValues',
 # that contains ONLY vectors of values and no functions
 #' @param p an object of class `roleParams`
 #' @param i the iterations over which to calculate parameter values
+#' @return a list of parameter vectors, each equal in length to `length(i)`
 
 getValuesFromParams <- function(p, i) {
     # slot names
