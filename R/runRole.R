@@ -174,25 +174,27 @@ paramValues <- setClass('paramValues',
                             niterTimestep = 'integer'
                         )
 )
-# run iter functions over params to generate a new object of class paramValues that contains ONLY vectors of values and no functions
-getValuesFromParams <- function(p){
-    pvals <- new('paramValues')
+# run iter functions over params to generate a new object of class paramValues 
+# that contains ONLY vectors of values and no functions
+#' @param p an object of class `roleParams`
+#' @param i the iterations over which to calculate parameter values
+
+getValuesFromParams <- function(p, i) {
+    # slot names
+    s <- slotNames(p)
     
-    niter <- p@niter # save niter
+    # apply over slots
+    pvals <- lapply(s, function(x) {
+        thisP <- slot(p, s)
         
-    # for every slot
-    slot_names <- slotNames("roleParams")
-    slot_types <- getSlots("roleParams")
-    for(i in 1:length(slot_names)){
-        
-        # if the slot type is a function, run the function over the iters
-        if(slot_types[i] == "function"){
-            fun <- slot(p,slot_names[i])
-            slot(pvals,slot_names[i]) <- fun(1:niter) # apply the function across 1:niter
+        if(inherits(thisP, 'function')) {
+            return(thisP(i))
+        } else {
+            return(rep(thisP, length(i)))
         }
-        else{
-            slot(pvals,slot_names[i]) <- slot(p,slot_names[i]) # if not a function just set the value
-        }
-    }
+    })
+    
     return(pvals)
 }
+
+
