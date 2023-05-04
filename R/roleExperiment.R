@@ -185,7 +185,6 @@ repS4 <- function(obj, n) {
 }
 
 #' @include rolePhylo.R
-#' @importClassesFrom ape phylo
 # set coercion method from ape::phylo to roleR::rolePhylo
 setAs(from = 'phylo', to = 'rolePhylo',
       def = function(from) {

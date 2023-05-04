@@ -35,6 +35,7 @@ Collate:
     'RcppExports.R'
     'cFun.R'
     'comm.R'
+    'createPredModel.R'
     'rolePhylo.R'
     'roleParams.R'
     'roleModel.R'
