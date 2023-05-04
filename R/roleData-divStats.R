@@ -9,13 +9,10 @@
 #' 
 #' @details See Gaggiotti et al. 2018 for an overview of Hill numbers in the context of ecology and evolution. 
 #' @references Gaggiotti, Oscar E, Anne Chao, Pedro Peres-Neto, Chun-Huo Chiu, Christine Edwards, Marie-Josée Fortin, Lou Jost, Christopher M Richards, and Kimberly A Selkoe. “Diversity from Genes to Ecosystems: A Unifying Framework to Study Variation across Biological Metrics and Scales.” Evol. Appl. 11, no. 7 (2018): 1176–93. https://doi.org/10.1111/eva.12593.
-
+#' @include roleData.R
 #' @rdname div-sumStats
 #' @export
 
-# abundance hill stats
-#' @rdname div-sumStats
-#' @export
 
 setGeneric('hillAbund', 
            def = function(x, q = 1:4, ...) standardGeneric('hillAbund'), 
@@ -33,7 +30,10 @@ setMethod('hillAbund',
 )
 
 
-# function for abundance-based
+#' @title HillDivSAD
+#' function for abundance-based
+#'@param q  hill order
+#'
 #' @param n is a vector of species abundances
 
 .hillDivSAD <- function(n, q) {
@@ -94,8 +94,8 @@ setMethod('hillTrait',
           }
 )
 
-
-# function for trait-based
+#' @title HillDivTrait
+#' function for trait-based
 #' @param X a matrix with first column = abund, second column = traits
 #' @param traits is a vector of traits
 

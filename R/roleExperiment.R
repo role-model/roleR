@@ -10,7 +10,7 @@
 #' When the model is saved with `writeRole` a text file is generated using this metadata
 #' @slot info data.frame of summarizing metadata for all the models of the experiment 
 #' (Need to chat with Andy about the exact intentions of this before writing more here)
-#' 
+#' @include roleModel.R
 #' @examples 
 #' # create and run a roleExperiment that will contain three models with three different levels of dispersal 
 # p1 <- roleParams(dispersal_prob =0.1)
@@ -183,3 +183,52 @@ repS4 <- function(obj, n) {
     # Return the list of replicated objects
     return(objs)
 }
+
+#' @include rolePhylo.R
+#' @importClassesFrom ape phylo
+# set coercion method from ape::phylo to roleR::rolePhylo
+setAs(from = 'phylo', to = 'rolePhylo',
+      def = function(from) {
+          # extract number of times
+          n <- ape::Ntip(from)
+          
+          # extract edge matrix and edge lengths
+          e <- from$edge
+          l <- from$edge.length
+          
+          # extract tip labels
+          tipNames <- from$tip.label
+          
+          # calculate alive or not
+          tipAge <- ape::node.depth.edgelength(from)[1:n]
+          
+          alive <- rep(TRUE, n)
+          alive[tipAge < max(tipAge)] <- FALSE
+          
+          # set default scale
+          scale <- 1
+          
+          return(rolePhylo(n = n, e = e, l = l, alive = alive,
+                           tipNames = tipNames, scale = scale))
+      }
+)
+
+
+# set coercion method from roleR::rolePhylo to ape::phylo
+setAs(from = 'rolePhylo', to = 'phylo',
+      def = function(from) {
+          i <- 2 * (from@n - 1)
+          
+          y <- list(edge = from@e[1:i, ], edge.length = from@l[1:i],
+                    tip.label = from@tipNames[1:from@n],
+                    Nnode = from@n - 1)
+          
+          # make any possible 0 or negative edge lengths equal to
+          # very small number
+          y$edge.length[y$edge.length <= 0] <- .Machine$double.eps
+          
+          class(y) <- 'phylo'
+          
+          return(y)
+      }
+)

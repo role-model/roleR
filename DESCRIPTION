@@ -19,6 +19,7 @@ Imports:
     pika, 
     methods,
     snow,
+    ranger,
     reticulate,
     testthat
 Remotes:
@@ -30,3 +31,25 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
+Collate: 
+    'RcppExports.R'
+    'cFun.R'
+    'comm.R'
+    'rolePhylo.R'
+    'roleParams.R'
+    'roleModel.R'
+    'roleExperiment.R'
+    'getFinalState.R'
+    'roleData.R'
+    'getSumStats.R'
+    'prepRebuild.R'
+    'quickModel.R'
+    'roleData-divStats.R'
+    'roleData-rawStats.R'
+    'roleExperiment-methods.R'
+    'roleModel-methods.R'
+    'roleR-package.R'
+    'runRole.R'
+    'setContext.R'
+    'writeRoLE.R'
+    'zzz.R'

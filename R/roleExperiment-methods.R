@@ -62,6 +62,9 @@ setMethod("$", "roleExperiment", function(x, name) {
 })
 
 # print method for `roleExperiment`
+#' @title show RoleExperiment
+#' @param object a roleExperiment
+#'
 #' @export
 
 setMethod('show', signature = signature(object = 'roleExperiment'),

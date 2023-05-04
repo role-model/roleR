@@ -14,7 +14,7 @@
 #' # Create a model using a default set of params, then run it.
 #' m <- roleModel(roleParams())
 #' m <- runRole(m)
-#' 
+#' @include roleModel.R roleParams.R
 #' @rdname roleModel
 #' @export
 #' 

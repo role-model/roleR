@@ -9,6 +9,7 @@
 #' @details access the `localComm`,`metaComm`, and `phylo` slots using `@`, 
 #' i.e. `data@localComm` for a `roleData` object called data 
 #' @rdname roleData
+#' @include rolePhylo.R
 #' @export
 
 setClass('roleData',

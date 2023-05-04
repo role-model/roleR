@@ -37,7 +37,7 @@
 #' 
 #' @slot mutation_rate Rate of sequence mutation to use in genetic simulations.
 #' @slot equilib_escape Proportion of equilibrium required to halt the model as it is running and return it
-#' @slot alpha
+#' @slot alpha alpha parameter
 #' @slot num_basepairs Number of basepairs to use in genetic simulations. Genetic simulations are currently single-locus.
 #' 
 #' @slot init_type The biological model used to initialize; a single character string that can be either "oceanic_island", "bridge_island", or "bare_island."

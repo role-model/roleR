@@ -21,6 +21,8 @@
 #' @return data.frame containing summary stats where each row is a model snapshot
 #' and each column is a summary stat requested by a function provided to `funs`
 #' 
+#' @include roleData.R
+#' 
 #' @examples 
 #' # get the species richness 
 #' rich_stat <- getSumStats(model, funs = list(rich = richness))
