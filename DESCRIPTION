@@ -5,13 +5,14 @@ Version: 0.1.0
 Date: 2022-09-15
 Author: Andrew Rominger, Jacob Idec, Renata Diaz
 Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
+Website: https://role-model.github.io/role-user-guide
 Description: A simulation-based model the captures many processes across ecology 
     and evolution and jointly predicts multi-dimensional biodiversity data.
 License: GNU GENERAL PUBLIC LICENSE
 LazyData: true
 Encoding: UTF-8
 Depends:
-    R (>= 3.2)
+    R (>= 3.5.0)
 Imports: 
     Rcpp,
     ape,
@@ -25,3 +26,7 @@ Remotes:
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
 RcppModules: iterModelCpp
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

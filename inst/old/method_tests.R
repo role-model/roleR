@@ -1,4 +1,4 @@
-# make sure you have the current version of R and Rtools 
+ # make sure you have the current version of R and Rtools
 library("roleR")
 
 #------

@@ -1,8 +1,9 @@
-pandoc: 2.17.1.1
-pkgdown: 2.0.7
+pandoc: 2.19.2
+pkgdown: 2.0.6
 pkgdown_sha: ~
 articles:
+  basics: basics.html
   roleR_intro: roleR_intro.html
   roleR_use_cases: roleR_use_cases.html
-last_built: 2023-03-03T14:53Z
+last_built: 2023-04-27T15:38Z
 
