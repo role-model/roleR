@@ -8,7 +8,7 @@ Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
 Website: https://role-model.github.io/role-user-guide
 Description: A simulation-based model the captures many processes across ecology 
     and evolution and jointly predicts multi-dimensional biodiversity data.
-License: GNU GENERAL PUBLIC LICENSE
+License: GPL (>= 3)
 LazyData: true
 Encoding: UTF-8
 Depends:

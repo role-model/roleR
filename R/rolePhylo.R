@@ -25,12 +25,15 @@ setClass('rolePhylo',
 
 #' @title Create a rolePhylo
 #'
-#' @param n 
-#' @param e 
-#' @param l 
-#' @param alive 
-#' @param tipNames 
-#' @param scale
+#' @param n The number of tips in the phylogeny
+#' @param e The numeric edge matrix of the phylogeny.
+#' Each row contains an ancestor-child pair where the 1st column is the ancestor and the 2nd is the child
+#' @param l A numeric vector of edge lengths.
+#' The units of l are the time steps (iterations) of the model.
+#' Each time step unit is equal to 1/J generations where J is the number of individuals in the local community
+#' @param alive A logical vector indicating whether each tip is extant or not.
+#' @param tipNames A character vector of the tip names.
+#' @param scale  A single numeric value of time scale translation to years.
 #' @return A `rolePhylo` object.
 #' 
 #' @rdname rolePhylo
