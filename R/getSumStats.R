@@ -25,9 +25,9 @@
 #' 
 #' @examples 
 #' # get the species richness 
-#' rich_stat <- getSumStats(model, funs = list(rich = richness))
+#' # rich_stat <- getSumStats(model, funs = list(rich = richness))
 #' # get many default summary stats
-#' stats <- getSumStats(model)
+#' # stats <- getSumStats(model)
 #' 
 #' @rdname getSumStats
 #' @export

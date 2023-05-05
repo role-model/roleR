@@ -57,7 +57,7 @@
 #'      If `niter`values are supplied, a different sequential value in the `niter` vector is used for each iteration.
 #'      
 #' @examples 
-#' Create a set of params
+#' # Create a set of params
 #' params <- roleParams(individuals_local = 100, individuals_meta = 1000,
 #' species_meta = 10, speciation_local = 0.5, 
 #' speciation_meta = 1, extinction_meta = 0.8, env_sigma = 0.5,
@@ -65,7 +65,7 @@
 #' equilib_escape = 1, num_basepairs = 250,
 #' init_type = 'oceanic_island', niter = 2, niterTimestep = 2)
 #' 
-#' Use it to create a roleModel
+#' # Use it to create a roleModel
 #' model <- roleModel(params)
 #' 
 #' @rdname roleParams

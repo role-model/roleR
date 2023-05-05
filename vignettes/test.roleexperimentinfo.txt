@@ -1,5 +1,0 @@
-Metadata for RoLE experiment R object - load into R using readRDS(file_location_and_name)
-Contains 2 model runs
-Author: Jacob Idec
-Date: 10/18/22
-Description: A test experiment

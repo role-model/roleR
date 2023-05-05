@@ -85,7 +85,7 @@ roleModel <- function(params) {
 }
 
 
-# ----
+#' @title Logseries from S and N
 #' @description function to solve for parameter of logseries
 #' @param S number of species
 #' @param N number of individuals
