@@ -751,9 +751,10 @@ List iterModelCpp(RObject local,
 //
 // [[Rcpp::export]]
 int intFunCpp(Rcpp::StringVector fun_name,
-                Nullable<NumericVector> probs=R_NilValue, 
-                Nullable<int> x=R_NilValue) {
+                NumericVector probs=NULL, 
+                int x=NULL) {
     std::string fn = Rcpp::as<std::string>(fun_name(0));
+   
     
     // tried switch, didn't work but may revisit
     if(fn == "sample_index_using_probs"){
