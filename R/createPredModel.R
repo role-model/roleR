@@ -5,7 +5,7 @@
 #' @param exp A `roleExperiment` that contains models with simulation data to use for training and validation,
 #' @param predParam The name of the parameter to predict. See the `roleParams` documentation for a list of possible parameter choices. 
 
-#' 
+#' @include roleParams.R
 #' @examples 
 #' m <- quickExp()
 #' p <- quickParams()

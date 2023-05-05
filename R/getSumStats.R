@@ -85,6 +85,12 @@ setMethod('getSumStats',
           }
 )
 
+#' Get SumStats mean
+#'
+#' @param x x
+#' @param funs funs
+#'
+#' @return something
 getSumStatsMean <- function(x, funs){
     ss <- list()
     for(r in 1:length(x@modelRuns)){

@@ -15,7 +15,6 @@
 #' p3 <- roleParams(speciation_local=0.4)
 #' exp <- roleExperiment(list(p1,p2,p3))
 #' exp <- runRole(exp)
-#' 
 #' @rdname runRole
 #' @export
 
@@ -75,14 +74,18 @@ setMethod('runRole',
           }
 )
 
-# user-inaccessible helper to augment the data of the not-yet-run model based on
-#   what is expected from the params 
-# called right before the model is run in Cpp
+#' @title buffer model data
+#'
+#' @description user-inaccessible helper to augment the data of the not-yet-run model based on  what is expected from the params called right before the model is run in Cpp
+#' @param model model
+#'
+#' @return model
+#' @importFrom stats qbinom
 .bufferModelData <- function(model){
     p <- model@params 
     
     # calculate expected number of new species using binom
-    expec_n_spec <- qbinom(0.9,p@niter,prob = mean(p@speciation_local(1:p@niter)))
+    expec_n_spec <- stats::qbinom(0.9,p@niter,prob = mean(p@speciation_local(1:p@niter)))
     el_add <- (expec_n_spec * 2 - 1) + 1
     at_add <- expec_n_spec + 1
     
@@ -138,8 +141,30 @@ setMethod('runRole',
     return(model)
 }
 
-# make class and object to hold paramValues - it is identical to roleParams 
-#   EXCEPT that all slots are numeric instead of functions
+#' paramValues clas
+#'
+#' @slot individuals_local numeric. 
+#' @slot individuals_meta numeric. 
+#' @slot species_meta numeric. 
+#' @slot speciation_local numeric. 
+#' @slot speciation_meta numeric. 
+#' @slot extinction_meta numeric. 
+#' @slot trait_sigma numeric. 
+#' @slot env_sigma numeric. 
+#' @slot comp_sigma numeric. 
+#' @slot neut_delta numeric. 
+#' @slot env_comp_delta numeric. 
+#' @slot dispersal_prob numeric. 
+#' @slot mutation_rate numeric. 
+#' @slot equilib_escape numeric. 
+#' @slot alpha numeric. 
+#' @slot num_basepairs numeric. 
+#' @slot init_type character. 
+#' @slot niter integer. 
+#' @slot niterTimestep integer. 
+#' @rdname paramValues
+#' @include roleParams.R
+ 
 paramValues <- setClass('paramValues',
                         slots = c(
                             individuals_local = "numeric",
@@ -163,7 +188,13 @@ paramValues <- setClass('paramValues',
                             niterTimestep = 'integer'
                         )
 )
-# run iter functions over params to generate a new object of class paramValues that contains ONLY vectors of values and no functions
+#' Get vals from params
+#' @description run iter functions over params to generate a new object of class paramValues that contains ONLY vectors of values and no functions
+#' 
+#' @param p params
+#'
+#' @return processed params
+#'
 getValuesFromParams <- function(p){
     pvals <- new('paramValues')
     

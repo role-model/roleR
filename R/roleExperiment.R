@@ -10,7 +10,7 @@
 #' When the model is saved with `writeRole` a text file is generated using this metadata
 #' @slot info data.frame of summarizing metadata for all the models of the experiment 
 #' (Need to chat with Andy about the exact intentions of this before writing more here)
-#' @include roleModel.R
+#' @include roleModel.R roleParams.R
 #' @examples 
 #' # create and run a roleExperiment that will contain three models with three different levels of dispersal 
 # p1 <- roleParams(dispersal_prob =0.1)
