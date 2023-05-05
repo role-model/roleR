@@ -60,19 +60,19 @@ setMethod("$", "roleExperiment", function(x, name) {
         stop('no $ method for object without metadata')
     }
 })
-
-# print method for `roleExperiment`
-#' @title show RoleExperiment
-#' @param object a roleExperiment
-#'
-#' @export
-
-setMethod('show', signature = signature(object = 'roleExperiment'),
-          definition = function(object) {
-              nmod <- length(unique(object@experimentMeta$mod_id))
-              cat(sprintf('RoLE experiment with %s unique model%s', 
-                          nmod, 
-                          ifelse(nmod == 1, '', 's')), 
-                  '\n')
-          }
-)
+#' 
+#' # print method for `roleExperiment`
+#' #' @title show RoleExperiment
+#' #' @param object a roleExperiment
+#' #'
+#' #' @export
+#' 
+#' setMethod('show', signature = signature(object = 'roleExperiment'),
+#'           definition = function(object) {
+#'               nmod <- length(unique(object@experimentMeta$mod_id))
+#'               cat(sprintf('RoLE experiment with %s unique model%s', 
+#'                           nmod, 
+#'                           ifelse(nmod == 1, '', 's')), 
+#'                   '\n')
+#'           }
+#' )
