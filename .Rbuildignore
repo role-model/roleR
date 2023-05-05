@@ -4,3 +4,11 @@
 ^LICENSE\.md$
 data\example_out_in*
 data\*
+_pkgdown.yml
+about.Rmd
+binaries/*
+binaries
+docs/*
+docs
+python/*
+python

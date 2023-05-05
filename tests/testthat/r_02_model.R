@@ -44,22 +44,22 @@ test_that("model copying in C++ does not result in all timesteps being equal", {
 #     m <- runRole(roleModel(params))
 # }
 
-test_that("comparing runtime of R implementation in a simple example"){
-    x <- proc.time()
-    params <- untbParams(
-        individuals_local = 1000,
-        individuals_meta = 10000,
-        species_meta = 50,
-        speciation = 0, # might break
-        dispersal_prob = 0.1,
-        init_type = "oceanic_island",
-        niter = 1000000, 
-        niterTimestep = 100000
-    )
-    m <- runRole(roleModel(params))
-    proc.time() - x
-    # takes 17.5 seconds relative to 45 in base R with missing functionality
-}
+# test_that("comparing runtime of R implementation in a simple example"){
+#     x <- proc.time()
+#     params <- untbParams(
+#         individuals_local = 1000,
+#         individuals_meta = 10000,
+#         species_meta = 50,
+#         speciation = 0, # might break
+#         dispersal_prob = 0.1,
+#         init_type = "oceanic_island",
+#         niter = 1000000, 
+#         niterTimestep = 100000
+#     )
+#     m <- runRole(roleModel(params))
+#     proc.time() - x
+#     # takes 17.5 seconds relative to 45 in base R with missing functionality
+# }
 
 test_that("when a model is run the supplied model is NOT modified in place"){
     m <- quickModelNonRun()

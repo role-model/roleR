@@ -8,7 +8,7 @@ Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
 Website: https://role-model.github.io/role-user-guide
 Description: A simulation-based model the captures many processes across ecology 
     and evolution and jointly predicts multi-dimensional biodiversity data.
-License: GPL (>= 3)
+License: GPL (>= 3) + file LICENSE
 LazyData: true
 Encoding: UTF-8
 Depends:
@@ -17,11 +17,8 @@ Imports:
     Rcpp,
     ape,
     pika, 
-    methods,
     snow,
-    ranger,
-    reticulate,
-    testthat
+    ranger
 Remotes:
     ajrominger/pika
 LinkingTo: Rcpp, RcppArmadillo
@@ -29,7 +26,10 @@ RoxygenNote: 7.2.3
 RcppModules: iterModelCpp
 Suggests: 
     knitr,
-    rmarkdown
+    methods,
+    rmarkdown,
+    reticulate,
+    testthat
 VignetteBuilder: knitr
 Collate: 
     'RcppExports.R'
