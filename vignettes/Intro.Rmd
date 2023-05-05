@@ -1,8 +1,8 @@
 ---
-title: "Introduction and basic workflow"
+title: "Intro"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{roleR_intro}
+  %\VignetteIndexEntry{Intro}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -1,10 +1,10 @@
 ---
-title: "roleR Use Cases"
-author: "Jacob Idec"
-date: "2023-02-28"
-output:
-  html_document: default
-  pdf_document: default
+title: "UseCases"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{UseCases}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE} 
