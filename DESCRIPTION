@@ -27,6 +27,7 @@ RcppModules: iterModelCpp
 Suggests: 
     knitr,
     methods,
+    rlang,
     rmarkdown,
     reticulate,
     testthat

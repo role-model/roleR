@@ -291,8 +291,15 @@ untbParams <- function(individuals_local,
         niterTimestep = niterTimestep))
 }
 
-# helper that, given a single value, builds a function
+
+#' buildFun
+#'
+#'  helper that, given a single value, builds a function
 #   that returns that value stretched to niter in a vectorized fashion
+#' @param p something magical
+#'
+#' @return p stretched to niter
+#'
 buildFun <- function(p) {
     p # what in the name of god why does this work
     f <- function(i) {

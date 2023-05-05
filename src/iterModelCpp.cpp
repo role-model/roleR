@@ -604,9 +604,20 @@ S4 role_data_from_cpp(roleDataCpp &d){
     
     return(out_d);
 }
-
+// @title iterModelCpp
+// @param local local
+// @param meta meta
+// @param phylo phylo
+// @param params params
+// @param print print
+//
+//
 // [[Rcpp::export]]
-List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bool print) {
+List iterModelCpp(RObject local, 
+                  RObject meta, 
+                  RObject phylo, 
+                  RObject params, 
+                  bool print) {
     
     if(print){ Rcout << "save niter and niterTimestep"<< "\n";}
     
@@ -733,9 +744,15 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bo
 // these funs, one per return data type, are R wrappers around multiple Cpp functions
 // these avoid having to wrap all ~20 functions individually 
 // ONLY used for testing and nothing else
+// @name IntFunCpp
+// @param fun_Name fun_Name
+// @param probs probs
+// @param x x
+//
 // [[Rcpp::export]]
 int intFunCpp(Rcpp::StringVector fun_name,
-                NumericVector probs=NULL, int x=NULL) {
+                Nullable<NumericVector> probs=R_NilValue, 
+                Nullable<int> x=R_NilValue) {
     std::string fn = Rcpp::as<std::string>(fun_name(0));
     
     // tried switch, didn't work but may revisit
@@ -746,6 +763,23 @@ int intFunCpp(Rcpp::StringVector fun_name,
         return(sample_zero_to_x(x));
     }
 }
+
+
+
+// @title dataFunCpp
+//
+// @param fun_name fun_name
+// @param local local
+// @param meta meta
+// @param phylo phylo
+// @param params params
+// @param niter niter
+// @param i i
+// @param dead_index dead_index
+// @param parent_indv parent_indv
+// @param dispersed_this_year dispersed_this_year
+// @param speciation_sp speciation_sp
+//
 // [[Rcpp::export]]
 S4 dataFunCpp(Rcpp::StringVector fun_name, 
                        RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, //used universally
@@ -786,7 +820,14 @@ S4 dataFunCpp(Rcpp::StringVector fun_name,
         return(role_data_from_cpp(d));
     }
 }
-
+// @title vectFunCpp
+// @param fun_name fun_name
+// @param local local
+// @param meta meta
+// @param phylo phylo
+// @param params params
+// @param niter niter
+// @param i i 
 // [[Rcpp::export]]
 NumericVector vectFunCpp(Rcpp::StringVector fun_name,
                          RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, // used universally 

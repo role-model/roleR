@@ -27,14 +27,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // intFunCpp
-int intFunCpp(Rcpp::StringVector fun_name, NumericVector probs, int x);
+int intFunCpp(Rcpp::StringVector fun_name, Nullable<NumericVector> probs, Nullable<int> x);
 RcppExport SEXP _roleR_intFunCpp(SEXP fun_nameSEXP, SEXP probsSEXP, SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::StringVector >::type fun_name(fun_nameSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type probs(probsSEXP);
-    Rcpp::traits::input_parameter< int >::type x(xSEXP);
+    Rcpp::traits::input_parameter< Nullable<NumericVector> >::type probs(probsSEXP);
+    Rcpp::traits::input_parameter< Nullable<int> >::type x(xSEXP);
     rcpp_result_gen = Rcpp::wrap(intFunCpp(fun_name, probs, x));
     return rcpp_result_gen;
 END_RCPP
