@@ -22,6 +22,12 @@ setGeneric('runRole',
            def = function(x, cores=1) standardGeneric('runRole'), 
            signature = 'x')
 
+
+#' runRole on roleModel
+#' @name runRole
+#' @aliases runRole,roleModel-method
+#' @docType methods
+#' @rdname runRole
 setMethod('runRole', 
           signature = 'roleModel', 
           definition = function(x) {
@@ -58,6 +64,12 @@ setMethod('runRole',
           }
 )
 
+
+#' runRole on roleExperiment
+#' @name runRole
+#' @aliases runRole,roleExperiment-method
+#' @docType methods
+#' @rdname runRole
 setMethod('runRole', 
           signature = 'roleExperiment', 
           definition = function(x, cores = 1) {

@@ -19,6 +19,12 @@ setGeneric('hillAbund',
            signature = 'x')
 
 
+#' HillAbund on roleData
+#' @name hillAbund
+#' @aliases hillAbund,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
+
 setMethod('hillAbund', 
           signature = 'roleData', 
           definition = function(x, q = 1:4) {
@@ -56,6 +62,13 @@ setGeneric('hillGenetic',
            signature = 'x')
 
 
+
+#' hillGenetic on roleData
+#' @name hillGenetic
+#' @aliases hillGenetic,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
+
 setMethod('hillGenetic', 
           signature = 'roleData', 
           definition = function(x, q = 1:4) {
@@ -76,6 +89,12 @@ setGeneric('hillTrait',
            signature = 'x')
 
 
+
+#' hillTrait on roleData
+#' @name hillTrait
+#' @aliases hillTrait,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
 setMethod('hillTrait', 
           signature = 'roleData', 
           definition = function(x, q = 1:4) {
@@ -131,6 +150,11 @@ setGeneric('hillPhylo',
            signature = 'x')
 
 
+#' hillPhylo on roleData
+#' @name hillPhylo
+#' @aliases hillPhylo,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
 setMethod('hillPhylo', 
           signature = 'roleData', 
           definition = function(x, q = 1:4) {
@@ -148,6 +172,12 @@ setGeneric('richness',
            def = function(x, ...) standardGeneric('richness'), 
            signature = 'x')
 
+
+#' richness on roleData
+#' @name richness
+#' @aliases richness,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
 setMethod('richness', 
           signature = 'roleData', 
           definition = function(x) {

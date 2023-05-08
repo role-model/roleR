@@ -18,8 +18,15 @@ setGeneric('getFinalState',
            def = function(x, modID, ...) standardGeneric('getFinalState'), 
            signature = 'x')
 
+
+#' Get final state of roleModel
+#' @name getFinalState
+#' @aliases getFinalState,roleModel-method
+#' @docType methods
+#' @rdname getFinalState
+
 setMethod('getFinalState', 
-          signature = 'roleModel', 
+          signature(x = 'roleModel'), 
           definition = function(x) {
               xlast <- x@modelSteps[length(x@modelSteps)]
               
@@ -30,8 +37,13 @@ setMethod('getFinalState',
 )
 
 
+#' Get final state of roleExperiment
+#' @name getFinalState
+#' @aliases getFinalState,roleExperiment-method
+#' @docType methods
+#' @rdname getFinalState
 setMethod('getFinalState', 
-          signature = 'roleExperiment', 
+          signature(x ='roleExperiment'), 
           definition = function(x, modID) {
               # if IDs are given, subset based on those
               if(!missing(modID)) {

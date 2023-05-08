@@ -22,6 +22,14 @@ setGeneric('rawAbundance',
            def = function(x, ...) standardGeneric('rawAbundance'), 
            signature = 'x')
 
+
+
+#' rawAbundance on roleData
+#' @name rawAbundance
+#' @aliases rawAbundance,roleData-method
+#' @docType methods
+#' @rdname raw-sumStats
+
 setMethod('rawAbundance', 
           signature = 'roleData', 
           definition = function(x) {
@@ -36,6 +44,13 @@ setGeneric('rawSpAbundance',
            def = function(x, ...) standardGeneric('rawSpAbundance'), 
            signature = 'x')
 
+
+
+#' abundance on roleData
+#' @name rawSpAbundance
+#' @aliases rawSpAbundance,roleData-method
+#' @docType methods
+#' @rdname rawSpAbundance
 setMethod('rawSpAbundance', 
           signature = 'roleData', 
           definition = function(x) {
@@ -51,6 +66,13 @@ setGeneric('rawSppID',
            def = function(x, ...) standardGeneric('rawSppID'), 
            signature = 'x')
 
+
+
+#' spp IDs on roleData
+#' @name rawSppID
+#' @aliases rawSppID,roleData-method
+#' @docType methods
+#' @rdname raw-sumStats
 setMethod('rawSppID', 
           signature = 'roleData', 
           definition = function(x) {
@@ -66,6 +88,12 @@ setGeneric('rawTraits',
            def = function(x, ...) standardGeneric('rawTraits'), 
            signature = 'x')
 
+
+#' raw traits on roleData
+#' @name rawTraits
+#' @aliases rawTraits,roleData-method
+#' @docType methods
+#' @rdname raw-sumStats
 setMethod('rawTraits', 
           signature = 'roleData', 
           definition = function(x) {
@@ -82,6 +110,13 @@ setGeneric('rawGenDiv',
            def = function(x, ...) standardGeneric('rawGenDiv'), 
            signature = 'x')
 
+
+
+#' raw gen div on roleData
+#' @name rawGenDiv
+#' @aliases rawGenDiv,roleData-method
+#' @docType methods
+#' @rdname raw-sumStats
 setMethod('rawGenDiv', 
           signature = 'roleData', 
           definition = function(x) {
@@ -99,6 +134,12 @@ setGeneric('rawSeqs',
            def = function(x, ...) standardGeneric('rawSeqs'), 
            signature = 'x')
 
+
+#' raw seqs on roleData
+#' @name rawSeqs
+#' @aliases rawSeqs,roleData-method
+#' @docType methods
+#' @rdname raw-sumStats
 setMethod('rawSeqs', 
           signature = 'roleData', 
           definition = function(x) {
@@ -115,6 +156,12 @@ setGeneric('rawBranchLengths',
            def = function(x, ...) standardGeneric('rawBranchLengths'), 
            signature = 'x')
 
+
+#' raw branch lengths on roleData
+#' @name rawBranchLengths
+#' @aliases rawBranchLengths,roleData-method
+#' @docType methods
+#' @rdname raw-sumStats
 setMethod('rawBranchLengths', 
           signature = 'roleData', 
           definition = function(x) {
@@ -131,6 +178,12 @@ setGeneric('rawApePhylo',
            def = function(x, ...) standardGeneric('rawApePhylo'), 
            signature = 'x')
 
+
+#' raw ape phylo  on roleData
+#' @name rawApePhylo
+#' @aliases rawApePhylo,roleData-method
+#' @docType methods
+#' @rdname raw-sumStats
 setMethod('rawApePhylo', 
           signature = 'roleData', 
           definition = function(x) {
