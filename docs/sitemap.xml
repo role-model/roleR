@@ -49,6 +49,9 @@
     <loc>/reference/createRolePredModel.html</loc>
   </url>
   <url>
+    <loc>/reference/dataFunCpp.html</loc>
+  </url>
+  <url>
     <loc>/reference/div-sumStats.html</loc>
   </url>
   <url>
@@ -82,6 +85,12 @@
     <loc>/reference/index.html</loc>
   </url>
   <url>
+    <loc>/reference/intFunCpp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/iterModelCpp.html</loc>
+  </url>
+  <url>
     <loc>/reference/localComm.html</loc>
   </url>
   <url>
@@ -91,13 +100,34 @@
     <loc>/reference/paramValues.html</loc>
   </url>
   <url>
+    <loc>/reference/quickExp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/quickModel.html</loc>
+  </url>
+  <url>
+    <loc>/reference/quickModelNonRun.html</loc>
+  </url>
+  <url>
     <loc>/reference/quickParams.html</loc>
   </url>
   <url>
     <loc>/reference/raw-sumStats.html</loc>
   </url>
   <url>
+    <loc>/reference/rawSpAbundance.html</loc>
+  </url>
+  <url>
+    <loc>/reference/repS4.html</loc>
+  </url>
+  <url>
     <loc>/reference/roleData.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleDataFromCpp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleDataToCpp.html</loc>
   </url>
   <url>
     <loc>/reference/roleExperiment.html</loc>
@@ -107,6 +137,9 @@
   </url>
   <url>
     <loc>/reference/roleModel.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleModelGiven.html</loc>
   </url>
   <url>
     <loc>/reference/roleParams.html</loc>
@@ -136,7 +169,16 @@
     <loc>/reference/simulateSpeciesGenDiv.html</loc>
   </url>
   <url>
+    <loc>/reference/sub.html</loc>
+  </url>
+  <url>
+    <loc>/reference/testRand.html</loc>
+  </url>
+  <url>
     <loc>/reference/untbParams.html</loc>
+  </url>
+  <url>
+    <loc>/reference/vectFunCpp.html</loc>
   </url>
   <url>
     <loc>/reference/writeRoLE.html</loc>

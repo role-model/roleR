@@ -1,7 +1,19 @@
-# selection method for `roleExperiment`
+#' @title [
+#' @name [
+#' @description selection method for `roleExperiment`
+#' @param x x
+#' @param i i
+#' @param j j
+#' @param drop drop
+
 #' @export
 
-setMethod("[", "roleExperiment", function(x, i, j, ..., drop = FALSE) {
+setMethod("[", 
+          c(x = "roleExperiment",
+            j = "numeric",
+            i = "numeric",
+            drop = "logical"),
+          function(x, i, j, ..., drop = FALSE) {
     iMissing <- missing(i)
     jMissing <- missing(j)
     nargs <- nargs() # e.g., a[3,] gives 2 for nargs, a[3] gives 1.
