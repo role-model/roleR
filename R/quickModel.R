@@ -10,6 +10,11 @@ quickParams <- function(){
 # function to create a model using a set of reasonable params
 # used in testthat tests
 # will eventually no longer be exported
+#' @title quickModel
+#'
+#' @return a roleModel
+#' @export
+#'
 quickModel <- function(){
     p <- quickParams()
     m <- roleModel(p)
@@ -19,6 +24,10 @@ quickModel <- function(){
 # function to create a model using a set of reasonable params
 # used in testthat tests
 # will eventually no longer be exported
+#' quickExp
+#'
+#' @return a run roleExperiment
+#' @export
 quickExp <- function(){
     
     p <- quickParams()
@@ -27,6 +36,10 @@ quickExp <- function(){
     return(runRole(expr))
 }
 
+#' quickModelNonRun
+#'
+#' @return a setup but not run roleModel
+#' @export
 quickModelNonRun <- function(){
     p <- quickParams()
     m <- roleModel(p)

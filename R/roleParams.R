@@ -67,11 +67,10 @@
 #' 
 #' # Use it to create a roleModel
 #' model <- roleModel(params)
-#' 
 #' @rdname roleParams
 #' @export
 
-roleParams <- setClass('roleParams',
+setClass('roleParams',
                         # slots that are 'functions' are allowed to time-vary across the simulation - all others are not
                        slots = c(
                            # number of individuals and species in the local and meta
@@ -148,7 +147,6 @@ roleParams <- setClass('roleParams',
 #' # create a new set of params but randomly deviating the speciation rate using an "iter function"
 #' spfun <- function(i){rnorm(1,mean=0.1,sd=0.01)}
 #' p <- roleParams(speciation_local=spfun)
-#' 
 #' @rdname roleParams
 #' @export
 

@@ -111,6 +111,16 @@ roleModel <- function(params) {
     return(thisSAD / sum(thisSAD))
 }
 
+#' roleModelGiven
+#'
+#' @param params  params
+#' @param phylo phylo
+#' @param spAbund spAbund
+#' @param spTrait spTrait
+#'
+#' @return something
+#' @export
+#'
 roleModelGiven <- function(params,phylo,spAbund,spTrait) {
     J <- params@individuals_local(1)
     Sm <- params@species_meta

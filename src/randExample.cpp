@@ -33,6 +33,10 @@ void updateRand(randExample &x) {
 
 
 // export a wrapper function for testing
+//' @name testRand
+//' @title testRand
+//' @param m m
+//' @return outMat
 // [[Rcpp::export]]
 
 NumericMatrix testRand(NumericMatrix m) {

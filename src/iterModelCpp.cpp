@@ -604,12 +604,13 @@ S4 role_data_from_cpp(roleDataCpp &d){
     
     return(out_d);
 }
-// @title iterModelCpp
-// @param local local
-// @param meta meta
-// @param phylo phylo
-// @param params params
-// @param print print
+//' @title iterModelCpp
+//' @name iterModelCpp
+//' @param local local
+//' @param meta meta
+//' @param phylo phylo
+//' @param params params
+//' @param print print
 //
 //
 // [[Rcpp::export]]
@@ -744,10 +745,11 @@ List iterModelCpp(RObject local,
 // these funs, one per return data type, are R wrappers around multiple Cpp functions
 // these avoid having to wrap all ~20 functions individually 
 // ONLY used for testing and nothing else
-// @name IntFunCpp
-// @param fun_Name fun_Name
-// @param probs probs
-// @param x x
+//' @name intFunCpp
+//' @title intFunCpp
+//' @param fun_Name fun_Name
+//' @param probs probs
+//' @param x x
 //
 // [[Rcpp::export]]
 int intFunCpp(Rcpp::StringVector fun_name,
@@ -767,19 +769,19 @@ int intFunCpp(Rcpp::StringVector fun_name,
 
 
 
-// @title dataFunCpp
-//
-// @param fun_name fun_name
-// @param local local
-// @param meta meta
-// @param phylo phylo
-// @param params params
-// @param niter niter
-// @param i i
-// @param dead_index dead_index
-// @param parent_indv parent_indv
-// @param dispersed_this_year dispersed_this_year
-// @param speciation_sp speciation_sp
+//' @title dataFunCpp
+//' @name dataFunCpp
+//' @param fun_name fun_name
+//' @param local local
+//' @param meta meta
+//' @param phylo phylo
+//' @param params params
+//' @param niter niter
+//' @param i i
+//' @param dead_index dead_index
+//' @param parent_indv parent_indv
+//' @param dispersed_this_year dispersed_this_year
+//' @param speciation_sp speciation_sp
 //
 // [[Rcpp::export]]
 S4 dataFunCpp(Rcpp::StringVector fun_name, 
@@ -821,14 +823,15 @@ S4 dataFunCpp(Rcpp::StringVector fun_name,
         return(role_data_from_cpp(d));
     }
 }
-// @title vectFunCpp
-// @param fun_name fun_name
-// @param local local
-// @param meta meta
-// @param phylo phylo
-// @param params params
-// @param niter niter
-// @param i i 
+//' @title vectFunCpp
+//' @name vectFunCpp
+//' @param fun_name fun_name
+//' @param local local
+//' @param meta meta
+//' @param phylo phylo
+//' @param params params
+//' @param niter niter
+//' @param i i 
 // [[Rcpp::export]]
 NumericVector vectFunCpp(Rcpp::StringVector fun_name,
                          RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, // used universally 

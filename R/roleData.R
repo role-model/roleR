@@ -28,6 +28,13 @@ roleData <- function(localComm,metaComm,phylo) {
              phylo = phylo))
 }
 
+#' roleDataFromCpp
+#'
+#' @param data  a cpp object 
+#'
+#' @return a roleData object
+#' @export
+#'
 roleDataFromCpp <- function(data) {
   local <- localComm(data$local$abundance_indv,data$local$species_ids,
                      data$local$traits,data$local$abundance_sp,
@@ -39,6 +46,13 @@ roleDataFromCpp <- function(data) {
   return(roleData(local,meta,phylo))
 }
 
+#' roleDataToCpp
+#'
+#' @param data some roleData
+#'
+#' @return for Cpp
+#' @export
+#'
 roleDataToCpp <- function(data) {
   local <- localComm(data$local$abundance_indv,data$local$species_ids,
                      data$local$traits,data$local$abundance_sp,

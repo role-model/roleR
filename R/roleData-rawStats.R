@@ -29,7 +29,9 @@ setMethod('rawAbundance',
           }
 )
 
-# abundance
+#' abundance
+#' @rdname rawSpAbundance
+#' @export
 setGeneric('rawSpAbundance', 
            def = function(x, ...) standardGeneric('rawSpAbundance'), 
            signature = 'x')
