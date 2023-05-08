@@ -1,18 +1,12 @@
-#' @title [
-#' @name [
-#' @description selection method for `roleExperiment`
-#' @param x x
-#' @param i i
-#' @param j j
-#' @param drop drop
 
-#' @export
+#' Extract parts of a roleExperiment
+#' @name [
+#' @aliases [,roleExperiment-method
+#' @docType methods
+#' @rdname roleExperiment
 
 setMethod("[", 
-          c(x = "roleExperiment",
-            j = "numeric",
-            i = "numeric",
-            drop = "logical"),
+         signature(x = "roleExperiment", i = "ANY", j = "ANY"),
           function(x, i, j, ..., drop = FALSE) {
     iMissing <- missing(i)
     jMissing <- missing(j)
@@ -62,10 +56,15 @@ setMethod("[",
 })
 
 
-# column selection method for `roleExperiment`
-#' @export
+#' Extract a name
+#' @name $
+#' @aliases $,roleExperiment-method
+#' @docType methods
+#' @rdname roleExperiment
 
-setMethod("$", "roleExperiment", function(x, name) {
+setMethod("$", 
+          signature(x = "roleExperiment"),
+          function(x, name) {
     if(name %in% names(x@experimentMeta)) {
         return(x@experimentMeta[, name])
     } else {
