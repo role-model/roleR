@@ -1,0 +1,5 @@
+Metadata for RoLE experiment R object - load into R using readRDS(*file_location_and_name*.roleExperiment)
+Contains 3 model runs
+Author: NA
+Date: NA
+Description: NA
