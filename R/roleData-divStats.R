@@ -116,7 +116,7 @@ setMethod('hillTrait',
 #' @title HillDivTrait
 #' function for trait-based
 #' @param X a matrix with first column = abund, second column = traits
-#' @param traits is a vector of traits
+#' @param q order for hill number
 
 .hillDivTrait <- function(X, q) {
     n <- X[, 1]

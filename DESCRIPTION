@@ -27,6 +27,7 @@ LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
 RcppModules: iterModelCpp
 Suggests: 
+    ggplot2,
     knitr,
     rlang,
     rmarkdown,

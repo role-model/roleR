@@ -1,8 +1,12 @@
 
 #' Extract parts of a roleExperiment
-#' @name [
 #' @aliases [,roleExperiment-method
 #' @docType methods
+#' @param x a roleExperiment object
+#' @param i i
+#' @param j j
+#' @param ... ignored
+#' @param drop default F
 #' @rdname roleExperiment
 
 setMethod("[", 
@@ -59,6 +63,8 @@ setMethod("[",
 #' Extract a name
 #' @name $
 #' @aliases $,roleExperiment-method
+#' @param x a roleExperiment
+#' @param name thing to extract
 #' @docType methods
 #' @rdname roleExperiment
 

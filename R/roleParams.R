@@ -251,9 +251,19 @@ roleParams <- function(individuals_local=100,
     return(out_params)
 }
 
+
 #' @title Wrapper around roleParams to create a "untb-flavored" (Unified Neutral Theory of Biodiversity) roleModel
 #' @description Only arguments relevant to a UNTB neutral model is included
 #' 
+#' @param individuals_local  individuals_local
+#'
+#' @param individuals_meta individuals_meta
+#' @param species_meta species_meta
+#' @param speciation speciation
+#' @param dispersal_prob dispersal_prob
+#' @param init_type init_type
+#' @param niter niter
+#' @param niterTimestep niterTimestep
 #' @return a `roleParams` object
 #' @rdname untbParams
 #' @export

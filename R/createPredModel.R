@@ -2,9 +2,8 @@
 #' 
 #' @description Creates a random forest model to predict a parameter value using summary statistics of simulation experiments.
 
-#' @param exp A `roleExperiment` that contains models with simulation data to use for training and validation,
-#' @param predParam The name of the parameter to predict. See the `roleParams` documentation for a list of possible parameter choices. 
-
+#' @param expr A `roleExperiment` that contains models with simulation data to use for training and validation,
+#' @param pred_param_name The name of the parameter to predict. See the `roleParams` documentation for a list of possible parameter choices. 
 #' @include roleParams.R
 #' @examples 
 #' m <- quickExp()

@@ -39,6 +39,8 @@ setMethod('rawAbundance',
 
 #' abundance
 #' @rdname rawSpAbundance
+#' @param x x
+#' @param ... ignored
 #' @export
 setGeneric('rawSpAbundance', 
            def = function(x, ...) standardGeneric('rawSpAbundance'), 

@@ -19,6 +19,9 @@ setClass('roleData',
 
 # constructor
 #' @rdname roleData
+#' @param localComm A `localComm` object containing the local community.
+#' @param metaComm A `metaComm` object containing the meta community.
+#' @param phylo A `rolePhylo` object containing the model phylogeny. 
 #' @export
 
 roleData <- function(localComm,metaComm,phylo) {

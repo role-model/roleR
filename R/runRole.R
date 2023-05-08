@@ -1,6 +1,7 @@
 #' @title Run a `roleModel` or `roleExperiment`.
 #' @description Run a RoLE object to completion.
 #' @param x `roleModel` or `roleExperiment` object to run.
+#' @param cores number of cores
 #' @return `roleModel` or `roleExperiment` run to completion.
 #' @details Prior to running the RoLE model(s), the parameters must be specified inside the RoLE object with `roleParams()`.
 #' 
