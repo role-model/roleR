@@ -26,9 +26,8 @@
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/basics.html">Basic demo</a>
-    <a class="dropdown-item" href="../articles/roleR_intro.html">Introduction and basic workflow</a>
-    <a class="dropdown-item" href="../articles/roleR_use_cases.html">roleR Use Cases</a>
+    <a class="dropdown-item" href="../articles/Intro.html">Intro</a>
+    <a class="dropdown-item" href="../articles/UseCases.html">UseCases</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -74,7 +73,11 @@
 <dt>funs</dt>
 <dd><p>A named list of functions to calculate the summary statistics; can be a 
 named list with a single function or many functions, but must be a 
-named list of functions.</p></dd>
+named list of functions. If unspecified, defaults to including several standard stats. 
+Included diversity index functions in roleR are: `hillAbund`, 
+`hillGenetic`,`hillPhylo` &amp; `richness`. Included raw stats functions are `rawAbundance`,
+`rawSpAbundance`,`rawSppId`,`rawTraits`,`rawGenDiv`,`rawSeqs`,
+`rawBranchLengths` &amp; `rawApePhylo`.</p></dd>
 
 
 <dt>moreArgs</dt>
@@ -88,11 +91,28 @@ functions listed in `funs`. If given, list names must match those in
 
 </dl></div>
     <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    
+
+<p>data.frame containing summary stats where each row is a model snapshot
+and each column is a summary stat requested by a function provided to `funs`</p>
+    </div>
+    <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Users can define their own functions, so long as they work on any
     object of class `roleData`.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># get the species richness </span></span></span>
+<span class="r-in"><span><span class="co"># rich_stat &lt;- getSumStats(model, funs = list(rich = richness))</span></span></span>
+<span class="r-in"><span><span class="co"># get many default summary stats</span></span></span>
+<span class="r-in"><span><span class="co"># stats &lt;- getSumStats(model)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 

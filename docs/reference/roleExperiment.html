@@ -26,9 +26,8 @@ It contains a list of `roleModel`objects, a list of `roleParams` to use for each
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/basics.html">Basic demo</a>
-    <a class="dropdown-item" href="../articles/roleR_intro.html">Introduction and basic workflow</a>
-    <a class="dropdown-item" href="../articles/roleR_use_cases.html">roleR Use Cases</a>
+    <a class="dropdown-item" href="../articles/Intro.html">Intro</a>
+    <a class="dropdown-item" href="../articles/UseCases.html">UseCases</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -80,19 +79,27 @@ It contains a list of `roleModel`objects, a list of `roleParams` to use for each
 <dd><p>a list of `roleParams` to use for each model</p></dd>
 
 
-<dt><code>authorMeta</code></dt>
+<dt><code>context</code></dt>
 <dd><p>a named string vector that keep track of author metadata
 It contains values for "author", "date", "description", "info", where each element is named by its respective string.
 When the model is saved with `writeRole` a text file is generated using this metadata</p></dd>
 
 
-<dt><code>experimentMeta</code></dt>
+<dt><code>info</code></dt>
 <dd><p>data.frame of summarizing metadata for all the models of the experiment 
 (Need to chat with Andy about the exact intentions of this before writing more here)</p></dd>
 
 
 </dl></div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># create and run a roleExperiment that will contain three models with three different levels of dispersal </span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 

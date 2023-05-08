@@ -26,9 +26,8 @@
 <li class="nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
-    <a class="dropdown-item" href="../articles/basics.html">Basic demo</a>
-    <a class="dropdown-item" href="../articles/roleR_intro.html">Introduction and basic workflow</a>
-    <a class="dropdown-item" href="../articles/roleR_use_cases.html">roleR Use Cases</a>
+    <a class="dropdown-item" href="../articles/Intro.html">Intro</a>
+    <a class="dropdown-item" href="../articles/UseCases.html">UseCases</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -73,6 +72,13 @@
     list of `roleData` objects for each model run is returned.</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># get the final state of a roleModel as a roleModel (but maybe should be roleData?)</span></span></span>
+<span class="r-in"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu">quickModel</span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">final_data</span> <span class="op">&lt;-</span> <span class="fu">getFinalState</span><span class="op">(</span><span class="va">m</span><span class="op">)</span><span class="op">@</span><span class="va">modelSteps</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
 

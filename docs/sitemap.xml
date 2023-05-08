@@ -7,6 +7,15 @@
     <loc>/LICENSE-text.html</loc>
   </url>
   <url>
+    <loc>/LICENSE.html</loc>
+  </url>
+  <url>
+    <loc>/articles/Intro.html</loc>
+  </url>
+  <url>
+    <loc>/articles/UseCases.html</loc>
+  </url>
+  <url>
     <loc>/articles/basics.html</loc>
   </url>
   <url>
@@ -25,6 +34,15 @@
     <loc>/index.html</loc>
   </url>
   <url>
+    <loc>/reference/buildFun.html</loc>
+  </url>
+  <url>
+    <loc>/reference/cFun.html</loc>
+  </url>
+  <url>
+    <loc>/reference/checkRolePhylo.html</loc>
+  </url>
+  <url>
     <loc>/reference/createPredModel.html</loc>
   </url>
   <url>
@@ -34,13 +52,31 @@
     <loc>/reference/div-sumStats.html</loc>
   </url>
   <url>
+    <loc>/reference/dot-bufferModelData.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dot-hillDivSAD.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dot-hillDivTrait.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dot-lseriesFromSN.html</loc>
+  </url>
+  <url>
     <loc>/reference/getFinalState.html</loc>
   </url>
   <url>
     <loc>/reference/getSumStats.html</loc>
   </url>
   <url>
+    <loc>/reference/getSumStatsMean.html</loc>
+  </url>
+  <url>
     <loc>/reference/getTimeseries.html</loc>
+  </url>
+  <url>
+    <loc>/reference/getValuesFromParams.html</loc>
   </url>
   <url>
     <loc>/reference/index.html</loc>
@@ -50,6 +86,9 @@
   </url>
   <url>
     <loc>/reference/metaComm.html</loc>
+  </url>
+  <url>
+    <loc>/reference/paramValues.html</loc>
   </url>
   <url>
     <loc>/reference/quickParams.html</loc>
@@ -85,6 +124,9 @@
     <loc>/reference/runRoLE.html</loc>
   </url>
   <url>
+    <loc>/reference/setContext.html</loc>
+  </url>
+  <url>
     <loc>/reference/setExpMetadata.html</loc>
   </url>
   <url>
@@ -92,6 +134,9 @@
   </url>
   <url>
     <loc>/reference/simulateSpeciesGenDiv.html</loc>
+  </url>
+  <url>
+    <loc>/reference/untbParams.html</loc>
   </url>
   <url>
     <loc>/reference/writeRoLE.html</loc>
