@@ -14,6 +14,8 @@ test_that("experiment runs two models with different params without error", {
                     init_type = 'oceanic_island', niter = 1000, niterTimestep = 100)
     
     exp <- runRole(roleExperiment(list(p,pu)))
+    
+    expect_true(length(exp@modelRuns) == 2)
 })
 
 test_that("setContext changes a slot in roleExperiment", {
@@ -27,8 +29,8 @@ test_that("writeRole writes an experiment whether or not context was added and w
     writeRole(expr)
     
     expr_w_context <- setContext(expr,author="Jacob Idec",datestring="4/13/23",description="example experiment for testing setContext and read/writeRole")
-    writeRole(expr_w_context,dir="D:/GitProjects/roleR",filename="test_expr",save_txt = T)
+    writeRole(expr_w_context,filename="test_expr",save_txt = T)
     
-    read_expr <- readRDS("test_expr.roleExperiment")
+    expect_silent(read_expr <- readRDS("test_expr.roleExperiment"))
 })
 

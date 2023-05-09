@@ -19,6 +19,9 @@ test_that("big model with high speciation runs without error", {
     )
     
     m <- runRole(roleModel(params))
+    
+    expect_true(length(m@modelSteps) == 901)
+    
 })
 
 test_that("model copying in C++ does not result in all timesteps being equal", {
@@ -60,11 +63,11 @@ test_that("model copying in C++ does not result in all timesteps being equal", {
 #     proc.time() - x
 #     # takes 17.5 seconds relative to 45 in base R with missing functionality
 # }
-# 
-# test_that("when a model is run the supplied model is NOT modified in place"){
-#     m <- quickModelNonRun()
-#     mrun <- runRole(m)
-#     
-#     expect_true(is.null(m@modelSteps[[2]]))
-#     expect_false(is.null(mrun@modelSteps[[2]]))
-# }
+
+test_that("when a model is run the supplied model is NOT modified in place", {
+    m <- quickModelNonRun()
+    mrun <- runRole(m)
+
+    expect_true(is.null(m@modelSteps[[2]]))
+    expect_false(is.null(mrun@modelSteps[[2]]))
+})
