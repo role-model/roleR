@@ -3,7 +3,7 @@
 
 quickParams <- function(){
     # its for some reason using the value of the last supplied non function in every fun 
-    p <- roleParams()
+    p <- roleParams(niter = 200, niterTimestep = 20, speciation_local = .2)
     return(p)
 }
 

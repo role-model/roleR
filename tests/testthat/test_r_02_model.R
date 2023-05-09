@@ -3,7 +3,7 @@ test_that("model runs without error and does not end in all 1 species", {
     
     # create a test model and get data from a step and the params
     m <- quickModel()
-    expect_true(length(unique(m@modelSteps[[10]]@localComm@indSpecies)) > 1)
+    expect_true(length(unique(m@modelSteps[[11]]@localComm@indSpecies)) > 1)
 })
 
 test_that("big model with high speciation runs without error", {
