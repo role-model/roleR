@@ -60,8 +60,8 @@ test_that("birth adds a new trait value different from the last", {
     # compare these two
     expect_false(start_trait == end_trait)
 })
-
-# make sure it gives you a number in the allowed range 
-test_that("birth calculates the new trait as expected", {
-    # ie make sure its 0-1
-})
+# 
+# # make sure it gives you a number in the allowed range 
+# test_that("birth calculates the new trait as expected", {
+#     # ie make sure its 0-1
+# })
