@@ -1,5 +1,6 @@
 #' @title Internal functions to facilitate vignette examples.
 #' @include roleParams.R
+#' @export
 
 quickParams <- function(){
     # its for some reason using the value of the last supplied non function in every fun 

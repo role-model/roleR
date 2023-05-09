@@ -54,3 +54,4 @@ test_that("env filtering probs is NOT all the same if env_sigma param is nonzero
 
     expect_false(length(unique(out)) == 1)
 })
+
