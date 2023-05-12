@@ -16,6 +16,7 @@ Depends:
 Imports: 
     Rcpp,
     ape,
+    extraDistr,
     methods,
     snow,
     ranger,
