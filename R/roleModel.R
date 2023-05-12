@@ -31,9 +31,9 @@ setClass('roleModel',
 roleModel <- function(params) {
     J <- params@individuals_local(1)
     Sm <- params@species_meta
-
+    
     phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)
-
+    
     meta <- metaComm(spAbund = .lseriesFromSN(params@species_meta, 
                                               params@individuals_meta), 
                      spTrait = ape::rTraitCont(phylo, 
@@ -59,7 +59,7 @@ roleModel <- function(params) {
     else{
         stop('`init_type` must be one of `"oceanic_island"` or `"bridge_island"`')
     }
-
+    
     # initialize traits based on spp ID
     initTrait <- meta@spTrait[initSpp]
     
@@ -91,8 +91,12 @@ roleModel <- function(params) {
 #' @param N number of individuals
 
 .lseriesFromSN <- function(S, N) {
+    qfun <- function(p, beta) {
+        
+        qlseries(p, beta)
+    }
+    
     # solve for alpha paramter
-    # browser()
     asol <- uniroot(interval = c(.Machine$double.eps^0.25,
                                  .Machine$integer.max),
                     f = function(a) {
@@ -103,12 +107,10 @@ roleModel <- function(params) {
     p <- 1 - exp(-S / asol$root)
     beta <- -log(p)
     
-    # calculate idealized SAD from parameter
-    thisSAD <- pika::sad(model = 'lseries', par = beta)
-    thisSAD <- pika::sad2Rank(thisSAD, S = S)
     
-    # return relative abundances
-    return(thisSAD / sum(thisSAD))
+    rank <- qfun(seq(1, 1/S, length = S) - 1/(2 * S), beta = beta)
+    
+    return(rank / sum(rank))
 }
 
 #' roleModelGiven

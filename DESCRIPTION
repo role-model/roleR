@@ -17,12 +17,9 @@ Imports:
     Rcpp,
     ape,
     methods,
-    pika, 
     snow,
     ranger,
     stats
-Remotes:
-    ajrominger/pika
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
 RcppModules: iterModelCpp
@@ -46,6 +43,7 @@ Collate:
     'getFinalState.R'
     'roleData.R'
     'getSumStats.R'
+    'ls_2.R'
     'prepRebuild.R'
     'quickModel.R'
     'roleData-divStats.R'
