@@ -2,7 +2,6 @@
 #' 
 #' @description An S4 class to represent a self-enclosed modeling experiment 
 #' 
-<<<<<<< HEAD
 #' 
 #' @slot modelRuns a list of `roleData`objects
 #' @slot allParams a list of `roleParams` to use for each model
@@ -14,17 +13,6 @@
 #'     snapshot for all the models of the experiment 
 #' @slot inits an optional list of initialized `roleModel` objects
 #' 
-=======
-#' @slot allFuns a list, something
-#' @slot modelRuns a list of `roleModel`objects
-#' @slot allParams a list of `roleParams` to use for each model
-#' @slot context a named string vector that keep track of author metadata
-#' It contains values for "author", "date", "description", "info", where each element is named by its respective string.
-#' When the model is saved with `writeRole` a text file is generated using this metadata
-#' @slot info data.frame of summarizing metadata for all the models of the experiment 
-#' (Need to chat with Andy about the exact intentions of this before writing more here)
-#' @include roleModel.R roleParams.R
->>>>>>> main
 #' @examples 
 #' # create and run a roleExperiment with three different levels of dispersal 
 # p1 <- roleParams(dispersal_prob = 0.1)
@@ -118,8 +106,7 @@ setMethod('rbind2', signature = c('roleExperiment', 'missing'),
           })
 
 
-<<<<<<< HEAD
-=======
+
 #' Repeat an S4 object
 #' @description temporary helper to rep an S4 object
 #' used to create roleExperiments with many models of the same params
@@ -190,4 +177,3 @@ setAs(from = 'rolePhylo', to = 'phylo',
           return(y)
       }
 )
->>>>>>> main
