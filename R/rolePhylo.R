@@ -25,12 +25,15 @@ setClass('rolePhylo',
 
 #' @title Create a rolePhylo
 #'
-#' @param n 
-#' @param e 
-#' @param l 
-#' @param alive 
-#' @param tipNames 
-#' @param scale
+#' @param n The number of tips in the phylogeny
+#' @param e The numeric edge matrix of the phylogeny.
+#' Each row contains an ancestor-child pair where the 1st column is the ancestor and the 2nd is the child
+#' @param l A numeric vector of edge lengths.
+#' The units of l are the time steps (iterations) of the model.
+#' Each time step unit is equal to 1/J generations where J is the number of individuals in the local community
+#' @param alive A logical vector indicating whether each tip is extant or not.
+#' @param tipNames A character vector of the tip names.
+#' @param scale  A single numeric value of time scale translation to years.
 #' @return A `rolePhylo` object.
 #' 
 #' @rdname rolePhylo
@@ -41,7 +44,12 @@ rolePhylo <- function(n, e, l, alive, tipNames, scale) {
         n = n, e = e, l = l, alive = alive, tipNames = tipNames, scale = scale)
 }
 
-# checker function for validation
+#' @title check RolePhylo
+#' checker function for validation
+#'
+#' @param object a supposed rolePhylo
+#'
+#' @return t/f if it's a rolePhylo
 checkRolePhylo <- function(object) {
     checks <- c()
     
@@ -83,50 +91,49 @@ setValidity('rolePhylo', checkRolePhylo)
 
 # register ape phylo
 # setOldClass('phylo')
-
-# set coercion method from ape::phylo to roleR::rolePhylo
-setAs(from = 'phylo', to = 'rolePhylo',
-      def = function(from) {
-          # extract number of times
-          n <- ape::Ntip(from)
-          
-          # extract edge matrix and edge lengths
-          e <- from$edge
-          l <- from$edge.length
-          
-          # extract tip labels
-          tipNames <- from$tip.label
-          
-          # calculate alive or not
-          tipAge <- ape::node.depth.edgelength(from)[1:n]
-          
-          alive <- rep(TRUE, n)
-          alive[tipAge < max(tipAge)] <- FALSE
-          
-          # set default scale
-          scale <- 1
-          
-          return(rolePhylo(n = n, e = e, l = l, alive = alive,
-                           tipNames = tipNames, scale = scale))
-      }
-)
-
-
-# set coercion method from roleR::rolePhylo to ape::phylo
-setAs(from = 'rolePhylo', to = 'phylo',
-      def = function(from) {
-          i <- 2 * (from@n - 1)
-          
-          y <- list(edge = from@e[1:i, ], edge.length = from@l[1:i],
-                    tip.label = from@tipNames[1:from@n],
-                    Nnode = from@n - 1)
-          
-          # make any possible 0 or negative edge lengths equal to
-          # very small number
-          y$edge.length[y$edge.length <= 0] <- .Machine$double.eps
-          
-          class(y) <- 'phylo'
-          
-          return(y)
-      }
-)
+# 
+# setAs(from = 'phylo', to = 'rolePhylo',
+#       def = function(from) {
+#           # extract number of times
+#           n <- ape::Ntip(from)
+#           
+#           # extract edge matrix and edge lengths
+#           e <- from$edge
+#           l <- from$edge.length
+#           
+#           # extract tip labels
+#           tipNames <- from$tip.label
+#           
+#           # calculate alive or not
+#           tipAge <- ape::node.depth.edgelength(from)[1:n]
+#           
+#           alive <- rep(TRUE, n)
+#           alive[tipAge < max(tipAge)] <- FALSE
+#           
+#           # set default scale
+#           scale <- 1
+#           
+#           return(rolePhylo(n = n, e = e, l = l, alive = alive,
+#                            tipNames = tipNames, scale = scale))
+#       }
+# )
+# 
+# 
+# # set coercion method from roleR::rolePhylo to ape::phylo
+# setAs(from = 'rolePhylo', to = 'phylo',
+#       def = function(from) {
+#           i <- 2 * (from@n - 1)
+#           
+#           y <- list(edge = from@e[1:i, ], edge.length = from@l[1:i],
+#                     tip.label = from@tipNames[1:from@n],
+#                     Nnode = from@n - 1)
+#           
+#           # make any possible 0 or negative edge lengths equal to
+#           # very small number
+#           y$edge.length[y$edge.length <= 0] <- .Machine$double.eps
+#           
+#           class(y) <- 'phylo'
+#           
+#           return(y)
+#       }
+# )

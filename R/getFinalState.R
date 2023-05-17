@@ -4,18 +4,30 @@
 #' @param x The `roleExperiment` or `roleModel` object to retrieve the final state from.
 #' @param modID Optional argument to retrieve the final state for specific model(s) in a
 #'     `roleExperiment` object; can be a vector of unique IDs. 
+#' @param ... passed
 #' 
 #' @details If `modID` is not supplied and `x` is a `roleExperiment`, then a 
 #'     list of `roleData` objects for each model run is returned.
-#' 
+#' @examples 
+#' # get the final state of a roleModel as a roleModel (but maybe should be roleData?)
+#' m <- quickModel()
+#' final_data <- getFinalState(m)@modelSteps[[1]]
+#' @include roleModel.R roleExperiment.R
 #' @export
 
 setGeneric('getFinalState', 
            def = function(x, modID, ...) standardGeneric('getFinalState'), 
            signature = 'x')
 
+
+#' Get final state of roleModel
+#' @name getFinalState
+#' @aliases getFinalState,roleModel-method
+#' @docType methods
+#' @rdname getFinalState
+
 setMethod('getFinalState', 
-          signature = 'roleModel', 
+          signature(x = 'roleModel'), 
           definition = function(x) {
               xlast <- x@modelSteps[length(x@modelSteps)]
               
@@ -26,8 +38,13 @@ setMethod('getFinalState',
 )
 
 
+#' Get final state of roleExperiment
+#' @name getFinalState
+#' @aliases getFinalState,roleExperiment-method
+#' @docType methods
+#' @rdname getFinalState
 setMethod('getFinalState', 
-          signature = 'roleExperiment', 
+          signature(x ='roleExperiment'), 
           definition = function(x, modID) {
               # if IDs are given, subset based on those
               if(!missing(modID)) {

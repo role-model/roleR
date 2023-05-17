@@ -1,0 +1,5 @@
+Metadata for RoLE experiment R object - load into R using readRDS(*file_location_and_name*.roleExperiment)
+Contains 3 model runs
+Author: Jacob Idec
+Date: 4/13/23
+Description: example experiment for testing setContext and read/writeRole

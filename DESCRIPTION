@@ -5,23 +5,54 @@ Version: 0.1.0
 Date: 2022-09-15
 Author: Andrew Rominger, Jacob Idec, Renata Diaz
 Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
+Website: https://role-model.github.io/role-user-guide
 Description: A simulation-based model the captures many processes across ecology 
     and evolution and jointly predicts multi-dimensional biodiversity data.
-License: GNU GENERAL PUBLIC LICENSE
+License: GPL (>= 3) + file LICENSE
 LazyData: true
 Encoding: UTF-8
 Depends:
-    R (>= 3.2)
+    R (>= 3.5.0)
 Imports: 
     Rcpp,
     ape,
-    pika, 
+    extraDistr,
     methods,
     snow,
-    reticulate,
-    testthat
-Remotes:
-    ajrominger/pika
+    ranger,
+    stats
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
 RcppModules: iterModelCpp
+Suggests: 
+    ggplot2,
+    knitr,
+    rlang,
+    rmarkdown,
+    reticulate,
+    testthat, 
+    meteR
+VignetteBuilder: knitr
+Collate: 
+    'RcppExports.R'
+    'cFun.R'
+    'comm.R'
+    'roleParams.R'
+    'createPredModel.R'
+    'rolePhylo.R'
+    'roleModel.R'
+    'roleExperiment.R'
+    'getFinalState.R'
+    'roleData.R'
+    'getSumStats.R'
+    'prepRebuild.R'
+    'quickModel.R'
+    'roleData-divStats.R'
+    'roleData-rawStats.R'
+    'roleExperiment-methods.R'
+    'roleModel-methods.R'
+    'roleR-package.R'
+    'runRole.R'
+    'setContext.R'
+    'writeRoLE.R'
+    'zzz.R'

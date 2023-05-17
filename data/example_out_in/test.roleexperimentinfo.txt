@@ -1,5 +1,0 @@
-Metadata for RoLE experiment R object - load into R using readRDS(file_location_and_name)
-Contains 1 runs of 100 iterations
-Author: NA
-Date: NA
-Description: NA

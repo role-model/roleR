@@ -72,7 +72,6 @@ public:
         spAbundM = Rcpp::clone(Rcpp::as<NumericVector>(meta.slot("spAbund")));
         spTraitM = Rcpp::clone(Rcpp::as<NumericVector>(meta.slot("spTrait")));
         
-        
         //NumericVector nTipsP_vect = Rcpp::as<NumericVector>(phylo.slot("n"));
         //nTipsP = nTipsP_vect
         nTipsP = Rcpp::clone(Rcpp::as<NumericVector>(phylo.slot("n")));

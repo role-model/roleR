@@ -4,6 +4,21 @@
     <loc>/404.html</loc>
   </url>
   <url>
+    <loc>/LICENSE-text.html</loc>
+  </url>
+  <url>
+    <loc>/LICENSE.html</loc>
+  </url>
+  <url>
+    <loc>/articles/Intro.html</loc>
+  </url>
+  <url>
+    <loc>/articles/UseCases.html</loc>
+  </url>
+  <url>
+    <loc>/articles/basics.html</loc>
+  </url>
+  <url>
     <loc>/articles/index.html</loc>
   </url>
   <url>
@@ -19,7 +34,13 @@
     <loc>/index.html</loc>
   </url>
   <url>
-    <loc>/LICENSE-text.html</loc>
+    <loc>/reference/buildFun.html</loc>
+  </url>
+  <url>
+    <loc>/reference/cFun.html</loc>
+  </url>
+  <url>
+    <loc>/reference/checkRolePhylo.html</loc>
   </url>
   <url>
     <loc>/reference/createPredModel.html</loc>
@@ -28,7 +49,22 @@
     <loc>/reference/createRolePredModel.html</loc>
   </url>
   <url>
+    <loc>/reference/dataFunCpp.html</loc>
+  </url>
+  <url>
     <loc>/reference/div-sumStats.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dot-bufferModelData.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dot-hillDivSAD.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dot-hillDivTrait.html</loc>
+  </url>
+  <url>
+    <loc>/reference/dot-lseriesFromSN.html</loc>
   </url>
   <url>
     <loc>/reference/getFinalState.html</loc>
@@ -37,10 +73,22 @@
     <loc>/reference/getSumStats.html</loc>
   </url>
   <url>
+    <loc>/reference/getSumStatsMean.html</loc>
+  </url>
+  <url>
     <loc>/reference/getTimeseries.html</loc>
   </url>
   <url>
+    <loc>/reference/getValuesFromParams.html</loc>
+  </url>
+  <url>
     <loc>/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>/reference/intFunCpp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/iterModelCpp.html</loc>
   </url>
   <url>
     <loc>/reference/localComm.html</loc>
@@ -49,10 +97,37 @@
     <loc>/reference/metaComm.html</loc>
   </url>
   <url>
+    <loc>/reference/paramValues.html</loc>
+  </url>
+  <url>
+    <loc>/reference/quickExp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/quickModel.html</loc>
+  </url>
+  <url>
+    <loc>/reference/quickModelNonRun.html</loc>
+  </url>
+  <url>
+    <loc>/reference/quickParams.html</loc>
+  </url>
+  <url>
     <loc>/reference/raw-sumStats.html</loc>
   </url>
   <url>
+    <loc>/reference/rawSpAbundance.html</loc>
+  </url>
+  <url>
+    <loc>/reference/repS4.html</loc>
+  </url>
+  <url>
     <loc>/reference/roleData.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleDataFromCpp.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleDataToCpp.html</loc>
   </url>
   <url>
     <loc>/reference/roleExperiment.html</loc>
@@ -62,6 +137,9 @@
   </url>
   <url>
     <loc>/reference/roleModel.html</loc>
+  </url>
+  <url>
+    <loc>/reference/roleModelGiven.html</loc>
   </url>
   <url>
     <loc>/reference/roleParams.html</loc>
@@ -79,6 +157,9 @@
     <loc>/reference/runRoLE.html</loc>
   </url>
   <url>
+    <loc>/reference/setContext.html</loc>
+  </url>
+  <url>
     <loc>/reference/setExpMetadata.html</loc>
   </url>
   <url>
@@ -86,6 +167,18 @@
   </url>
   <url>
     <loc>/reference/simulateSpeciesGenDiv.html</loc>
+  </url>
+  <url>
+    <loc>/reference/sub.html</loc>
+  </url>
+  <url>
+    <loc>/reference/testRand.html</loc>
+  </url>
+  <url>
+    <loc>/reference/untbParams.html</loc>
+  </url>
+  <url>
+    <loc>/reference/vectFunCpp.html</loc>
   </url>
   <url>
     <loc>/reference/writeRoLE.html</loc>

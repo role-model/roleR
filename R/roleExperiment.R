@@ -3,42 +3,30 @@
 #' @description An S4 class to represent a self-enclosed modeling experiment or intentioned set of models.
 #' It contains a list of `roleModel`objects, a list of `roleParams` to use for each model, a data.frame summary of the models, and some author metadata
 #' 
+#' @slot allFuns a list, something
 #' @slot modelRuns a list of `roleModel`objects
 #' @slot allParams a list of `roleParams` to use for each model
-#' @slot authorMeta a named string vector that keep track of author metadata
+#' @slot context a named string vector that keep track of author metadata
 #' It contains values for "author", "date", "description", "info", where each element is named by its respective string.
 #' When the model is saved with `writeRole` a text file is generated using this metadata
-#' @slot experimentMeta data.frame of summarizing metadata for all the models of the experiment 
+#' @slot info data.frame of summarizing metadata for all the models of the experiment 
 #' (Need to chat with Andy about the exact intentions of this before writing more here)
-#' 
-# @examples 
-# Create and run a roleExperiment that will contain three models with three different degrees of neutrality
-# NOTE - this does not work yet as defaults have not yet been discussed and implemented
-# p1 <- roleParams(neut_delta=0.3)
-# p2 <- roleParams(neut_delta=0.6)
-# p3 <- roleParams(neut_delta=1)
-# expr <- roleExperiment(list(p1,p2,p3))
-# 
-# TEMPORARY WORKAROUND
-# m <- quickModel()
-# p1 <- m@params
-# p2 <- p1
-# p3 <- p1
-# p1@neut_delta <- 0.3
-# p2@neut_delta <- 0.6
-# p3@neut_delta <- 1
+#' @include roleModel.R roleParams.R
+#' @examples 
+#' # create and run a roleExperiment that will contain three models with three different levels of dispersal 
+# p1 <- roleParams(dispersal_prob =0.1)
+# p2 <- roleParams(dispersal_prob = 0.2)
+# p3 <- roleParams(dispersal_prob = 0.3)
 # expr <- roleExperiment(list(p1,p2,p3))
 # expr <- runRole(expr)
-# 
-# Attach author metadata to the experiment
-# (in flux, could either make method to attach manually OR force attaching in constructor, which I like more)
+#' 
 #' 
 #' @rdname roleExperiment
 #' @export
 
 setClass('roleExperiment',
-         slots = c(authorMeta = 'character',
-                   experimentMeta = 'data.frame',
+         slots = c(context = 'character',
+                   info = 'data.frame',
                    modelRuns = 'list', 
                    allParams = 'list',
                    allFuns = 'list'))
@@ -97,7 +85,7 @@ roleExperiment <- function(allParams) {
     }
     
     return(new('roleExperiment', 
-               experimentMeta = data.frame(), 
+               info = data.frame(), 
                modelRuns = allModels,
                allParams=allParams,
                allFuns=allFuns))
@@ -141,7 +129,7 @@ setAs(from = 'roleModel', to = 'roleExperiment',
           pout <- cbind(mod_id = 1, pout)
           
           return(new('roleExperiment', 
-                     experimentMeta = pout,
+                     info = pout,
                      modelRuns = from@modelSteps, 
                      allParams = list(from@params), 
                      # iterFuns = list(from@iterFuns) # when iterFuns added to roleModel, uncomment this and delete line about `allFuns`
@@ -158,15 +146,15 @@ setMethod('rbind2', signature = c('roleExperiment', 'roleExperiment'),
               thisEx <- y
               
               # keep track of growing mod_id max index
-              j <- max(out@experimentMeta$mod_id)
+              j <- max(out@info$mod_id)
               
               # augment mod_id
-              thisEx@experimentMeta$mod_id <-
-                  thisEx@experimentMeta$mod_id + j
+              thisEx@info$mod_id <-
+                  thisEx@info$mod_id + j
               
               # combine with `out`
-              out@experimentMeta <- rbind(out@experimentMeta,
-                                          thisEx@experimentMeta)
+              out@info <- rbind(out@info,
+                                          thisEx@info)
               out@modelRuns <- c(out@modelRuns,
                                  thisEx@modelRuns)
               out@allParams <- c(out@allParams,
@@ -181,9 +169,17 @@ setMethod('rbind2', signature = c('roleExperiment', 'missing'),
               return(x)
           })
 
-# temporary helper to rep an S4 object
-# used to create roleExperiments with many models of the same params
-# i.e. roleExperiment(repS4(p,100)) does this 100 times using roleParams p
+
+#' Repeat an S4 object
+#' @description temporary helper to rep an S4 object
+#' used to create roleExperiments with many models of the same params
+#' i.e. roleExperiment(repS4(p,100)) does this 100 times using roleParams p
+#' @param obj an s4
+#' @param n times
+#'
+#' @return obj repeated n times
+#' @export
+#'
 repS4 <- function(obj, n) {
     # Create an empty list to store replicated objects
     objs <- vector("list", n)
@@ -196,3 +192,51 @@ repS4 <- function(obj, n) {
     # Return the list of replicated objects
     return(objs)
 }
+
+#' @include rolePhylo.R
+# set coercion method from ape::phylo to roleR::rolePhylo
+setAs(from = 'phylo', to = 'rolePhylo',
+      def = function(from) {
+          # extract number of times
+          n <- ape::Ntip(from)
+          
+          # extract edge matrix and edge lengths
+          e <- from$edge
+          l <- from$edge.length
+          
+          # extract tip labels
+          tipNames <- from$tip.label
+          
+          # calculate alive or not
+          tipAge <- ape::node.depth.edgelength(from)[1:n]
+          
+          alive <- rep(TRUE, n)
+          alive[tipAge < max(tipAge)] <- FALSE
+          
+          # set default scale
+          scale <- 1
+          
+          return(rolePhylo(n = n, e = e, l = l, alive = alive,
+                           tipNames = tipNames, scale = scale))
+      }
+)
+
+
+# set coercion method from roleR::rolePhylo to ape::phylo
+setAs(from = 'rolePhylo', to = 'phylo',
+      def = function(from) {
+          i <- 2 * (from@n - 1)
+          
+          y <- list(edge = from@e[1:i, ], edge.length = from@l[1:i],
+                    tip.label = from@tipNames[1:from@n],
+                    Nnode = from@n - 1)
+          
+          # make any possible 0 or negative edge lengths equal to
+          # very small number
+          y$edge.length[y$edge.length <= 0] <- .Machine$double.eps
+          
+          class(y) <- 'phylo'
+          
+          return(y)
+      }
+)

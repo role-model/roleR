@@ -1,32 +1,37 @@
 #' @title Run a `roleModel` or `roleExperiment`.
 #' @description Run a RoLE object to completion.
-#' @param x The `roleModel` or `roleModel` object to run.
-#' @param print A boolean indicating whether to print step information as the model runs.
-#' @return A `roleModel` or `roleExperiment` run to completion.
+#' @param x `roleModel` or `roleExperiment` object to run.
+#' @param cores number of cores
+#' @return `roleModel` or `roleExperiment` run to completion.
 #' @details Prior to running the RoLE model(s), the parameters must be specified inside the RoLE object with `roleParams()`.
 #' 
 #' @examples 
-#' Create and run a model
+#' # create and run a model
 #' model <- roleModel(roleParams())
 #' model <- runRole(model)
 #' 
-#' Create and run an experiment
+#' # create and run an experiment
 #' p1 <- roleParams(speciation_local=0.2)
 #' p2 <- roleParams(speciation_local=0.3)
 #' p3 <- roleParams(speciation_local=0.4)
 #' exp <- roleExperiment(list(p1,p2,p3))
 #' exp <- runRole(exp)
-#' 
 #' @rdname runRole
 #' @export
 
 setGeneric('runRole', 
-           def = function(x, cores=1, print = F) standardGeneric('runRole'), 
+           def = function(x, cores=1) standardGeneric('runRole'), 
            signature = 'x')
 
+
+#' runRole on roleModel
+#' @name runRole
+#' @aliases runRole,roleModel-method
+#' @docType methods
+#' @rdname runRole
 setMethod('runRole', 
           signature = 'roleModel', 
-          definition = function(x, print = F) {
+          definition = function(x) {
                 m <- x
                 
               for(i in 2:length(m@modelSteps))
@@ -46,7 +51,7 @@ setMethod('runRole',
               m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
                                            slot(m@modelSteps[[1]],"metaComm"),
                                            slot(m@modelSteps[[1]],"phylo"),
-                                           pvals,print=FALSE) #m@params
+                                           pvals,print=F)
               # trim data, removing the unused buffer
               m <- .trimModelData(m)
               
@@ -60,9 +65,15 @@ setMethod('runRole',
           }
 )
 
+
+#' runRole on roleExperiment
+#' @name runRole
+#' @aliases runRole,roleExperiment-method
+#' @docType methods
+#' @rdname runRole
 setMethod('runRole', 
           signature = 'roleExperiment', 
-          definition = function(x, cores = 1, print = F) {
+          definition = function(x, cores = 1) {
              
               if(cores == 1){
                   x@modelRuns <- lapply(x@modelRuns, runRole)
@@ -76,52 +87,45 @@ setMethod('runRole',
           }
 )
 
-# user-inaccessible helper to augment the data of the not-yet-run model based on
-#   what is expected from the params 
-# called right before the model is run in Cpp
+#' @title buffer model data
+#'
+#' @description user-inaccessible helper to augment the data of the not-yet-run model based on  what is expected from the params called right before the model is run in Cpp
+#' @param model model
+#'
+#' @return model
+#' @importFrom stats qbinom
 .bufferModelData <- function(model){
     p <- model@params 
     
     # calculate expected number of new species using binom
-    expec_n_spec <- qbinom(0.9,p@niter,prob = mean(p@speciation_local(1:niter)))
+    expec_n_spec <- stats::qbinom(0.9,p@niter,prob = mean(p@speciation_local(1:p@niter)))
     el_add <- (expec_n_spec * 2 - 1) + 1
     at_add <- expec_n_spec + 1
     
     # buffer phylo 
-    model@modelSteps[[1]]@phylo@e
     model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e, matrix(-1, nrow = el_add, ncol = 2)) # edges get -1s
-    model@modelSteps[[1]]@phylo@e
-    model@modelSteps[[1]]@phylo@l
     model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l, rep(0, el_add)) # lengths get 0s
-    model@modelSteps[[1]]@phylo@l
-    model@modelSteps[[1]]@phylo@alive
     model@modelSteps[[1]]@phylo@alive <- c(model@modelSteps[[1]]@phylo@alive, rep(FALSE, at_add)) # alives get FALSE
-    model@modelSteps[[1]]@phylo@alive
-    model@modelSteps[[1]]@phylo@tipNames
     model@modelSteps[[1]]@phylo@tipNames <- c(model@modelSteps[[1]]@phylo@tipNames, rep('', at_add)) # tipNames get ''
-    model@modelSteps[[1]]@phylo@tipNames
-    
+
     # calc buffer size for local species vects 
     # 1 is the expected number of new species plus a small add
     # 2 is the initial number of species plus the expected number of new species plus a small add
     local_add <- p@species_meta + expec_n_spec
     
     # buffer local species vectors with 0s
-    model@modelSteps[[1]]@localComm@spAbund
     model@modelSteps[[1]]@localComm@spAbund <- c(model@modelSteps[[1]]@localComm@spAbund,rep(0,local_add))
-    model@modelSteps[[1]]@localComm@spAbund
-    model@modelSteps[[1]]@localComm@spTrait
     model@modelSteps[[1]]@localComm@spTrait <- c(model@modelSteps[[1]]@localComm@spTrait,rep(0,local_add))
-    model@modelSteps[[1]]@localComm@spTrait
-    model@modelSteps[[1]]@localComm@spAbundHarmMean
-    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  rep(0,local_add)
-    model@modelSteps[[1]]@localComm@spAbundHarmMean
-    model@modelSteps[[1]]@localComm@spLastOriginStep
-    model@modelSteps[[1]]@localComm@spLastOriginStep <-  rep(0,local_add)
-    model@modelSteps[[1]]@localComm@spLastOriginStep
-    model@modelSteps[[1]]@localComm@spExtinctionStep
-    model@modelSteps[[1]]@localComm@spExtinctionStep <-  rep(0,local_add)
-    model@modelSteps[[1]]@localComm@spExtinctionStep
+    
+    # because there is only the start abundance at the start, the harmonic mean is just equal to the abundance 
+    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  c(model@modelSteps[[1]]@localComm@spAbund, rep(0,local_add))
+    
+    # last origin step gets filled with -1s, then all species present in the local at the start get 1
+    model@modelSteps[[1]]@localComm@spLastOriginStep <-  rep(-1,length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+    model@modelSteps[[1]]@localComm@spLastOriginStep[model@modelSteps[[1]]@localComm@spAbund != 0] <- 1
+    
+    # nothing has gone extinct yet, so this gets all -1s
+    model@modelSteps[[1]]@localComm@spExtinctionStep <-  rep(-1,length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
     
     return(model)
 }
@@ -150,8 +154,30 @@ setMethod('runRole',
     return(model)
 }
 
-# make class and object to hold paramValues - it is identical to roleParams 
-#   EXCEPT that all slots are numeric instead of functions
+#' paramValues clas
+#'
+#' @slot individuals_local numeric. 
+#' @slot individuals_meta numeric. 
+#' @slot species_meta numeric. 
+#' @slot speciation_local numeric. 
+#' @slot speciation_meta numeric. 
+#' @slot extinction_meta numeric. 
+#' @slot trait_sigma numeric. 
+#' @slot env_sigma numeric. 
+#' @slot comp_sigma numeric. 
+#' @slot neut_delta numeric. 
+#' @slot env_comp_delta numeric. 
+#' @slot dispersal_prob numeric. 
+#' @slot mutation_rate numeric. 
+#' @slot equilib_escape numeric. 
+#' @slot alpha numeric. 
+#' @slot num_basepairs numeric. 
+#' @slot init_type character. 
+#' @slot niter integer. 
+#' @slot niterTimestep integer. 
+#' @rdname paramValues
+#' @include roleParams.R
+ 
 paramValues <- setClass('paramValues',
                         slots = c(
                             individuals_local = "numeric",
@@ -175,7 +201,13 @@ paramValues <- setClass('paramValues',
                             niterTimestep = 'integer'
                         )
 )
-# run iter functions over params to generate a new object of class paramValues that contains ONLY vectors of values and no functions
+#' Get vals from params
+#' @description run iter functions over params to generate a new object of class paramValues that contains ONLY vectors of values and no functions
+#' 
+#' @param p params
+#'
+#' @return processed params
+#'
 getValuesFromParams <- function(p){
     pvals <- new('paramValues')
     

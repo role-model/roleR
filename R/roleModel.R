@@ -11,10 +11,10 @@
 #' 
 #' @details See the `roleR_intro` vignette for an example modeling workflow.
 #' @examples 
-#' Create a model using a default set of params, then run it.
+#' # Create a model using a default set of params, then run it.
 #' m <- roleModel(roleParams())
 #' m <- runRole(m)
-#' 
+#' @include roleModel.R roleParams.R
 #' @rdname roleModel
 #' @export
 #' 
@@ -31,9 +31,9 @@ setClass('roleModel',
 roleModel <- function(params) {
     J <- params@individuals_local(1)
     Sm <- params@species_meta
-
+    
     phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)
-
+    
     meta <- metaComm(spAbund = .lseriesFromSN(params@species_meta, 
                                               params@individuals_meta), 
                      spTrait = ape::rTraitCont(phylo, 
@@ -41,7 +41,6 @@ roleModel <- function(params) {
     
     # initialize indSpecies from random draw from meta (based on oceanic or
     # bridge island)
-    # ROCKS NOTE - indSpecies and indTrait get n rocks added on where n is empty_niche_space param
     if(params@init_type == 'oceanic_island'){
         initSpp <- rep(sample(params@species_meta, 1, 
                               prob = meta@spAbund), 
@@ -60,7 +59,7 @@ roleModel <- function(params) {
     else{
         stop('`init_type` must be one of `"oceanic_island"` or `"bridge_island"`')
     }
-
+    
     # initialize traits based on spp ID
     initTrait <- meta@spTrait[initSpp]
     
@@ -74,7 +73,6 @@ roleModel <- function(params) {
                     phylo = as(phylo, 'rolePhylo'))
     
     niter <- params@niter
-    
     niterTimestep <- params@niterTimestep
     
     # output data
@@ -87,14 +85,17 @@ roleModel <- function(params) {
 }
 
 
-# ----
-#' @description function to solve for parameter of logseries
+
+# non-exported helper function to solve for parameter of logseries
 #' @param S number of species
 #' @param N number of individuals
 
 .lseriesFromSN <- function(S, N) {
+    qfun <- function(p, beta) {
+        extraDistr::qlgser(p, theta = exp(-beta))
+    }
+    
     # solve for alpha paramter
-    # browser()
     asol <- uniroot(interval = c(.Machine$double.eps^0.25,
                                  .Machine$integer.max),
                     f = function(a) {
@@ -105,55 +106,10 @@ roleModel <- function(params) {
     p <- 1 - exp(-S / asol$root)
     beta <- -log(p)
     
-    # calculate idealized SAD from parameter
-    thisSAD <- pika::sad(model = 'lseries', par = beta)
-    thisSAD <- pika::sad2Rank(thisSAD, S = S)
     
-    # return relative abundances
-    return(thisSAD / sum(thisSAD))
+    rank <- qfun(seq(1, 1/S, length = S) - 1/(2 * S), beta = beta)
+    
+    return(rank / sum(rank))
 }
 
-roleModelGiven <- function(params,phylo,spAbund,spTrait) {
-    J <- params@individuals_local(1)
-    Sm <- params@species_meta
-    
-    meta <- metaComm(spAbund = spAbund,
-                     spTrait = spTrait)
-    
-    # initialize indSpecies from random draw from meta (based on oceanic or
-    # bridge island)
-    if(params@init_type == 'oceanic_island') {
-        initSpp <- rep(sample(params@species_meta, 1, 
-                              prob = meta@spAbund), 
-                       J)
-    } else if(params@init_type == 'bridge_island') {
-        initSpp <- sample(params@speciation_meta, J, 
-                          replace = TRUE, prob = meta@spAbund)
-    } else {
-        stop('`init_type` must be one of `"oceanic_island"` or `"bridge_island"`')
-    }
-    
-    # initialize traits based on spp ID
-    initTrait <- meta@spTrait[initSpp]
-    
-    locs <- localComm(indSpecies = initSpp,
-                      indTrait = initTrait,
-                      indSeqs = rep('ATCG', J), # leave genetic stuff alone
-                      spGenDiv = c(1))
-    
-    dat <- roleData(localComm = locs, 
-                    metaComm = meta, 
-                    phylo = as(phylo, 'rolePhylo'))
-    
-    niter <- params@niter
-    
-    niterTimestep <- params@niterTimestep
-    
-    # output data
-    modelSteps <- vector('list', length = niter / niterTimestep + 1)
-    modelSteps[[1]] <- dat
-    
-    return(new('roleModel', 
-               params =  params, 
-               modelSteps = modelSteps))
-}
+
