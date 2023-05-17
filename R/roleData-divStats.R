@@ -64,14 +64,6 @@ setMethod('totalN',
               return(sum(X))
           }
 )
-# function for total abundance
-#' @param n is a vector of species abundances
-
-.totalAbundSAD <- function(n) {
-    
-    return(sum(n))
-    
-}
 
 
 # genetic hill stats
