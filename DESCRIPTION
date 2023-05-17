@@ -16,13 +16,11 @@ Depends:
 Imports: 
     Rcpp,
     ape,
+    extraDistr,
     methods,
-    pika, 
     snow,
     ranger,
     stats
-Remotes:
-    ajrominger/pika
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
 RcppModules: iterModelCpp
@@ -32,7 +30,8 @@ Suggests:
     rlang,
     rmarkdown,
     reticulate,
-    testthat
+    testthat, 
+    meteR
 VignetteBuilder: knitr
 Collate: 
     'RcppExports.R'
