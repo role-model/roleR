@@ -15,15 +15,13 @@
 #' 
 #' @include roleModel.R roleExperiment.R
 #' @rdname getFinalState
-#' @include roleModel.R roleExperiment.R
 #' @export
 
 setGeneric('getFinalState', 
            def = function(x, modID, ...) standardGeneric('getFinalState'), 
            signature = 'x')
 
-#' @rdname getFinalState
-#' @export
+
 #' Get final state of roleModel
 #' @name getFinalState
 #' @aliases getFinalState,roleModel-method
@@ -42,8 +40,6 @@ setMethod('getFinalState',
           }
 )
 
-#' @rdname getFinalState
-#' @export
 
 #' Get final state of roleExperiment
 #' @name getFinalState

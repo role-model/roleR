@@ -109,7 +109,8 @@ roleModel <- function(params) {
 
 
 
-# non-exported helper function to solve for parameter of logseries
+#' @title logseriesfromsn
+#' @description non-exported helper function to solve for parameter of logseries
 #' @param S number of species
 #' @param N number of individuals
 

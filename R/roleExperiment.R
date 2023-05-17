@@ -22,6 +22,7 @@
 # expr <- runRole(expr)
 #' 
 #' @rdname roleExperiment
+#' @include roleModel.R
 #' @export
 
 setClass('roleExperiment',

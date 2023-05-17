@@ -54,7 +54,7 @@ setMethod('hillAbund',
 
 
 
-# total abundance
+#' @title totalabundance
 #' @rdname total-abundance
 #' @export
 

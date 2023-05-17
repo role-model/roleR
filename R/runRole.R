@@ -110,7 +110,7 @@ setMethod('runRole',
     
     # calculate expected number of new species using binom
     expec_n_spec <- qbinom(0.9, p@niter,
-                           prob = mean(p@speciation_local(1:niter)))
+                           prob = mean(p@speciation_local(1:p@niter)))
     el_add <- (expec_n_spec * 2 - 1) + 1
     at_add <- expec_n_spec + 1
     
@@ -178,8 +178,10 @@ setMethod('runRole',
 }
 
 
-# run iter functions over params to generate a new object of class paramValues 
-# that contains ONLY vectors of values and no functions
+#' @title getValuesFromParams
+#' @description
+#' run iter functions over params to generate a new object of class paramValues 
+#' that contains ONLY vectors of values and no functions
 #' @param p an object of class `roleParams`
 #' @param i the iterations over which to calculate parameter values
 #' @return a list of parameter vectors, each equal in length to `length(i)`
