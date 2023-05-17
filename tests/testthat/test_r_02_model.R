@@ -71,3 +71,13 @@ test_that("when a model is run the supplied model is NOT modified in place", {
     expect_true(is.null(m@modelSteps[[2]]))
     expect_false(is.null(mrun@modelSteps[[2]]))
 })
+
+
+test_that("metacommunity logseries initialization is correct", {
+    S <- 20
+    N <- 1000
+    s <- meteR::meteDist2Rank(meteR::sad(meteR::meteESF(S0 = S, N0 = N)))
+    s <- s / sum(s)
+    m <- roleR:::.lseriesFromSN(S, N)
+    expect_lt(sum((s - m)^2), 0.0001)
+})
