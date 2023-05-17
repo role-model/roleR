@@ -25,3 +25,26 @@ Remotes:
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
 RcppModules: iterModelCpp
+Collate: 
+    'RcppExports.R'
+    'cFun.R'
+    'comm.R'
+    'createPredModel.R'
+    'roleExperiment.R'
+    'roleModel.R'
+    'getFinalState.R'
+    'getSumStats.R'
+    'prepRebuild.R'
+    'quickModel.R'
+    'roleData-divStats.R'
+    'roleData-rawStats.R'
+    'roleData.R'
+    'roleExperiment-methods.R'
+    'roleModel-methods.R'
+    'roleParams.R'
+    'rolePhylo.R'
+    'roleR-package.R'
+    'runRole.R'
+    'setContext.R'
+    'writeRoLE.R'
+    'zzz.R'
