@@ -1,3 +1,20 @@
+#' C fun wrapper
+#' 
+#' (RMD believes) used to port between R and C functions.
+#'
+#' @param type type
+#' @param fun_name fun_name
+#' @param data  data 
+#' @param params params
+#' @param i i
+#' @param probs probs
+#' @param x x
+#' @param dead_index dead_index
+#' @param parent_indv parent_indv
+#' @param dispersed_this_iter dispersed_this_iter
+#' @param speciation_sp speciation_sp
+#'
+#' @return corresponding C function
 cFun <- function(type="int",fun_name="sample_index_using_probs",
                    data=NULL,params=NULL,i=0, # used universally
                    probs=c(0), x = 0, # used in intFuns sample_zero_to_x and sample_index_from_probs

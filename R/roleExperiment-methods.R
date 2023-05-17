@@ -1,7 +1,17 @@
-# selection method for `roleExperiment`
-#' @export
 
-setMethod("[", "roleExperiment", function(x, i, j, ..., drop = FALSE) {
+#' Extract parts of a roleExperiment
+#' @aliases [,roleExperiment-method
+#' @docType methods
+#' @param x a roleExperiment object
+#' @param i i
+#' @param j j
+#' @param ... ignored
+#' @param drop default F
+#' @rdname roleExperiment
+
+setMethod("[", 
+         signature(x = "roleExperiment", i = "ANY", j = "ANY"),
+          function(x, i, j, ..., drop = FALSE) {
     iMissing <- missing(i)
     jMissing <- missing(j)
     nargs <- nargs() # e.g., a[3,] gives 2 for nargs, a[3] gives 1.
@@ -50,8 +60,13 @@ setMethod("[", "roleExperiment", function(x, i, j, ..., drop = FALSE) {
 })
 
 
-# column selection method for `roleExperiment`
-#' @export
+#' Extract a name
+#' @name $
+#' @aliases $,roleExperiment-method
+#' @param x a roleExperiment
+#' @param name thing to extract
+#' @docType methods
+#' @rdname roleExperiment
 
 setMethod("$", "roleExperiment", function(x, name) {
     if(name %in% names(x@info)) {
@@ -60,16 +75,17 @@ setMethod("$", "roleExperiment", function(x, name) {
         stop('no $ method for object without metadata')
     }
 })
+#' 
+#' # print method for `roleExperiment`
+#' #' @export
+#' 
+#' setMethod('show', signature = signature(object = 'roleExperiment'),
+#'           definition = function(object) {
+#'               nmod <- length(unique(object@info$mod_id))
+#'               cat(sprintf('RoLE experiment with %s unique model%s', 
+#'                           nmod, 
+#'                           ifelse(nmod == 1, '', 's')), 
+#'                   '\n')
+#'           }
+#' )
 
-# print method for `roleExperiment`
-#' @export
-
-setMethod('show', signature = signature(object = 'roleExperiment'),
-          definition = function(object) {
-              nmod <- length(unique(object@info$mod_id))
-              cat(sprintf('RoLE experiment with %s unique model%s', 
-                          nmod, 
-                          ifelse(nmod == 1, '', 's')), 
-                  '\n')
-          }
-)

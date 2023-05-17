@@ -21,7 +21,6 @@
 #' p3 <- roleParams(dispersal_prob = 0.4)
 #' exp <- roleExperiment(list(p1,p2,p3))
 #' exp <- runRole(exp)
-#' 
 #' @rdname runRole
 #' @export
 
@@ -29,6 +28,12 @@ setGeneric('runRole',
            def = function(x, cores=1) standardGeneric('runRole'), 
            signature = 'x')
 
+
+#' runRole on roleModel
+#' @name runRole
+#' @aliases runRole,roleModel-method
+#' @docType methods
+#' @rdname runRole
 setMethod('runRole', 
           signature = 'roleModel', 
           definition = function(x) {
@@ -60,6 +65,12 @@ setMethod('runRole',
           }
 )
 
+
+#' runRole on roleExperiment
+#' @name runRole
+#' @aliases runRole,roleExperiment-method
+#' @docType methods
+#' @rdname runRole
 setMethod('runRole', 
           signature = 'roleExperiment', 
           definition = function(x, cores = 1) {
@@ -87,9 +98,13 @@ setMethod('runRole',
           }
 )
 
-# user-inaccessible helper to augment the data of the not-yet-run model based on
-#   what is expected from the params 
-# called right before the model is run in Cpp
+#' @title buffer model data
+#'
+#' @description user-inaccessible helper to augment the data of the not-yet-run model based on  what is expected from the params called right before the model is run in Cpp
+#' @param model model
+#'
+#' @return model
+#' @importFrom stats qbinom
 .bufferModelData <- function(model){
     p <- model@params 
     
@@ -132,7 +147,7 @@ setMethod('runRole',
         rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
     model@modelSteps[[1]]@localComm@spExtinctionStep <-  
         rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
-    
+
     return(model)
 }
 

@@ -9,18 +9,21 @@
 #' 
 #' @details See Gaggiotti et al. 2018 for an overview of Hill numbers in the context of ecology and evolution. 
 #' @references Gaggiotti, Oscar E, Anne Chao, Pedro Peres-Neto, Chun-Huo Chiu, Christine Edwards, Marie-Josée Fortin, Lou Jost, Christopher M Richards, and Kimberly A Selkoe. “Diversity from Genes to Ecosystems: A Unifying Framework to Study Variation across Biological Metrics and Scales.” Evol. Appl. 11, no. 7 (2018): 1176–93. https://doi.org/10.1111/eva.12593.
-
+#' @include roleData.R
 #' @rdname div-sumStats
 #' @export
 
-# abundance hill stats
-#' @rdname div-sumStats
-#' @export
 
 setGeneric('hillAbund', 
            def = function(x, q = 1:4, ...) standardGeneric('hillAbund'), 
            signature = 'x')
 
+
+#' HillAbund on roleData
+#' @name hillAbund
+#' @aliases hillAbund,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
 
 setMethod('hillAbund', 
           signature = 'roleData', 
@@ -33,7 +36,10 @@ setMethod('hillAbund',
 )
 
 
-# function for abundance-based
+#' @title HillDivSAD
+#' function for abundance-based
+#'@param q  hill order
+#'
 #' @param n is a vector of species abundances
 
 .hillDivSAD <- function(n, q) {
@@ -47,6 +53,25 @@ setMethod('hillAbund',
 }
 
 
+
+# total abundance
+#' @rdname total-abundance
+#' @export
+
+setGeneric('totalN', 
+           def = function(x, ...) standardGeneric('totalN'), 
+           signature = 'x')
+
+
+setMethod('totalN', 
+          signature = 'roleData', 
+          definition = function(x) {
+              X <- rawAbundance(x)[[1]]
+              return(sum(X))
+          }
+)
+
+
 # genetic hill stats
 #' @rdname div-sumStats
 #' @export
@@ -55,6 +80,13 @@ setGeneric('hillGenetic',
            def = function(x, q = 1:4, ...) standardGeneric('hillGenetic'), 
            signature = 'x')
 
+
+
+#' hillGenetic on roleData
+#' @name hillGenetic
+#' @aliases hillGenetic,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
 
 setMethod('hillGenetic', 
           signature = 'roleData', 
@@ -76,6 +108,12 @@ setGeneric('hillTrait',
            signature = 'x')
 
 
+
+#' hillTrait on roleData
+#' @name hillTrait
+#' @aliases hillTrait,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
 setMethod('hillTrait', 
           signature = 'roleData', 
           definition = function(x, q = 1:4) {
@@ -94,10 +132,10 @@ setMethod('hillTrait',
           }
 )
 
-
-# function for trait-based
+#' @title HillDivTrait
+#' function for trait-based
 #' @param X a matrix with first column = abund, second column = traits
-#' @param traits is a vector of traits
+#' @param q order for hill number
 
 .hillDivTrait <- function(X, q) {
     n <- X[, 1]
@@ -131,6 +169,11 @@ setGeneric('hillPhylo',
            signature = 'x')
 
 
+#' hillPhylo on roleData
+#' @name hillPhylo
+#' @aliases hillPhylo,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
 setMethod('hillPhylo', 
           signature = 'roleData', 
           definition = function(x, q = 1:4) {
@@ -148,6 +191,12 @@ setGeneric('richness',
            def = function(x, ...) standardGeneric('richness'), 
            signature = 'x')
 
+
+#' richness on roleData
+#' @name richness
+#' @aliases richness,roleData-method
+#' @docType methods
+#' @rdname div-sumStats
 setMethod('richness', 
           signature = 'roleData', 
           definition = function(x) {

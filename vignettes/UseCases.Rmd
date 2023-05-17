@@ -1,0 +1,272 @@
+---
+title: "UseCases"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{UseCases}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+This document shows off various use cases using the current implementation of roleR
+
+## Overview
+
+Install from GitHub
+
+```{r role, cache = TRUE, eval = TRUE}
+
+# devtools::install_github("role-model/roleR")
+
+library(roleR)
+library(ggplot2)
+```
+
+Run a model and plot species richness over time
+
+
+```{r overview, cache = TRUE, eval = TRUE}
+
+p <- roleParams(
+    individuals_local = 100,
+    individuals_meta = 1000,
+    species_meta = 50,
+    speciation_local = 0.05,
+    speciation_meta = 0.05,
+    extinction_meta = 0.05,
+    env_sigma = 0.5,
+    trait_sigma = 1,
+    comp_sigma = 0.5,
+    dispersal_prob = 0.1,
+    mutation_rate = 0.01,
+    equilib_escape = 1,
+    num_basepairs = 250,
+    init_type = 'oceanic_island',
+    niter = 1000,
+    niterTimestep = 100
+)
+
+model <- runRole(roleModel(p))
+stats <-
+    getSumStats(model, funs = list(rich = richness)) #TODO add default where all existing sumstats are added
+ggplot(stats, aes(iteration, rich)) +
+    geom_line()
+```
+
+## Parameter Creation
+
+Create a set of parameters specifying every one
+
+```{r params, cache = TRUE, eval = TRUE}
+
+p <- roleParams(individuals_local = 100, individuals_meta = 1000, species_meta = 100, 
+                    speciation_local = 0.1, speciation_meta = 0.1, extinction_meta = 0.05, dispersal_prob = 0.1,
+                    trait_sigma=1, env_sigma=1, comp_sigma = 0.5, neut_delta=1, env_comp_delta=1,
+                    mutation_rate=0,equilib_escape = 1, alpha=50, num_basepairs = 250,
+                    init_type = 'oceanic_island', niter = 1000, niterTimestep = 10)
+```
+
+Create a set of params per the Unified Neutral Theory of Biodiversity (UNTB).
+This creates a "UNTB-flavored" RoLE model 
+
+```{r untb_params, cache = TRUE, eval = TRUE}
+
+p_untb <- untbParams(individuals_local = 100, individuals_meta = 1000, 
+                        species_meta = 50, 
+                        speciation = 0.2, 
+                        dispersal_prob = 0.1, init_type = 'oceanic_island',
+                        niter = 1000, niterTimestep = 100)   
+    
+```
+
+See the roleParams documentation for descriptions of all available parameters 
+
+<span style="color:blue">Group Question: Should default parameters exist so that simply p <- roleParams() creates a valid params? If so what should the defaults be? </span>
+
+## Model & Experiment Creation & Running
+
+Create a model (not yet run) using the params, then run it 
+
+```{r model, cache = TRUE, eval = TRUE}
+
+model <- roleModel(p)
+model <- runRole(model)
+
+```
+
+Create an experiment (not yet run) containing two models created using both sets of params, then run it.
+Experiment running can be parallelized on Windows, Mac, & Linux by specifying the number of cores to use. 
+When you run an experiment, it runs every model within it.
+
+```{r exp, cache = TRUE, eval = TRUE}
+
+exp <- roleExperiment(list(p,p_untb))
+library(parallel)
+exp <- runRole(exp,cores=2)
+
+```
+
+Experiments are intended to encapsulate one or more hypotheses through comparison of multiple varying models contained within them
+
+<span style="color:blue">Group Question: Is encapsulating multiple models as experiments useful, or would you rather deal with models individually in your use cases? </span>
+
+## Extracting Data From Models
+
+Get a summary stats over time for a single model, each row being a different saved iteration state.
+Available raw stats are rawAbundance, rawSpAbundance, rawTraits, rawGenDiv, rawBranchLengths, and rawApePhylo.
+Available transformed stats are hillAbund, hillGenetic, hillTrait, hillPhylo, and richness.
+
+```{r series, cache = TRUE, eval = TRUE}
+
+stats <- getSumStats(model, list(rich = richness,hill_abund=hillAbund))
+stats
+
+```
+
+Get summary stats over time for one model of an experiment 
+
+```{r series2, cache = TRUE, eval = TRUE} 
+
+stats <- getSumStats(exp@modelRuns[[1]], list(hill_abund=hillAbund)) 
+``` 
+
+Create a custom summary statistic and extract it 
+
+```{r series3, cache = TRUE, eval = TRUE} 
+
+speciesWith5Indv <- function(x){return(sum(x@localComm@spAbund > 4))} 
+stats <- getSumStats(exp@modelRuns[[1]], list(sp_with_5=speciesWith5Indv)) 
+
+``` 
+
+<span style="color:blue">Group Question: Any ideas for more default summary stats we could add? </span> 
+
+<span style="color:blue">Group Question: Besides plotting model data over model iterations, any plotting functions you would want? </span> 
+
+## Extracting Data From Experiments 
+
+Get a dataframe containing all saved timesteps of all models in the experiment 
+
+```{r data, cache = TRUE, eval = TRUE} 
+
+stats <- getSumStats(exp, list(hill_abund=hillAbund)) 
+
+``` 
+
+Get a dataframe containing model metadata in the experiment, where each row is an experiment with its associated params 
+
+```{r data2, cache = TRUE, eval = FALSE} 
+
+exp_model_params <- exp@experimentMeta 
+
+``` 
+
+Get transformed summary stats (such as the mean of a stat at an iteration for multiple models) from an experiment (WIP) 
+
+```{r series4, cache = TRUE, eval = FALSE} 
+
+# stats <- getSumStats(exp, list(hill_abund_itermean=hillAbundItermean)) 
+## where hillAbundItermean is a function that applies across an experiment rather than across a roleData 
+
+``` 
+
+<span style="color:blue">Group Question: Are transformed summary stats summarized from multiple models useful? Any other multiple-model-summarizing functions other than mean? Also let us know if this concept is unclear, it is a little confusing. </span> 
+
+## Parameter Priors & Iter-Functions (NOT CURRENT) 
+
+Functions can be set that sample params at every iteration step 
+
+A prior is any function that takes no inputs and returns a parameter value 
+
+Change one parameter to be sampled from a normal distribution every iteration 
+
+```{r priors, cache = TRUE, eval = FALSE} 
+
+p@speciation_local <- function(){return(rnorm(1,mean=0.05,sd=0.01))} 
+
+``` 
+
+An iter-function takes an iteration number and returns a parameter value 
+
+Change one parameter to increase linearly every iteration 
+
+```{r iterfuns, cache = TRUE, eval = FALSE} 
+
+p@speciation_local <- function(iter){return(iter * 0.001)} 
+plot(1:1000 * 0.001,xlab = "iteration",ylab = "speciation rate") 
+
+``` 
+
+Create a simple piecewise function where a param changes during some iterations 
+
+```{r iterfuns2, cache = TRUE, eval = FALSE} 
+
+#p@env_sigma <- function(iter){ 
+#        if(iter > 400 & iter < 600){ 
+#            return(0.75) 
+#        } 
+#        else{ 
+#            return(0.5) 
+#        } 
+#    } 
+
+``` 
+
+<span style="color:blue">Group Question: What are some ways in which you would want to vary parameters? Do priors and iterfuncs capture the kind of parameter variability you would want? </span> 
+
+<span style="color:blue">Group Question: We are considering two ways of handling priors and iterfuns. The first is allow the parameter slot to include either a vector or a function as in the example. The second is have an additional class called roleFunctions that would overwrite params it contains, for the purpose of avoiding confusion that could be caused by a multiple-class slot. Let us know if you have any feelings about these! </span> 
+
+
+## Simulating Genetic Diversities (NOT CURRENT) 
+
+Add genetic diversities to a run model by backwards time simulation using msprime 
+
+```{r gendiv, cache = TRUE, eval = FALSE} 
+
+#model <- simulateSpeciesGenDiv(model) 
+
+``` 
+
+## Experiment Organization 
+
+Tag models in an experiment for comparison between different tags 
+
+```{r adv, cache = TRUE, eval = FALSE} 
+
+names(exp@modelRuns) <- c("basic","neut") 
+
+``` 
+
+Set metadata of experiment within the object, which is exported when saving 
+
+```{r adv2, cache = TRUE, eval = FALSE} 
+
+exp@authorMeta <- c("author"="Jacob Idec","description"="dummy model")
+
+``` 
+
+<span style="color:blue">Group Question: Is this basic metadata sufficient? Should the description be split up into more specific parts? </span> 
+
+## Writing and Loading
+
+Write and load models, experiments, and params 
+
+```{r saving, cache = TRUE, eval = FALSE} 
+
+writeRole(exp,dir="",filename="test",save_txt = T) 
+#exp <- readRDS("test.roleexperiment") 
+
+``` 
+
+## Predictive Models (NOT CURRENT) 
+
+Use a run experiment to make a model predicting a parameter from summary stats 
+
+```{r preds, cache = TRUE, eval = FALSE} 
+
+#pred_model <- createPredModel(exp,param_name = "speciation_local", preds=c("hill_abund1","hill_abund2")) 
+
+``` 

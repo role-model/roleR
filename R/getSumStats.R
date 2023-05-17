@@ -21,11 +21,13 @@
 #' @return data.frame containing summary stats where each row is a model snapshot
 #' and each column is a summary stat requested by a function provided to `funs`
 #' 
+#' @include roleData.R
+#' 
 #' @examples 
 #' # get the species richness 
-#' rich_stat <- getSumStats(model, funs = list(rich = richness))
+#' # rich_stat <- getSumStats(model, funs = list(rich = richness))
 #' # get many default summary stats
-#' stats <- getSumStats(model)
+#' # stats <- getSumStats(model)
 #' 
 #' @rdname getSumStats
 #' @export
@@ -83,6 +85,12 @@ setMethod('getSumStats',
           }
 )
 
+#' Get SumStats mean
+#'
+#' @param x x
+#' @param funs funs
+#'
+#' @return something
 getSumStatsMean <- function(x, funs){
     ss <- list()
     for(r in 1:length(x@modelRuns)){

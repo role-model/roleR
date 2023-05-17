@@ -9,6 +9,7 @@
 #' @details access the `localComm`,`metaComm`, and `phylo` slots using `@`, 
 #' i.e. `data@localComm` for a `roleData` object called data 
 #' @rdname roleData
+#' @include rolePhylo.R
 #' @export
 
 setClass('roleData',
@@ -18,6 +19,9 @@ setClass('roleData',
 
 # constructor
 #' @rdname roleData
+#' @param localComm A `localComm` object containing the local community.
+#' @param metaComm A `metaComm` object containing the meta community.
+#' @param phylo A `rolePhylo` object containing the model phylogeny. 
 #' @export
 
 roleData <- function(localComm,metaComm,phylo) {
@@ -27,6 +31,13 @@ roleData <- function(localComm,metaComm,phylo) {
              phylo = phylo))
 }
 
+#' roleDataFromCpp
+#'
+#' @param data  a cpp object 
+#'
+#' @return a roleData object
+#' @export
+#'
 roleDataFromCpp <- function(data) {
   local <- localComm(data$local$abundance_indv,data$local$species_ids,
                      data$local$traits,data$local$abundance_sp,
@@ -38,6 +49,13 @@ roleDataFromCpp <- function(data) {
   return(roleData(local,meta,phylo))
 }
 
+#' roleDataToCpp
+#'
+#' @param data some roleData
+#'
+#' @return for Cpp
+#' @export
+#'
 roleDataToCpp <- function(data) {
   local <- localComm(data$local$abundance_indv,data$local$species_ids,
                      data$local$traits,data$local$abundance_sp,

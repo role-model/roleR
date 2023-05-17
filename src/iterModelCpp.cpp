@@ -231,12 +231,14 @@ Rcpp::CharacterVector buffer_character_vector(Rcpp::CharacterVector vec, std::st
     return result; // return the new vector
 }
 arma::imat buffer_arma_mat(arma::imat imat, int value, int n) {
-    arma::mat mat = arma::conv_to<arma::mat>::from(imat);
-    int n_rows = mat.n_rows + n; // calculate the new number of rows of the matrix
-    int n_cols = mat.n_cols; // keep the same number of columns
-    arma::mat result(n_rows, n_cols, arma::fill::zeros); // create a new matrix with the new number of rows, filled with zeroes
-    result.submat(n, 0, n_rows - 1, n_cols - 1) = mat; // copy the original matrix to the new matrix, starting at the (n+1)th row
-    result.submat(0, 0, n - 1, n_cols - 1).fill(value); // fill the top n rows of the new matrix with -1
+    //arma::mat mat = arma::conv_to<arma::mat>::from(imat);
+    //int n_rows = mat.n_rows + n; // calculate the new number of rows of the matrix
+    //int n_cols = mat.n_cols; // keep the same number of columns
+    //arma::mat result(n_rows, n_cols, arma::fill::zeros); // create a new matrix with the new number of rows, filled with zeroes
+    //result.submat(n, 0, n_rows - 1, n_cols - 1) = mat; // copy the original matrix to the new matrix, starting at the (n+1)th row
+    //result.submat(0, 0, n - 1, n_cols - 1).fill(value); // fill the top n rows of the new matrix with -1
+    arma::mat result = arma::join_cols(arma::conv_to<arma::mat>::from(imat), arma::ones<arma::mat>(n, 2) * value);
+    
     return(arma::conv_to<arma::imat>::from(result)); // return the new matrix
 }
 arma::vec buffer_arma_vec(arma::vec v, int value, int n) {
@@ -266,7 +268,8 @@ void update_speciation_local_meta(int i, int dead_index, roleDataCpp &d, rolePar
     
     // augment vectors by a set amount if the id of the new species (the n tips in the phylo)
     //  exceeds the size of the local sp vectors
-    if(d.nTipsP(0) > d.spAbundL.length() - 20){
+    if(d.nTipsP(0) > d.spAbundL.length() - 1){
+        if(print){ Rcout << "buffering in local meta" << "\n";}
         d.spAbundL = buffer_numeric_vector(d.spAbundL,0,100);
         d.spTraitL = buffer_numeric_vector(d.spTraitL,0,100);
         d.spLastOriginStepL = buffer_numeric_vector(d.spLastOriginStepL,0,100);
@@ -298,7 +301,8 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
     
     // augment vectors by a set amount if the id of the new species (the n tips in the phylo)
     //  exceeds the size of the local sp vectors
-    if(d.nTipsP(0) > d.aliveP.length() - 20){
+    if(d.nTipsP(0) > d.aliveP.length() - 1){
+        //if(print){ Rcout << "buffering in phylo" << "\n";}
         d.aliveP = buffer_logical_vector(d.aliveP,"FALSE",100); // buffer alive
         d.tipNamesP = buffer_character_vector(d.tipNamesP,"",100); // buffer tip names
         d.lengthsP = buffer_arma_vec(d.lengthsP,-2,100); // buffer edge lengths
@@ -327,16 +331,24 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
        }
     }
     
-    //if(print){ Rcout << "safety buffer" << "\n";}
     // additional safety check
     if(eNew == -1){
         //if(print){ Rcout << "do safety buffer" << "\n";}
+        
+        //if(print){ Rcout << "lengthsP before" << "\n";}
+        //if(print){ Rcout << d.lengthsP << "\n";}
         d.lengthsP = buffer_arma_vec(d.lengthsP,-2,100); // buffer edge lengths
+        //if(print){ Rcout << "lengthsP after" << "\n";}
+        //if(print){ Rcout << d.lengthsP << "\n";}
+        
         //if(print){ Rcout << "edgesP before" << "\n";}
         //if(print){ Rcout << d.edgesP << "\n";}
         d.edgesP = buffer_arma_mat(d.edgesP,-2,100); // buffer edges
         //if(print){ Rcout << "edgesP after" << "\n";}
         //if(print){ Rcout << d.edgesP << "\n";}
+        
+        int eMax = arma::size(d.edgesP)[0];
+        
         for (int k = 0; k < eMax; k++) {
             if (d.edgesP(k, 0) == -2) {
                 eNew = k;
@@ -592,9 +604,18 @@ S4 role_data_from_cpp(roleDataCpp &d){
     
     return(out_d);
 }
-
+//' @title iterModelCpp
+//' @name iterModelCpp
+//' @param local local
+//' @param meta meta
+//' @param phylo phylo
+//' @param params params
+//' @param print print
+//
+//
 // [[Rcpp::export]]
 List iterModelCpp(RObject local, RObject meta, RObject phylo, List params, bool print) {
+
     
     if(print){ Rcout << "save niter and niterTimestep"<< "\n";}
     
@@ -721,10 +742,18 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, List params, bool 
 // these funs, one per return data type, are R wrappers around multiple Cpp functions
 // these avoid having to wrap all ~20 functions individually 
 // ONLY used for testing and nothing else
+//' @name intFunCpp
+//' @title intFunCpp
+//' @param fun_Name fun_Name
+//' @param probs probs
+//' @param x x
+//
 // [[Rcpp::export]]
 int intFunCpp(Rcpp::StringVector fun_name,
-                NumericVector probs=NULL, int x=NULL) {
+                NumericVector probs=NULL, 
+                int x=NULL) {
     std::string fn = Rcpp::as<std::string>(fun_name(0));
+   
     
     // tried switch, didn't work but may revisit
     if(fn == "sample_index_using_probs"){
@@ -738,6 +767,21 @@ int intFunCpp(Rcpp::StringVector fun_name,
 
 // need to update this so it can deal with params as a List
 
+
+//' @title dataFunCpp
+//' @name dataFunCpp
+//' @param fun_name fun_name
+//' @param local local
+//' @param meta meta
+//' @param phylo phylo
+//' @param params params
+//' @param niter niter
+//' @param i i
+//' @param dead_index dead_index
+//' @param parent_indv parent_indv
+//' @param dispersed_this_year dispersed_this_year
+//' @param speciation_sp speciation_sp
+//
 // [[Rcpp::export]]
 S4 dataFunCpp(Rcpp::StringVector fun_name,
               RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, //used universally
@@ -778,7 +822,15 @@ S4 dataFunCpp(Rcpp::StringVector fun_name,
         return(role_data_from_cpp(d));
     }
 }
-
+//' @title vectFunCpp
+//' @name vectFunCpp
+//' @param fun_name fun_name
+//' @param local local
+//' @param meta meta
+//' @param phylo phylo
+//' @param params params
+//' @param niter niter
+//' @param i i 
 // [[Rcpp::export]]
 NumericVector vectFunCpp(Rcpp::StringVector fun_name,
                          RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, // used universally 

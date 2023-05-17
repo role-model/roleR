@@ -1,8 +1,9 @@
 #' @title Write a roleExperiment to disk
 #' @description writes to a .roleExperiment file that can be read into R using readRDs
 #' @param x roleExperiment object to write.
-#' @param dir directory (path) to write the object to.
+#' @param directory directory (path) to write the object to.
 #' @param filename name of the file to save.
+#' @param save_txt T/F
 #' File will be called *filename*.roleExperiment. 
 #' @rdname writeRole
 #' @export

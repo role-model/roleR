@@ -37,7 +37,7 @@
 #' 
 #' @slot mutation_rate Rate of sequence mutation to use in genetic simulations.
 #' @slot equilib_escape Proportion of equilibrium required to halt the model as it is running and return it
-#' @slot alpha
+#' @slot alpha alpha parameter
 #' @slot num_basepairs Number of basepairs to use in genetic simulations. Genetic simulations are currently single-locus.
 #' 
 #' @slot init_type The biological model used to initialize; a single character string that can be either "oceanic_island", "bridge_island", or "bare_island."
@@ -57,7 +57,7 @@
 #'      If `niter`values are supplied, a different sequential value in the `niter` vector is used for each iteration.
 #'      
 #' @examples 
-#' Create a set of params
+#' # Create a set of params
 #' params <- roleParams(individuals_local = 100, individuals_meta = 1000,
 #' species_meta = 10, speciation_local = 0.5, 
 #' speciation_meta = 1, extinction_meta = 0.8, env_sigma = 0.5,
@@ -65,13 +65,12 @@
 #' equilib_escape = 1, num_basepairs = 250,
 #' init_type = 'oceanic_island', niter = 2, niterTimestep = 2)
 #' 
-#' Use it to create a roleModel
+#' # Use it to create a roleModel
 #' model <- roleModel(params)
-#' 
 #' @rdname roleParams
 #' @export
 
-roleParams <- setClass('roleParams',
+setClass('roleParams',
                         # slots that are 'functions' are allowed to time-vary across the simulation - all others are not
                        slots = c(
                            # number of individuals and species in the local and meta
@@ -148,7 +147,6 @@ roleParams <- setClass('roleParams',
 #' # create a new set of params but randomly deviating the speciation rate using an "iter function"
 #' spfun <- function(i){rnorm(1,mean=0.1,sd=0.01)}
 #' p <- roleParams(speciation_local=spfun)
-#' 
 #' @rdname roleParams
 #' @export
 
@@ -253,9 +251,19 @@ roleParams <- function(individuals_local=100,
     return(out_params)
 }
 
+
 #' @title Wrapper around roleParams to create a "untb-flavored" (Unified Neutral Theory of Biodiversity) roleModel
 #' @description Only arguments relevant to a UNTB neutral model is included
 #' 
+#' @param individuals_local  individuals_local
+#'
+#' @param individuals_meta individuals_meta
+#' @param species_meta species_meta
+#' @param speciation speciation
+#' @param dispersal_prob dispersal_prob
+#' @param init_type init_type
+#' @param niter niter
+#' @param niterTimestep niterTimestep
 #' @return a `roleParams` object
 #' @rdname untbParams
 #' @export
@@ -291,57 +299,15 @@ untbParams <- function(individuals_local,
         niterTimestep = niterTimestep))
 }
 
-# constructor
-#' @rdname untbParams
-#' @export
 
-sp1_gr = 0.1
-sp2_gr = 0.6
-sp1_k = 50
-sp2_k = 70
-alpha12 = 0.1
-alpha21 = 0.2
-niter = 1000
-lvParams <- function(sp1_n,sp2_n,sp1_gr,sp2_gr,sp1_k,sp2_k,alpha12,alpha21,niter) {
-    max_gr_sp <- which.max(c(sp1_gr,sp2_gr))
-    max_gr <- max(sp1_gr,sp2_gr)
-    
-    mu10 <- ifelse(max_gr_sp == 1, 0, max_gr - sp1_gr)
-    mu20 <- ifelse(max_gr_sp == 2, 0, max_gr - sp2_gr)
-    
-    la10 <- sp1_gr + mu10
-    la20 <- sp2_gr + mu20
-    
-    mu11 <- sp1_gr / sp1_k
-    mu22 <- sp2_gr / sp2_k
-    
-    mu12 <- sp1_gr * alpha12 / sp1_k
-    mu21 <- sp2_gr * alpha21 / sp2_k
-    
-    return(roleParams(
-        individuals_local = sp1_k + sp2_k, # J (number of indv + rocks) = the total carrying capacity
-        individuals_meta = individuals_meta,
-        species_meta = species_meta,
-        speciation_local = speciation,
-        speciation_meta = 0.8,
-        extinction_meta = 0.05,
-        trait_sigma = 1,
-        env_sigma = 1,
-        comp_sigma = 1,
-        neut_delta = 1, # makes the model neutral by ignoring env and comp sigmas
-        env_comp_delta = 1,
-        dispersal_prob = dispersal_prob,
-        mutation_rate = 1e-7,
-        equilib_escape = 1,
-        alpha = 10,
-        num_basepairs = 250,
-        init_type = init_type, 
-        niter = niter,
-        niterTimestep = niterTimestep))
-}
-
-# helper that, given a single value, builds a function
+#' buildFun
+#'
+#'  helper that, given a single value, builds a function
 #   that returns that value stretched to niter in a vectorized fashion
+#' @param p something magical
+#'
+#' @return p stretched to niter
+#'
 buildFun <- function(p) {
     p # what in the name of god why does this work
     f <- function(i) {

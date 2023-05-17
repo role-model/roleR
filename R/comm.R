@@ -1,16 +1,13 @@
 #' @title The local community of a `roleData` 
 #' 
 #' @description An S4 class to specify the state of a local community
-
 #' @slot indSpecies a numeric vector of the species IDs for each individual
 #' For example indSpecies[2] is the ID of the species of individual 2
 #' @slot indTrait a numeric vector of the trait values for each individual
 #' @slot indSeqs a character vector of the gene sequences for each individual
-#'     
 #' @slot spGenDiv a numeric vector of the genetic diversities for each species
 #' @slot spTrait a numeric vector of the mean trait value of each species
 #' @slot spAbund a numeric vector of the abundance (number of individuals) of each species
-#' 
 #' @slot spAbundHarmMean numeric vector of the harmonic mean of species abundances
 #' Equivalent to n / the reciprocal sum of abundances since last emergence where n is the number of steps in the reciprocal sum
 #' Used in genetic simulation in roleR
@@ -19,7 +16,7 @@
 #' Used in genetic simulation in roleR
 #' @slot spExtinctionStep numeric vector of the last extinction (extirpation) step of each species
 #' Used in genetic simulation in roleR
-#' 
+#' @slot equilibProp numeric something
 #' @rdname localComm
 #' @export
 
@@ -39,6 +36,10 @@ setClass('localComm',
 
 # constructor 
 #' @rdname localComm
+#' @param indSpecies indSpecies
+#' @param indTrait indTrait
+#' @param indSeqs indSeqs
+#' @param spGenDiv spGenDiv
 #' @export
 
 localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { #indSppTrt, indSeqs, sppGenDiv
@@ -82,6 +83,8 @@ setClass('metaComm',
 
 # constructor 
 #' @rdname metaComm
+#' @param spAbund spAbund
+#' @param spTrait spTrait
 #' @export
 
 metaComm <- function(spAbund,spTrait) {

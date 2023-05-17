@@ -11,6 +11,7 @@ def py_msprime_simulate(J_m,
                         metaTree,
                         metaAbund,
                         localAbund,
+                        spAbundHarmMean,
                         localTDiv,
                         alpha,
                         sequence_length,
@@ -22,8 +23,8 @@ def py_msprime_simulate(J_m,
 
     if verbose:
         print(INIT_MSG.format(J_m=J_m, J=J, curtime=curtime, metaTree=metaTree,
-                            metaAbund=metaAbund, localTDiv=localTDiv,
-                            alpha=alpha, sequence_length=sequence_length, mu=mu))
+                            metaAbund=metaAbund, localAbundHmean=spAbundHarmMean, 
+                            localTDiv=localTDiv, alpha=alpha, sequence_length=sequence_length, mu=mu))
 
     ## Sanity check
     if alpha <= 0:
@@ -33,11 +34,24 @@ def py_msprime_simulate(J_m,
     ## Enumerate +1 for 1-indexed species names
     meta_sad = {x+1:y*J_m for x,y in enumerate(metaAbund)}
 
-    ## Local community
+    ## Local community. Raw abundances. In current form only used to get the
+    ## species ids for the local community (which will be used to grab harmonic means below)
     local_sad = {int(x):y for x,y in Counter(localAbund).items()}
+    if verbose: print("local_sad Raw - ", local_sad)
 
     ## -1 so lidx indices from 1-idexed species names properly index indo localTDiv array
-    lidx = np.array(list(local_sad.keys()), dtype=int)-1
+    ## and the spAbundHarmMean array (sorted for the sake of sanity)
+    lidx = np.sort(np.array(list(local_sad.keys()), dtype=int)-1)
+
+    ## Maintain the dictionary format for the local community mapping species ids to 
+    ## harmonic mean abundances
+    ## If harmonic mean species abundance is all zeros then fall back to using the raw abundance
+    ## (primarily for time zero).
+    if np.sum(spAbundHarmMean) > 0:
+        hmeans = np.array(spAbundHarmMean)[lidx]
+        local_sad = {x+1:y for x,y in zip(lidx, hmeans)}
+        if verbose: print("local_sad Hmean - ", local_sad)
+
     ## Get tdiv in generations before present
     ## Subtract localTDiv from curtime (current time in iterations) and divide by iterations per generation (J/2)
     localTDiv = np.array(localTDiv)[lidx]
@@ -158,6 +172,7 @@ INIT_MSG = """
     curtime - {curtime}
     metaTree - {metaTree}
     metaAbund - {metaAbund}
+    localAbundHmean - {localAbundHmean}
     localTDiv - {localTDiv}
     alpha - {alpha}
     sequence_length - {sequence_length}
