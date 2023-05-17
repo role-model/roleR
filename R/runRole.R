@@ -63,15 +63,26 @@ setMethod('runRole',
 setMethod('runRole', 
           signature = 'roleExperiment', 
           definition = function(x, cores = 1) {
-             
+              oldInits <- x@inits
+              
+              # run consituent models
               if(cores == 1){
-                  x@modelRuns <- lapply(x@modelRuns, runRole)
-              }
-              else{
+                  modList <- lapply(x@inits, runRole)
+              } else {
                   cl <- snow::makeCluster(cores, type="SOCK")
-                  x@modelRuns <- snow::clusterApply(cl, x@modelRuns, runRole)
+                  modList <- snow::clusterApply(cl, x@inits, runRole)
                   snow::stopCluster(cl)
               }
+              
+              # convert list of models to list of experiments
+              expList <- lapply(modList, as, Class = 'roleExperiment')
+              
+              # combine list
+              x <- Reduce(rbind2, expList)
+              
+              # add back the original inits
+              x@inits <- oldInits
+              
               return(x)
           }
 )

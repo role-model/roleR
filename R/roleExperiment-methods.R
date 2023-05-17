@@ -28,14 +28,14 @@ setMethod("[", "roleExperiment", function(x, i, j, ..., drop = FALSE) {
     }
     
     # vector of unique model run IDs before selecting
-    origModID <- unique(x@experimentMeta$mod_id)
+    origModID <- unique(x@info$mod_id)
     
     # update metadata and runs
-    x@experimentMeta <- x@experimentMeta[i, j, ..., drop = FALSE]
+    x@info <- x@info[i, j, ..., drop = FALSE]
     x@modelRuns <- x@modelRuns[i]
     
     # check to see if any unique model runs have been dropped
-    theseDropped <- !(origModID %in% x@experimentMeta$mod_id)
+    theseDropped <- !(origModID %in% x@info$mod_id)
     
     # if so, drop them
     if(any(theseDropped)) {
@@ -43,7 +43,7 @@ setMethod("[", "roleExperiment", function(x, i, j, ..., drop = FALSE) {
         x@allParams <- x@allParams[i]
         
         # re-number IDs in metadata to remove any missing
-        x@experimentMeta$mod_id <- order(x@experimentMeta$mod_id)
+        x@info$mod_id <- order(x@info$mod_id)
     }
     
     return(x)
@@ -54,8 +54,8 @@ setMethod("[", "roleExperiment", function(x, i, j, ..., drop = FALSE) {
 #' @export
 
 setMethod("$", "roleExperiment", function(x, name) {
-    if(name %in% names(x@experimentMeta)) {
-        return(x@experimentMeta[, name])
+    if(name %in% names(x@info)) {
+        return(x@info[, name])
     } else {
         stop('no $ method for object without metadata')
     }
@@ -66,7 +66,7 @@ setMethod("$", "roleExperiment", function(x, name) {
 
 setMethod('show', signature = signature(object = 'roleExperiment'),
           definition = function(object) {
-              nmod <- length(unique(object@experimentMeta$mod_id))
+              nmod <- length(unique(object@info$mod_id))
               cat(sprintf('RoLE experiment with %s unique model%s', 
                           nmod, 
                           ifelse(nmod == 1, '', 's')), 
