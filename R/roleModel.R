@@ -1,4 +1,3 @@
-
 #' @title A single RoLE model.
 #'
 #' @description An S4 class that holds one RoLE model realization. A model is 
@@ -19,7 +18,7 @@
 #' m <- roleModel(roleParams())
 #' m <- runRole(m)
 #' 
-#' @rdname roleModel
+#' @rdname roleModel-class
 #' @export
 
 setClass('roleModel',
@@ -28,7 +27,8 @@ setClass('roleModel',
                    modelSteps = 'list'))
 
 #' @title Create a roleModel.
-#' @param params The params to use when the model is run.
+#' @param params The params, an object of class `roleParams`, to use when the 
+#'     model is run.
 #' @return A ready-to-run `roleModel`.
 #' 
 #' @rdname roleModel
@@ -71,8 +71,8 @@ roleModel <- function(params) {
     
     locs <- localComm(indSpecies = initSpp,
                       indTrait = initTrait,
-                      indSeqs = rep('ATCG', J), # leave genetic stuff alone
-                      spGenDiv = c(1))
+                      indSeqs = character(J),
+                      spGenDiv = numeric(0))
     
     dat <- roleData(localComm = locs, 
                     metaComm = meta, 
@@ -81,12 +81,29 @@ roleModel <- function(params) {
     niter <- params@niter
     niterTimestep <- params@niterTimestep
     
+    # calculate generations
+    allTStep <- 1:(niter + 1)
+    allJ <- params@individuals_local(allTStep)
+    gens <- (allTStep - 1) * 2 / allJ # scale so generations start at 0
+    
     # output data
     modelSteps <- vector('list', length = niter / niterTimestep + 1)
-    modelSteps[[1]] <- dat
+    modelSteps[[1]] <- dat # initial state 
+    
+    
+    
+    
+    # create info data.frame
+    tstep <- seq(1, params@niter + 1, params@niterTimestep)
+    info <- as.data.frame(getValuesFromParams(params, tstep))
+    info <- info[, !grepl('niter', names(info))]
+    info$timestep <- tstep - 1 # scale so initial state is tstep 0
+    info$generations <- gens[tstep]
+    
     
     return(new('roleModel', 
                params =  params, 
+               info = info,
                modelSteps = modelSteps))
 }
 
@@ -117,3 +134,4 @@ roleModel <- function(params) {
     return(thisSAD / sum(thisSAD))
 }
 
+# setValidity()
