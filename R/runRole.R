@@ -62,6 +62,9 @@ setMethod('runRole',
                   m@modelSteps[[d]]@phylo@e <- m@modelSteps[[d]]@phylo@e + 1
               }
               
+              # add popgen
+              m <- sim_seqs(m)
+              
               return(m)
           }
 )
