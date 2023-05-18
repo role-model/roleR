@@ -1,5 +1,20 @@
 library(roleR)
 
+p <- roleParams(individuals_local = 100, individuals_meta = 10000,
+                species_meta = 10, speciation_local = 0, 
+                speciation_meta = 0.05, extinction_meta = 0.05, env_sigma = 0.5,
+                trait_sigma=1, comp_sigma = 0.5, dispersal_prob = 0.01, mutation_rate = 1e-6,
+                equilib_escape = 1, num_basepairs = 500, alpha = 10000,
+                init_type = 'bridge_island', niter = 1000, niterTimestep = 100)
+
+model <- runRole(roleModel(p))
+
+
+
+
+
+
+
 
 J <- c(rep(500, 250), 100 * exp(0.007 * 0:249))
 

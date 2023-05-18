@@ -30,7 +30,10 @@ sim_seqs <- function(model) {
         J <- model@params@individuals_local(idx)
         alpha <- model@params@alpha(idx)
         
-        metaTree <- newick(model@modelSteps[[idx]]@phylo)
+        # metaTree <- newick(model@modelSteps[[idx]]@phylo)
+        metaTree <- as(model@modelSteps[[idx]]@phylo, 'phylo')
+        metaTree <- ape::write.tree(metaTree, append = FALSE, digits = 30, 
+                                    tree.names = FALSE)
         metaAbund <- model@modelSteps[[idx]]@metaComm@spAbund
         
         localAbund <- model@modelSteps[[idx]]@localComm@indSpecies
@@ -40,7 +43,7 @@ sim_seqs <- function(model) {
         ## Returns a dataframe with rows for pi, TajD and genotypes
         res <- py_msprime_simulate(J_m, J, curtime, metaTree, metaAbund, localAbund,
                                    spAbundHarmMean, localTDiv, alpha, sequence_length, mu,
-                                   verbose=TRUE)
+                                   verbose=FALSE)
         
         ## Update the model with the results
         model@modelSteps[[idx]]@localComm@spGenDiv = unlist(res["pi",])
