@@ -11,7 +11,7 @@
 #' @slot info a `data.frame` with one row for each saved snapshot (unrun models
 #'     will only have 1 row); columns are parameters, cells are parameter values 
 #'     at each snapshot
-#' 
+#' @include roleParams.R
 #' @details See the `roleR_intro` vignette for an example modeling workflow.
 #' @examples 
 #' # Create a model using a default set of params, then run it.

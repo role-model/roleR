@@ -19,7 +19,6 @@ Imports:
     extraDistr,
     methods,
     snow,
-    ranger,
     stats
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
@@ -37,9 +36,9 @@ Collate:
     'RcppExports.R'
     'cFun.R'
     'comm.R'
-    'roleParams.R'
     'createPredModel.R'
     'rolePhylo.R'
+    'roleParams.R'
     'roleModel.R'
     'roleExperiment.R'
     'getFinalState.R'

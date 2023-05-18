@@ -4,6 +4,7 @@
 #'     specified in the given parameters
 #' 
 #' @param x `roleModel` or `roleExperiment` object to run
+#' @param cores number of cores
 #' @return `roleModel` or `roleExperiment` run for the specified number of time
 #'     steps
 #' 
