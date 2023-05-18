@@ -12,7 +12,7 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // iterModelCpp
-List iterModelCpp(RObject local, RObject meta, RObject phylo, RObject params, bool print);
+List iterModelCpp(RObject local, RObject meta, RObject phylo, List params, bool print);
 RcppExport SEXP _roleR_iterModelCpp(SEXP localSEXP, SEXP metaSEXP, SEXP phyloSEXP, SEXP paramsSEXP, SEXP printSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -20,7 +20,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< RObject >::type local(localSEXP);
     Rcpp::traits::input_parameter< RObject >::type meta(metaSEXP);
     Rcpp::traits::input_parameter< RObject >::type phylo(phyloSEXP);
-    Rcpp::traits::input_parameter< RObject >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< List >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< bool >::type print(printSEXP);
     rcpp_result_gen = Rcpp::wrap(iterModelCpp(local, meta, phylo, params, print));
     return rcpp_result_gen;
@@ -40,7 +40,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // dataFunCpp
-S4 dataFunCpp(Rcpp::StringVector fun_name, RObject local, RObject meta, RObject phylo, RObject params, int niter, int i, int dead_index, int parent_indv, bool dispersed_this_iter, int speciation_sp);
+S4 dataFunCpp(Rcpp::StringVector fun_name, RObject local, RObject meta, RObject phylo, List params, int niter, int i, int dead_index, int parent_indv, bool dispersed_this_iter, int speciation_sp);
 RcppExport SEXP _roleR_dataFunCpp(SEXP fun_nameSEXP, SEXP localSEXP, SEXP metaSEXP, SEXP phyloSEXP, SEXP paramsSEXP, SEXP niterSEXP, SEXP iSEXP, SEXP dead_indexSEXP, SEXP parent_indvSEXP, SEXP dispersed_this_iterSEXP, SEXP speciation_spSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -49,7 +49,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< RObject >::type local(localSEXP);
     Rcpp::traits::input_parameter< RObject >::type meta(metaSEXP);
     Rcpp::traits::input_parameter< RObject >::type phylo(phyloSEXP);
-    Rcpp::traits::input_parameter< RObject >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< List >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
     Rcpp::traits::input_parameter< int >::type i(iSEXP);
     Rcpp::traits::input_parameter< int >::type dead_index(dead_indexSEXP);
@@ -61,7 +61,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // vectFunCpp
-NumericVector vectFunCpp(Rcpp::StringVector fun_name, RObject local, RObject meta, RObject phylo, RObject params, int niter, int i);
+NumericVector vectFunCpp(Rcpp::StringVector fun_name, RObject local, RObject meta, RObject phylo, List params, int niter, int i);
 RcppExport SEXP _roleR_vectFunCpp(SEXP fun_nameSEXP, SEXP localSEXP, SEXP metaSEXP, SEXP phyloSEXP, SEXP paramsSEXP, SEXP niterSEXP, SEXP iSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -70,7 +70,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< RObject >::type local(localSEXP);
     Rcpp::traits::input_parameter< RObject >::type meta(metaSEXP);
     Rcpp::traits::input_parameter< RObject >::type phylo(phyloSEXP);
-    Rcpp::traits::input_parameter< RObject >::type params(paramsSEXP);
+    Rcpp::traits::input_parameter< List >::type params(paramsSEXP);
     Rcpp::traits::input_parameter< int >::type niter(niterSEXP);
     Rcpp::traits::input_parameter< int >::type i(iSEXP);
     rcpp_result_gen = Rcpp::wrap(vectFunCpp(fun_name, local, meta, phylo, params, niter, i));

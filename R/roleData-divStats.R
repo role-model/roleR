@@ -54,23 +54,6 @@ setMethod('hillAbund',
 
 
 
-# total abundance
-#' @rdname total-abundance
-#' @export
-
-setGeneric('totalN', 
-           def = function(x, ...) standardGeneric('totalN'), 
-           signature = 'x')
-
-
-setMethod('totalN', 
-          signature = 'roleData', 
-          definition = function(x) {
-              X <- rawAbundance(x)[[1]]
-              return(sum(X))
-          }
-)
-
 
 # genetic hill stats
 #' @rdname div-sumStats

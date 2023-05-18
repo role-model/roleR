@@ -1,145 +1,85 @@
 #' @title roleExperiment - one or more models bundled collectively 
 #' 
-#' @description An S4 class to represent a self-enclosed modeling experiment or intentioned set of models.
-#' It contains a list of `roleModel`objects, a list of `roleParams` to use for each model, a data.frame summary of the models, and some author metadata
+#' @description An S4 class to represent a self-enclosed modeling experiment 
 #' 
-#' @slot allFuns a list, something
-#' @slot modelRuns a list of `roleModel`objects
+#' 
+#' @slot modelRuns a list of `roleData`objects
 #' @slot allParams a list of `roleParams` to use for each model
-#' @slot context a named string vector that keep track of author metadata
-#' It contains values for "author", "date", "description", "info", where each element is named by its respective string.
-#' When the model is saved with `writeRole` a text file is generated using this metadata
-#' @slot info data.frame of summarizing metadata for all the models of the experiment 
-#' (Need to chat with Andy about the exact intentions of this before writing more here)
-#' @include roleModel.R roleParams.R
+# @slot context a named string vector that keep track of author metadata
+#     It contains values for "author", "date", "description", "info", where 
+#     each element is named by its respective string. When the model is saved 
+#     with `writeRole` a text file is generated using this metadata
+#' @slot info a data.frame with model parameter information for each saved 
+#'     snapshot for all the models of the experiment 
+#' @slot inits an optional list of initialized `roleModel` objects
+#' 
 #' @examples 
-#' # create and run a roleExperiment that will contain three models with three different levels of dispersal 
-# p1 <- roleParams(dispersal_prob =0.1)
+#' # create and run a roleExperiment with three different levels of dispersal 
+# p1 <- roleParams(dispersal_prob = 0.1)
 # p2 <- roleParams(dispersal_prob = 0.2)
 # p3 <- roleParams(dispersal_prob = 0.3)
-# expr <- roleExperiment(list(p1,p2,p3))
+# expr <- roleExperiment(list(p1, p2, p3))
 # expr <- runRole(expr)
 #' 
-#' 
 #' @rdname roleExperiment
+#' @include roleModel.R
 #' @export
 
 setClass('roleExperiment',
-         slots = c(context = 'character',
-                   info = 'data.frame',
+         slots = c(info = 'data.frame',
                    modelRuns = 'list', 
-                   allParams = 'list',
-                   allFuns = 'list'))
+                   allParams = 'list', 
+                   inits = 'list'))
 
-#' @title Create a roleExperiment
-#' @param allParams the list of model params to use for each model
+
+#' @param allParams the list of model params to use for each model; can also be
+#'     `rolePriors` object
 #' @return a ready-to-run `roleExperiment`
 #' 
 #' @rdname roleExperiment
 #' @export
 
 roleExperiment <- function(allParams) {
-    # if given priors or iterfuns, run functions on each model, param, and iter 
-    # and add to new allParams object
-    if(class(allParams) == 'rolePriors' | class(allParams) == 'roleIterFuns'){
-        # save allFuns
-        allFuns <- allParams
-        # create new allParams
-        allParams <- list()
-        # for each model's set of priors
-        for(p in 1:length(allFuns)){
-            funs <- allFuns[[p]]
-            params <- roleParams()
-            # for each slot
-            for(slot_name in slotNames(funs))
-            {
-                if(class(allFuns) == 'rolePriors'){
-                    # get the list of funs, one per iteration
-                    fun_list <- slot(priors,slot_name)
-                    # for each iteration/functions
-                    for(f in 1:length(fun_list)){
-                        fun = fun_list[[f]]
-                        slot(params,slot_name)[f] = fun()
-                    }
-                }
-                else{
-                    # get the list of funs, one per iteration
-                    fun <- slot(iterfuns,slot_name)
-                    # for each iteration/functions
-                    for(i in 1:niter){
-                        slot(params,slot_name)[i] = fun(i)
-                    }
-                }
-                allParams <- list(allParams,params)
-            }
-        }
-    }
-    else{
-        allFuns <- list(NULL)
+    # if given a `rolePriors` object, make it a list before proceeding 
+    if(inherits(allParams, 'rolePriors')) {
+        allParams <- list() # just a stub for now
     }
     
-    # create models from params and add to experiment
-    allModels <- list()
-    for(i in 1:length(allParams)){
-        allModels <- append(allModels,roleModel(allParams[[i]]))
-    }
+    # a list of `roleModel` objects
+    allMods <- lapply(allParams, roleModel)
     
-    return(new('roleExperiment', 
-               info = data.frame(), 
-               modelRuns = allModels,
-               allParams=allParams,
-               allFuns=allFuns))
+    # a list of `roleExperiment` objects converted from `allMods`
+    allExps <- lapply(allMods, as, Class = 'roleExperiment')
+    
+    # combine list of `roleExperiments`
+    outExp <- Reduce(rbind2, allExps)
+    
+    # write over the `inits` slot
+    outExp@inits <- allMods
+    
+    return(outExp)
 }
 
 
 # set coercion method from `roleModel` to `roleExperiment`
 setAs(from = 'roleModel', to = 'roleExperiment',
       def = function(from) {
-          niter <- from@params@niter
-          niterTimestep <- from@params@niterTimestep
+          # get metadata
+          pout <- from@info
           
-          # index of when data were saved
-          j <- c(0, which(1:niter %% niterTimestep == 0)) + 1
-          
-          # extract the param vals for those j indeces
-          pnames <- slotNames(from@params)
-          pnames <- pnames[!grepl('niter', pnames)]
-          
-          pout <- lapply(pnames, function(p) {
-              p <- slot(from@params, p)
-              
-              if(length(p) > 1) {
-                  p <- c(p[1], p)
-                  return(p[j])
-              } else {
-                  return(rep(p, length(j)))
-              }
-          })
-          
-          # put param vals in a data.frame
-          names(pout) <- pnames
-          # browser()
-          pout <- do.call(data.frame, pout)
-          
-          # add time information
-          pout$iterations <- j - 1
-          pout$generations <- pout$iterations / (pout$individuals_local / 2)
-          
-          # put an index column in that data.frame for model run
+          # put an index column in that data.frame for model 
           pout <- cbind(mod_id = 1, pout)
           
           return(new('roleExperiment', 
                      info = pout,
                      modelRuns = from@modelSteps, 
                      allParams = list(from@params), 
-                     # iterFuns = list(from@iterFuns) # when iterFuns added to roleModel, uncomment this and delete line about `allFuns`
-                     allFuns = list(NULL)))
+                     inits = list()))
       }
 )
 
 
 # rbind method for `roleExperiment` class
-
 setMethod('rbind2', signature = c('roleExperiment', 'roleExperiment'), 
           definition = function(x, y) {
               out <- x
@@ -149,16 +89,13 @@ setMethod('rbind2', signature = c('roleExperiment', 'roleExperiment'),
               j <- max(out@info$mod_id)
               
               # augment mod_id
-              thisEx@info$mod_id <-
-                  thisEx@info$mod_id + j
+              thisEx@info$mod_id <- thisEx@info$mod_id + j
               
               # combine with `out`
-              out@info <- rbind(out@info,
-                                          thisEx@info)
-              out@modelRuns <- c(out@modelRuns,
-                                 thisEx@modelRuns)
-              out@allParams <- c(out@allParams,
-                                 thisEx@allParams)
+              out@info <- rbind(out@info, thisEx@info)
+              out@modelRuns <- c(out@modelRuns, thisEx@modelRuns)
+              out@allParams <- c(out@allParams, thisEx@allParams)
+              out@inits <- c(out@inits, thisEx@inits)
               
               return(out)
           }
@@ -168,6 +105,7 @@ setMethod('rbind2', signature = c('roleExperiment', 'missing'),
           definition = function(x, y) {
               return(x)
           })
+
 
 
 #' Repeat an S4 object

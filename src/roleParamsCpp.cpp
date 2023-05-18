@@ -22,18 +22,20 @@ public:
     NumericVector equilib_escape;
     //NumericVector num_basepairs;
     
-   roleParamsCpp(RObject params, int niter){
-        individuals_local = Rcpp::as<NumericVector>(params.slot("individuals_local"));
-        speciation_local = Rcpp::as<NumericVector>(params.slot("speciation_local"));
-        speciation_meta = Rcpp::as<NumericVector>(params.slot("speciation_meta"));
-        extinction_meta = Rcpp::as<NumericVector>(params.slot("extinction_meta"));
-        trait_sigma = Rcpp::as<NumericVector>(params.slot("trait_sigma"));
-        env_sigma = Rcpp::as<NumericVector>(params.slot("env_sigma"));
-        comp_sigma = Rcpp::as<NumericVector>(params.slot("comp_sigma"));
-        neut_delta = Rcpp::as<NumericVector>(params.slot("neut_delta"));
-        env_comp_delta = Rcpp::as<NumericVector>(params.slot("env_comp_delta"));
-        dispersal_prob = Rcpp::as<NumericVector>(params.slot("dispersal_prob"));
+   roleParamsCpp(List params, int niter) {
+        individuals_local = Rcpp::as<NumericVector>(params["individuals_local"]);
+        speciation_local = Rcpp::as<NumericVector>(params["speciation_local"]);
+        speciation_meta = Rcpp::as<NumericVector>(params["speciation_meta"]);
+        extinction_meta = Rcpp::as<NumericVector>(params["extinction_meta"]);
+        trait_sigma = Rcpp::as<NumericVector>(params["trait_sigma"]);
+        env_sigma = Rcpp::as<NumericVector>(params["env_sigma"]);
+        comp_sigma = Rcpp::as<NumericVector>(params["comp_sigma"]);
+        neut_delta = Rcpp::as<NumericVector>(params["neut_delta"]);
+        env_comp_delta = Rcpp::as<NumericVector>(params["env_comp_delta"]);
+        dispersal_prob = Rcpp::as<NumericVector>(params["dispersal_prob"]);
         
+        // we should either do these checks all in R or all in C++ 
+        // but not both places
         if(individuals_local.length() == 1){
             individuals_local = rep(individuals_local, niter);
         }
@@ -69,4 +71,5 @@ public:
     }
 };
 
+// why do we need this?
 RCPP_EXPOSED_CLASS(roleParamsCpp)

@@ -614,22 +614,19 @@ S4 role_data_from_cpp(roleDataCpp &d){
 //
 //
 // [[Rcpp::export]]
-List iterModelCpp(RObject local, 
-                  RObject meta, 
-                  RObject phylo, 
-                  RObject params, 
-                  bool print) {
+List iterModelCpp(RObject local, RObject meta, RObject phylo, List params, bool print) {
+
     
     if(print){ Rcout << "save niter and niterTimestep"<< "\n";}
     
     // save niter and niterTimestep
-    int niter = as<IntegerVector>(params.slot("niter"))[0];
-    int niter_timestep = as<IntegerVector>(params.slot("niterTimestep"))[0];
+    int niter = as<IntegerVector>(params["niter"])[0];
+    int niter_timestep = as<IntegerVector>(params["niterTimestep"])[0];
     
     if(print){ Rcout << "make cpp objects for data and params"<< "\n";}
     // make cpp objects for data and params
     roleDataCpp d(local,meta,phylo);
-    roleParamsCpp p = roleParamsCpp(params,niter); // constructor samples/stretches
+    roleParamsCpp p = roleParamsCpp(params, niter); // constructor samples/stretches
     
     // setup rng distr using params
     // JACOB  - allow these to time vary - make new distr every iteration when any of these params change
@@ -768,6 +765,8 @@ int intFunCpp(Rcpp::StringVector fun_name,
 }
 
 
+// need to update this so it can deal with params as a List
+
 
 //' @title dataFunCpp
 //' @name dataFunCpp
@@ -784,19 +783,19 @@ int intFunCpp(Rcpp::StringVector fun_name,
 //' @param speciation_sp speciation_sp
 //
 // [[Rcpp::export]]
-S4 dataFunCpp(Rcpp::StringVector fun_name, 
-                       RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, //used universally
-                       RObject params=NULL, int niter=NULL, int i=NULL, //used universally
-                       int dead_index=NULL, // used universally
-                       int parent_indv=NULL, // used by call_birth and call_dispersal
-                       bool dispersed_this_iter=NULL, // used by call_speciation and update_speciation_local_meta
-                       int speciation_sp=NULL) { // used in update_speciation_local_meta
-    
+S4 dataFunCpp(Rcpp::StringVector fun_name,
+              RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, //used universally
+              List params=NULL, int niter=NULL, int i=NULL, //used universally
+              int dead_index=NULL, // used universally
+              int parent_indv=NULL, // used by call_birth and call_dispersal
+              bool dispersed_this_iter=NULL, // used by call_speciation and update_speciation_local_meta
+              int speciation_sp=NULL) { // used in update_speciation_local_meta
+
     // create Cpp objects
     roleDataCpp d(local,meta,phylo);
     roleParamsCpp p(params,niter);
     std::string fn = Rcpp::as<std::string>(fun_name(0));
-    
+
     // tried switch, didn't work
     if(fn == std::string("call_birth")){
         call_birth(i,dead_index,parent_indv,d, p,true);
@@ -835,7 +834,7 @@ S4 dataFunCpp(Rcpp::StringVector fun_name,
 // [[Rcpp::export]]
 NumericVector vectFunCpp(Rcpp::StringVector fun_name,
                          RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, // used universally 
-                         RObject params=NULL, int niter=NULL, int i = NULL){ // used universally 
+                         List params=NULL, int niter=NULL, int i = NULL){ // used universally 
     // create Cpp objects
     roleDataCpp d(local,meta,phylo);
     roleParamsCpp p(params,niter);
@@ -859,5 +858,5 @@ RCPP_MODULE(iterModelCpp) {
     function("iterModelCpp", &iterModelCpp);
     function("intFunCpp", &intFunCpp);
     function("vectFunCpp", &vectFunCpp);
-    function("dataFunCpp", &dataFunCpp);
+    // function("dataFunCpp", &dataFunCpp);
 }

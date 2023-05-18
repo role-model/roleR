@@ -1,28 +1,34 @@
-
 #' @title A single RoLE model.
 #'
-#' @description An S4 class that holds a RoLE eco-evolutionary process model.
-#' A model is first initialized using a set of parameters, then run using those parameters.
+#' @description An S4 class that holds one RoLE model realization. A model is 
+#'     first initialized using a set of parameters, then run using those 
+#'     parameters.
 #' 
-#' @slot modelSteps A list of `roleData` objects, one for each snapshot of the model that were recorded as the model ran.
-#' For example, the 3rd saved snapshot is accessed at modelSteps[[3]].
-#' Models that are not yet run only have one timestep in modelSteps[[1]].
-#' @slot params A `roleParams` object containing the params to use when the model is run.
-#' 
+#' @slot modelSteps A list of `roleData` objects, one for each saved snapshot.
+#'     For example, the 3rd saved snapshot is accessed at `modelSteps[[3]]`.
+#'     Models that are not yet run only have one timestep, i.e. `modelSteps[[1]]`
+#' @slot params A `roleParams` object containing the params of the model
+#' @slot info a `data.frame` with one row for each saved snapshot (unrun models
+#'     will only have 1 row); columns are parameters, cells are parameter values 
+#'     at each snapshot
+#' @include roleParams.R
 #' @details See the `roleR_intro` vignette for an example modeling workflow.
 #' @examples 
 #' # Create a model using a default set of params, then run it.
 #' m <- roleModel(roleParams())
 #' m <- runRole(m)
-#' @include roleModel.R roleParams.R
-#' @rdname roleModel
-#' @export
 #' 
+#' @rdname roleModel-class
+#' @export
+
 setClass('roleModel',
-         slots = c(params = 'roleParams', modelSteps = 'list'))
+         slots = c(params = 'roleParams', 
+                   info = 'data.frame',
+                   modelSteps = 'list'))
 
 #' @title Create a roleModel.
-#' @param params The params to use when the model is run.
+#' @param params The params, an object of class `roleParams`, to use when the 
+#'     model is run.
 #' @return A ready-to-run `roleModel`.
 #' 
 #' @rdname roleModel
@@ -57,7 +63,7 @@ roleModel <- function(params) {
         initSpp[2:length(initSpp)] <- 0
     }
     else{
-        stop('`init_type` must be one of `"oceanic_island"` or `"bridge_island"`')
+        stop('`init_type` must be one of "oceanic_island" or "bridge_island"')
     }
     
     # initialize traits based on spp ID
@@ -65,8 +71,8 @@ roleModel <- function(params) {
     
     locs <- localComm(indSpecies = initSpp,
                       indTrait = initTrait,
-                      indSeqs = rep('ATCG', J), # leave genetic stuff alone
-                      spGenDiv = c(1))
+                      indSeqs = character(J),
+                      spGenDiv = numeric(0))
     
     dat <- roleData(localComm = locs, 
                     metaComm = meta, 
@@ -75,18 +81,36 @@ roleModel <- function(params) {
     niter <- params@niter
     niterTimestep <- params@niterTimestep
     
+    # calculate generations
+    allTStep <- 1:(niter + 1)
+    allJ <- params@individuals_local(allTStep)
+    gens <- (allTStep - 1) * 2 / allJ # scale so generations start at 0
+    
     # output data
     modelSteps <- vector('list', length = niter / niterTimestep + 1)
-    modelSteps[[1]] <- dat
+    modelSteps[[1]] <- dat # initial state 
+    
+    
+    
+    
+    # create info data.frame
+    tstep <- seq(1, params@niter + 1, params@niterTimestep)
+    info <- as.data.frame(getValuesFromParams(params, tstep))
+    info <- info[, !grepl('niter', names(info))]
+    info$timestep <- tstep - 1 # scale so initial state is tstep 0
+    info$generations <- gens[tstep]
+    
     
     return(new('roleModel', 
                params =  params, 
+               info = info,
                modelSteps = modelSteps))
 }
 
 
 
-# non-exported helper function to solve for parameter of logseries
+#' @title logseriesfromsn
+#' @description non-exported helper function to solve for parameter of logseries
 #' @param S number of species
 #' @param N number of individuals
 

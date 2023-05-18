@@ -12,7 +12,9 @@
 #' # get the final state of a roleModel as a roleModel (but maybe should be roleData?)
 #' m <- quickModel()
 #' final_data <- getFinalState(m)@modelSteps[[1]]
+#' 
 #' @include roleModel.R roleExperiment.R
+#' @rdname getFinalState
 #' @export
 
 setGeneric('getFinalState', 
@@ -25,6 +27,7 @@ setGeneric('getFinalState',
 #' @aliases getFinalState,roleModel-method
 #' @docType methods
 #' @rdname getFinalState
+#' @export
 
 setMethod('getFinalState', 
           signature(x = 'roleModel'), 
