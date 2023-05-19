@@ -15,7 +15,6 @@ setMethod('show', signature = signature(object = 'roleModel'),
               niter <- object@params@niter
               
               cat(sprintf('%s RoLE model with %s iterations',
-                          run_str, niter),
-                  '\n')
+                          run_str, niter), '\n')
           }
 )
