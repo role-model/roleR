@@ -108,29 +108,6 @@ setMethod('rbind2', signature = c('roleExperiment', 'missing'),
 
 
 
-#' Repeat an S4 object
-#' @description temporary helper to rep an S4 object
-#' used to create roleExperiments with many models of the same params
-#' i.e. roleExperiment(repS4(p,100)) does this 100 times using roleParams p
-#' @param obj an s4
-#' @param n times
-#'
-#' @return obj repeated n times
-#' @export
-#'
-repS4 <- function(obj, n) {
-    # Create an empty list to store replicated objects
-    objs <- vector("list", n)
-    
-    # Replicate the object and store in the list
-    for (i in 1:n) {
-        objs[[i]] <- obj
-    }
-    
-    # Return the list of replicated objects
-    return(objs)
-}
-
 #' @include rolePhylo.R
 # set coercion method from ape::phylo to roleR::rolePhylo
 setAs(from = 'phylo', to = 'rolePhylo',
