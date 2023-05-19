@@ -44,7 +44,6 @@ Collate:
     'roleData.R'
     'getSumStats.R'
     'prepRebuild.R'
-    'quickModel.R'
     'roleData-divStats.R'
     'roleData-rawStats.R'
     'roleExperiment-methods.R'

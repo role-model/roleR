@@ -8,10 +8,6 @@
 #' 
 #' @details If `modID` is not supplied and `x` is a `roleExperiment`, then a 
 #'     list of `roleData` objects for each model run is returned.
-#' @examples 
-#' # get the final state of a roleModel as a roleModel (but maybe should be roleData?)
-#' m <- quickModel()
-#' final_data <- getFinalState(m)@modelSteps[[1]]
 #' 
 #' @include roleModel.R roleExperiment.R
 #' @rdname getFinalState
