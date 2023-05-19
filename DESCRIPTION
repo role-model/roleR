@@ -18,6 +18,7 @@ Imports:
     ape,
     extraDistr,
     methods,
+    reticulate,
     snow,
     stats
 LinkingTo: Rcpp, RcppArmadillo

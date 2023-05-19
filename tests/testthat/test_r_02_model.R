@@ -1,8 +1,11 @@
 
 test_that("model runs without error and does not end in all 1 species", {
     
+    p <- roleParams(niter = 200, speciation_local = .5) 
     # create a test model and get data from a step and the params
-    m <- quickModel()
+    m <- roleModel(p)
+    m <- runRole(m)
+    
     expect_true(length(unique(m@modelSteps[[11]]@localComm@indSpecies)) > 1)
 })
 
@@ -26,10 +29,13 @@ test_that("big model with high speciation runs without error", {
 
 test_that("model copying in C++ does not result in all timesteps being equal", {
     
-    m <- quickModel()
-    #setequal(m@modelSteps[[1]]@localComm@indSpecies,m@modelSteps[[10]]@localComm@indSpecies)
+    
+    p <- roleParams(niter = 200, speciation_local = .5) 
+    # create a test model and get data from a step and the params
+    m <- roleModel(p)
+    m <- runRole(m)    #setequal(m@modelSteps[[1]]@localComm@indSpecies,m@modelSteps[[10]]@localComm@indSpecies)
     #m@modelSteps[[10]]@localComm@indSpecies
-    expect_false(setequal(m@modelSteps[[1]]@localComm@indSpecies,m@modelSteps[[10]]@localComm@indSpecies))
+    expect_false(setequal(m@modelSteps[[1]]@localComm@indSpecies,m@modelSteps[[11]]@localComm@indSpecies))
 })
 # 
 # test_that("testing the limits of how many iterations we can run"){
@@ -65,8 +71,11 @@ test_that("model copying in C++ does not result in all timesteps being equal", {
 # }
 
 test_that("when a model is run the supplied model is NOT modified in place", {
-    m <- quickModelNonRun()
-    mrun <- runRole(m)
+    
+    p <- roleParams(niter = 200, speciation_local = .5) 
+    # create a test model and get data from a step and the params
+    m <- roleModel(p)
+    mrun <- runRole(m)   
 
     expect_true(is.null(m@modelSteps[[2]]))
     expect_false(is.null(mrun@modelSteps[[2]]))
