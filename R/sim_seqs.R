@@ -4,6 +4,10 @@
 
 sim_seqs <- function(model) {
     sim_seqs_path <- system.file("python", "role_msprime.py", package = "roleR")
+    
+    # test if it can find the file
+    print(readLines(sim_seqs_path, n = 10))
+    
     reticulate::source_python(sim_seqs_path)
     
     #exp = as(model, "roleExperiment")
