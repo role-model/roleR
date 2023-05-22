@@ -43,6 +43,8 @@ setMethod('hillAbund',
 #' @param n is a vector of species abundances
 
 .hillDivSAD <- function(n, q) {
+    # Remove zero values, primarily for genDiv where zero is a valid value
+    n <- n[n != 0]
     n <- n/sum(n)
     
     hill <- outer(n, q, '^')
