@@ -61,22 +61,7 @@ roleExperiment <- function(allParams) {
 }
 
 
-# set coercion method from `roleModel` to `roleExperiment`
-setAs(from = 'roleModel', to = 'roleExperiment',
-      def = function(from) {
-          # get metadata
-          pout <- from@info
-          
-          # put an index column in that data.frame for model 
-          pout <- cbind(mod_id = 1, pout)
-          
-          return(new('roleExperiment', 
-                     info = pout,
-                     modelRuns = from@modelSteps, 
-                     allParams = list(from@params), 
-                     inits = list()))
-      }
-)
+
 
 
 # rbind method for `roleExperiment` class
