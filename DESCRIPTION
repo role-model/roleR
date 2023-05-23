@@ -18,6 +18,7 @@ Imports:
     ape,
     extraDistr,
     methods,
+    reticulate,
     snow,
     stats
 LinkingTo: Rcpp, RcppArmadillo
@@ -44,7 +45,6 @@ Collate:
     'roleData.R'
     'getSumStats.R'
     'prepRebuild.R'
-    'quickModel.R'
     'roleData-divStats.R'
     'roleData-rawStats.R'
     'roleExperiment-methods.R'

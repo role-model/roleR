@@ -1,7 +1,15 @@
-# function to simulate genetic data
-# takes a roleModel object which has been run
-# returns a roleModel object with seq data completed 
-
+#' Sim seqs
+#' @description
+#' Takes a roleModel and simulates seq data for it. 
+#' 
+#'
+#' @param model a completed roleModel
+#'
+#' @return model with seqs added
+#' @export
+#'
+#' @importFrom reticulate source_python
+#' @importFrom ape write.tree
 sim_seqs <- function(model) {
     sim_seqs_path <- system.file("python", "role_msprime.py", package = "roleR")
         
