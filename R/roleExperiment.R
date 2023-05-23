@@ -37,6 +37,7 @@ setClass('roleExperiment',
 #' @return a ready-to-run `roleExperiment`
 #' 
 #' @rdname roleExperiment
+#' @include roleExperiment-methods.R
 #' @export
 
 roleExperiment <- function(allParams) {
