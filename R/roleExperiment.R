@@ -59,36 +59,3 @@ roleExperiment <- function(allParams) {
     
     return(outExp)
 }
-
-
-
-
-
-# rbind method for `roleExperiment` class
-setMethod('rbind2', signature = c('roleExperiment', 'roleExperiment'), 
-          definition = function(x, y) {
-              out <- x
-              thisEx <- y
-              
-              # keep track of growing mod_id max index
-              j <- max(out@info$mod_id)
-              
-              # augment mod_id
-              thisEx@info$mod_id <- thisEx@info$mod_id + j
-              
-              # combine with `out`
-              out@info <- rbind(out@info, thisEx@info)
-              out@modelRuns <- c(out@modelRuns, thisEx@modelRuns)
-              out@allParams <- c(out@allParams, thisEx@allParams)
-              out@inits <- c(out@inits, thisEx@inits)
-              
-              return(out)
-          }
-)
-
-setMethod('rbind2', signature = c('roleExperiment', 'missing'), 
-          definition = function(x, y) {
-              return(x)
-          })
-
-
