@@ -1,6 +1,9 @@
 #!/bin/bash
 
-apt update; apt install libgsl-dev libpng-dev -y
+apt update; apt install libgsl-dev libpng-dev libxml2-dev -y
+# libpng-dev is for 'remotes'
+# libgsl-dev is for 'msprime' (I think)
+# libxml2-dev is for 'taxize' <- RoLE workshop Part I
 
 sudo -u rstudio bash -i -c '\
     cd ~
@@ -32,7 +35,8 @@ sudo -u rstudio bash -i -c '\
 '
 
 echo "install.packages(\"remotes\")
-install.packages(\"reticulate\")
+install.packages(\"reticulate\") # <- Necessary for installing/configuring conda base
+install.packages(c(\"dplyr\", \"tidyr\", \"ape\", \"taxize\", \"hillR\", \"spoc\", \"rotl\", \"rentrez\")) # <- Workshop Part I reqs
 library(reticulate)
 library(remotes)
 reticulate::use_condaenv('base') # <- Tell reticulate to use the externally installed conda env
