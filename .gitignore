@@ -4,7 +4,6 @@
 .Ruserdata
 .DS_Store
 *.dll
-*.Rd
 *.RData
 *.RDataTmp1
 *.RDataTmp2
