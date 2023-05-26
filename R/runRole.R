@@ -102,18 +102,16 @@ setMethod('runRole',
           }
 )
 
-#' @title buffer model data
-#'
-#' @description user-inaccessible helper to augment the data of the not-yet-run model based on  what is expected from the params called right before the model is run in Cpp
+# buffer model data
+# augment the data of the not-yet-run model based on what is expected from the 
+# params called right before the model is run in Cpp
 #' @param model model
-#'
-#' @return model
-#' @importFrom stats qbinom
-.bufferModelData <- function(model){
+
+.bufferModelData <- function(model) {
     p <- model@params 
     
     # calculate expected number of new species using binom
-    expec_n_spec <- qbinom(0.9, p@niter,
+    expec_n_spec <- stats::qbinom(0.9, p@niter,
                            prob = mean(p@speciation_local(1:p@niter)))
     el_add <- (expec_n_spec * 2 - 1) + 1
     at_add <- expec_n_spec + 1
