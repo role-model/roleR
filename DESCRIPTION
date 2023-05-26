@@ -35,7 +35,6 @@ Suggests:
 VignetteBuilder: knitr
 Collate: 
     'RcppExports.R'
-    'cFun.R'
     'comm.R'
     'roleExperiment-methods.R'
     'roleParams.R'
@@ -45,7 +44,6 @@ Collate:
     'rolePhylo.R'
     'roleData.R'
     'getSumStats.R'
-    'prepRebuild.R'
     'roleData-divStats.R'
     'roleData-rawStats.R'
     'roleModel-methods.R'
