@@ -123,11 +123,17 @@ setMethod('hillTrait',
 #' @param q order for hill number
 
 .hillDivTrait <- function(X, q) {
+    
     n <- X[, 1]
     traits <- X[, 2]
     
     p <- n / sum(n)
     dij <- as.matrix(dist(traits))
+    
+    # catch case where species richness = 0
+    if(nrow(X) == 1) {
+        dij[1,1] <- 1
+    }
     Q <- as.vector(p %*% dij %*% p)
     a <- outer(p, p, '*') / Q
     
@@ -140,6 +146,7 @@ setMethod('hillTrait',
     })
     
     D <- sqrt(Hk / Q)
+    
     
     return(D)
 }
