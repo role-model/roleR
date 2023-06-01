@@ -131,9 +131,10 @@ setMethod('hillTrait',
     dij <- as.matrix(dist(traits))
     
     # catch case where species richness = 0
-    if(nrow(X) == 1) {
-        dij[1,1] <- 1
+    if(length(unique(traits)) == 1) {
+        dij <- dij + 1
     }
+    
     Q <- as.vector(p %*% dij %*% p)
     a <- outer(p, p, '*') / Q
     
