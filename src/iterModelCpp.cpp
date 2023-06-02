@@ -738,125 +738,125 @@ List iterModelCpp(RObject local, RObject meta, RObject phylo, List params, bool 
     return(out);
 };
 
-
-// these funs, one per return data type, are R wrappers around multiple Cpp functions
-// these avoid having to wrap all ~20 functions individually 
-// ONLY used for testing and nothing else
-//' @name intFunCpp
-//' @title intFunCpp
-//' @param fun_Name fun_Name
-//' @param probs probs
-//' @param x x
-//
-// [[Rcpp::export]]
-int intFunCpp(Rcpp::StringVector fun_name,
-                NumericVector probs=NULL, 
-                int x=NULL) {
-    std::string fn = Rcpp::as<std::string>(fun_name(0));
-   
-    
-    // tried switch, didn't work but may revisit
-    if(fn == "sample_index_using_probs"){
-        return(sample_index_using_probs(probs));
-    }
-    if(fn == "sample_zero_to_x"){
-        return(sample_zero_to_x(x));
-    }
-}
-
-
-// need to update this so it can deal with params as a List
-
-
-//' @title dataFunCpp
-//' @name dataFunCpp
-//' @param fun_name fun_name
-//' @param local local
-//' @param meta meta
-//' @param phylo phylo
-//' @param params params
-//' @param niter niter
-//' @param i i
-//' @param dead_index dead_index
-//' @param parent_indv parent_indv
-//' @param dispersed_this_year dispersed_this_year
-//' @param speciation_sp speciation_sp
-//
-// [[Rcpp::export]]
-S4 dataFunCpp(Rcpp::StringVector fun_name,
-              RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, //used universally
-              List params=NULL, int niter=NULL, int i=NULL, //used universally
-              int dead_index=NULL, // used universally
-              int parent_indv=NULL, // used by call_birth and call_dispersal
-              bool dispersed_this_iter=NULL, // used by call_speciation and update_speciation_local_meta
-              int speciation_sp=NULL) { // used in update_speciation_local_meta
-
-    // create Cpp objects
-    roleDataCpp d(local,meta,phylo);
-    roleParamsCpp p(params,niter);
-    std::string fn = Rcpp::as<std::string>(fun_name(0));
-
-    // tried switch, didn't work
-    if(fn == std::string("call_birth")){
-        call_birth(i,dead_index,parent_indv,d, p,true);
-        return(role_data_from_cpp(d));
-    }
-    if(fn == std::string("call_dispersal")){
-        call_dispersal(i,dead_index,parent_indv,d, p,true);
-        return(role_data_from_cpp(d));
-    }
-    if(fn == std::string("update_trait_diffs_sq")){
-        update_trait_diffs_sq(dead_index,d, p);
-        return(role_data_from_cpp(d));
-    }
-    if(fn == std::string("call_speciation")){
-        call_speciation(i, dead_index, d, p, dispersed_this_iter, true);
-        return(role_data_from_cpp(d));
-    }
-    if(fn == std::string("update_speciation_local_meta")){
-        update_speciation_local_meta(i,dead_index,d,p,dispersed_this_iter,speciation_sp,true);
-        return(role_data_from_cpp(d));
-    }
-    if(fn == std::string("update_speciation_phylo")){
-        update_speciation_phylo(i,d,p,speciation_sp);
-        return(role_data_from_cpp(d));
-    }
-}
-//' @title vectFunCpp
-//' @name vectFunCpp
-//' @param fun_name fun_name
-//' @param local local
-//' @param meta meta
-//' @param phylo phylo
-//' @param params params
-//' @param niter niter
-//' @param i i 
-// [[Rcpp::export]]
-NumericVector vectFunCpp(Rcpp::StringVector fun_name,
-                         RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, // used universally 
-                         List params=NULL, int niter=NULL, int i = NULL){ // used universally 
-    // create Cpp objects
-    roleDataCpp d(local,meta,phylo);
-    roleParamsCpp p(params,niter);
-    std::string fn = Rcpp::as<std::string >(fun_name(0));
-    
-    // tried switch, didn't work
-    if(fn == "get_filtering_death_probs"){
-        return(get_filtering_death_probs(i,d,p));
-    }
-    if(fn == "get_comp_death_probs"){
-        return(get_comp_death_probs(i,d,p));
-    }
-    if(fn == "get_speciation_probs"){
-        return(get_speciation_probs(i,d,p));
-    }
-}
-
-// export Rcpp modules for use in R
-// only 4 functions get exported - the core loop and the test wrappers
-RCPP_MODULE(iterModelCpp) {
-    function("iterModelCpp", &iterModelCpp);
-    function("intFunCpp", &intFunCpp);
-    function("vectFunCpp", &vectFunCpp);
-    // function("dataFunCpp", &dataFunCpp);
-}
+// 
+// // these funs, one per return data type, are R wrappers around multiple Cpp functions
+// // these avoid having to wrap all ~20 functions individually 
+// // ONLY used for testing and nothing else
+// //' @name intFunCpp
+// //' @title intFunCpp
+// //' @param fun_Name fun_Name
+// //' @param probs probs
+// //' @param x x
+// //
+// // [[Rcpp::export]]
+// int intFunCpp(Rcpp::StringVector fun_name,
+//                 NumericVector probs=NULL, 
+//                 int x=NULL) {
+//     std::string fn = Rcpp::as<std::string>(fun_name(0));
+//    
+//     
+//     // tried switch, didn't work but may revisit
+//     if(fn == "sample_index_using_probs"){
+//         return(sample_index_using_probs(probs));
+//     }
+//     if(fn == "sample_zero_to_x"){
+//         return(sample_zero_to_x(x));
+//     }
+// }
+// 
+// 
+// // need to update this so it can deal with params as a List
+// 
+// 
+// //' @title dataFunCpp
+// //' @name dataFunCpp
+// //' @param fun_name fun_name
+// //' @param local local
+// //' @param meta meta
+// //' @param phylo phylo
+// //' @param params params
+// //' @param niter niter
+// //' @param i i
+// //' @param dead_index dead_index
+// //' @param parent_indv parent_indv
+// //' @param dispersed_this_year dispersed_this_year
+// //' @param speciation_sp speciation_sp
+// //
+// // [[Rcpp::export]]
+// S4 dataFunCpp(Rcpp::StringVector fun_name,
+//               RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, //used universally
+//               List params=NULL, int niter=NULL, int i=NULL, //used universally
+//               int dead_index=NULL, // used universally
+//               int parent_indv=NULL, // used by call_birth and call_dispersal
+//               bool dispersed_this_iter=NULL, // used by call_speciation and update_speciation_local_meta
+//               int speciation_sp=NULL) { // used in update_speciation_local_meta
+// 
+//     // create Cpp objects
+//     roleDataCpp d(local,meta,phylo);
+//     roleParamsCpp p(params,niter);
+//     std::string fn = Rcpp::as<std::string>(fun_name(0));
+// 
+//     // tried switch, didn't work
+//     if(fn == std::string("call_birth")){
+//         call_birth(i,dead_index,parent_indv,d, p,true);
+//         return(role_data_from_cpp(d));
+//     }
+//     if(fn == std::string("call_dispersal")){
+//         call_dispersal(i,dead_index,parent_indv,d, p,true);
+//         return(role_data_from_cpp(d));
+//     }
+//     if(fn == std::string("update_trait_diffs_sq")){
+//         update_trait_diffs_sq(dead_index,d, p);
+//         return(role_data_from_cpp(d));
+//     }
+//     if(fn == std::string("call_speciation")){
+//         call_speciation(i, dead_index, d, p, dispersed_this_iter, true);
+//         return(role_data_from_cpp(d));
+//     }
+//     if(fn == std::string("update_speciation_local_meta")){
+//         update_speciation_local_meta(i,dead_index,d,p,dispersed_this_iter,speciation_sp,true);
+//         return(role_data_from_cpp(d));
+//     }
+//     if(fn == std::string("update_speciation_phylo")){
+//         update_speciation_phylo(i,d,p,speciation_sp);
+//         return(role_data_from_cpp(d));
+//     }
+// }
+// //' @title vectFunCpp
+// //' @name vectFunCpp
+// //' @param fun_name fun_name
+// //' @param local local
+// //' @param meta meta
+// //' @param phylo phylo
+// //' @param params params
+// //' @param niter niter
+// //' @param i i 
+// // [[Rcpp::export]]
+// NumericVector vectFunCpp(Rcpp::StringVector fun_name,
+//                          RObject local=NULL, RObject meta=NULL,RObject phylo=NULL, // used universally 
+//                          List params=NULL, int niter=NULL, int i = NULL){ // used universally 
+//     // create Cpp objects
+//     roleDataCpp d(local,meta,phylo);
+//     roleParamsCpp p(params,niter);
+//     std::string fn = Rcpp::as<std::string >(fun_name(0));
+//     
+//     // tried switch, didn't work
+//     if(fn == "get_filtering_death_probs"){
+//         return(get_filtering_death_probs(i,d,p));
+//     }
+//     if(fn == "get_comp_death_probs"){
+//         return(get_comp_death_probs(i,d,p));
+//     }
+//     if(fn == "get_speciation_probs"){
+//         return(get_speciation_probs(i,d,p));
+//     }
+// }
+// 
+// // export Rcpp modules for use in R
+// // only 4 functions get exported - the core loop and the test wrappers
+// RCPP_MODULE(iterModelCpp) {
+//     function("iterModelCpp", &iterModelCpp);
+//     function("intFunCpp", &intFunCpp);
+//     function("vectFunCpp", &vectFunCpp);
+//     // function("dataFunCpp", &dataFunCpp);
+// }
