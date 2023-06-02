@@ -10,51 +10,8 @@
 #' @param print print
 NULL
 
-#' @name intFunCpp
-#' @title intFunCpp
-#' @param fun_Name fun_Name
-#' @param probs probs
-#' @param x x
-NULL
-
-#' @title dataFunCpp
-#' @name dataFunCpp
-#' @param fun_name fun_name
-#' @param local local
-#' @param meta meta
-#' @param phylo phylo
-#' @param params params
-#' @param niter niter
-#' @param i i
-#' @param dead_index dead_index
-#' @param parent_indv parent_indv
-#' @param dispersed_this_year dispersed_this_year
-#' @param speciation_sp speciation_sp
-NULL
-
 iterModelCpp <- function(local, meta, phylo, params, print) {
     .Call(`_roleR_iterModelCpp`, local, meta, phylo, params, print)
-}
-
-intFunCpp <- function(fun_name, probs, x) {
-    .Call(`_roleR_intFunCpp`, fun_name, probs, x)
-}
-
-dataFunCpp <- function(fun_name, local, meta, phylo, params, niter, i, dead_index, parent_indv, dispersed_this_iter, speciation_sp) {
-    .Call(`_roleR_dataFunCpp`, fun_name, local, meta, phylo, params, niter, i, dead_index, parent_indv, dispersed_this_iter, speciation_sp)
-}
-
-#' @title vectFunCpp
-#' @name vectFunCpp
-#' @param fun_name fun_name
-#' @param local local
-#' @param meta meta
-#' @param phylo phylo
-#' @param params params
-#' @param niter niter
-#' @param i i 
-vectFunCpp <- function(fun_name, local, meta, phylo, params, niter, i) {
-    .Call(`_roleR_vectFunCpp`, fun_name, local, meta, phylo, params, niter, i)
 }
 
 #' @name testRand

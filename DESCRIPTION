@@ -36,7 +36,6 @@ VignetteBuilder: knitr
 Collate: 
     'RcppExports.R'
     'comm.R'
-    'roleExperiment-methods.R'
     'roleParams.R'
     'roleModel.R'
     'roleExperiment.R'
@@ -46,6 +45,7 @@ Collate:
     'getSumStats.R'
     'roleData-divStats.R'
     'roleData-rawStats.R'
+    'roleExperiment-methods.R'
     'roleModel-methods.R'
     'roleR-package.R'
     'runRole.R'
