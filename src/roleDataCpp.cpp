@@ -116,32 +116,32 @@ public:
         std::normal_distribution<double> norm(0, 1);
     }
     
-    // // copy constructor for roleDataCpp
+    // copy constructor for roleDataCpp
     // roleDataCpp(const roleDataCpp &rhs) {
-    //     
+    // 
     //     this->indTraitL = rhs.indTraitL;
     //     this->indSpeciesL = rhs.indSpeciesL;
     //     this->spAbundL = rhs.spAbundL;
     //     this->spTraitL = rhs.spTraitL;
-    //     
+    // 
     //     this->spAbundHarmMeanL = rhs.spAbundHarmMeanL;
     //     this->spLastOriginStepL = rhs.spLastOriginStepL;
-    //     
+    // 
     //     this->spExtinctionStepL = rhs.spExtinctionStepL;
     //     this->spReciprSumL = rhs.spReciprSumL;
-    //     
+    // 
     //     this->spAbundM = rhs.spAbundM;
     //     this->spTraitM = rhs.spTraitM;
-    //     
+    // 
     //     this->nTipsP = rhs.nTipsP;
     //     this->edgesP = rhs.edgesP;
-    //     
+    // 
     //     this->lengthsP = rhs.lengthsP;
     //     this->aliveP = rhs.aliveP;
-    //     
+    // 
     //     this->tipNamesP = rhs.tipNamesP;
     //     this->scaleP = rhs.scaleP;
-    //     
+    // 
     //     this->traitDiffsSq = rhs.traitDiffsSq;
     //     this->envFilterProbs = rhs.envFilterProbs;
     //     this->prevEnvSigma = rhs.prevEnvSigma;
@@ -149,30 +149,30 @@ public:
     // 
     // // copy assignment operator
     // roleDataCpp& operator=(const roleDataCpp &rhs) {
-    //     
+    // 
     //     this->indTraitL = rhs.indTraitL;
     //     this->indSpeciesL = rhs.indSpeciesL;
     //     this->spAbundL = rhs.spAbundL;
     //     this->spTraitL = rhs.spTraitL;
-    //     
+    // 
     //     this->spAbundHarmMeanL = rhs.spAbundHarmMeanL;
     //     this->spLastOriginStepL = rhs.spLastOriginStepL;
-    //     
+    // 
     //     this->spExtinctionStepL = rhs.spExtinctionStepL;
     //     this->spReciprSumL = rhs.spReciprSumL;
-    //     
+    // 
     //     this->spAbundM = rhs.spAbundM;
     //     this->spTraitM = rhs.spTraitM;
-    //     
+    // 
     //     this->nTipsP = rhs.nTipsP;
     //     this->edgesP = rhs.edgesP;
-    //     
+    // 
     //     this->lengthsP = rhs.lengthsP;
     //     this->aliveP = rhs.aliveP;
-    //     
+    // 
     //     this->tipNamesP = rhs.tipNamesP;
     //     this->scaleP = rhs.scaleP;
-    //     
+    // 
     //     this->traitDiffsSq = rhs.traitDiffsSq;
     //     this->envFilterProbs = rhs.envFilterProbs;
     //     this->prevEnvSigma = rhs.prevEnvSigma;
