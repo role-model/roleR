@@ -44,12 +44,13 @@ rolePhylo <- function(n, e, l, alive, tipNames, scale) {
         n = n, e = e, l = l, alive = alive, tipNames = tipNames, scale = scale)
 }
 
-#' @title check RolePhylo
-#' checker function for validation
-#'
-#' @param object a supposed rolePhylo
-#'
-#' @return t/f if it's a rolePhylo
+# @title check RolePhylo
+# checker function for validation
+#
+# @param object a supposed rolePhylo
+#
+# @return t/f if it's a rolePhylo
+
 checkRolePhylo <- function(object) {
     checks <- c()
     

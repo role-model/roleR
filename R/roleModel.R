@@ -109,10 +109,10 @@ roleModel <- function(params) {
 
 
 
-#' @title logseriesfromsn
-#' @description non-exported helper function to solve for parameter of logseries
-#' @param S number of species
-#' @param N number of individuals
+# @title logseriesfromsn
+# @description non-exported helper function to solve for parameter of logseries
+# @param S number of species
+# @param N number of individuals
 
 .lseriesFromSN <- function(S, N) {
     qfun <- function(p, beta) {
