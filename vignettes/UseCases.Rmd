@@ -8,7 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE} 
-knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE, eval = FALSE) 
 ```
 
 This document shows off various use cases using the current implementation of roleR
@@ -17,7 +17,7 @@ This document shows off various use cases using the current implementation of ro
 
 Install from GitHub
 
-```{r role, cache = TRUE, eval = TRUE}
+```{r role, cache = TRUE}
 
 # devtools::install_github("role-model/roleR")
 
@@ -28,7 +28,7 @@ library(ggplot2)
 Run a model and plot species richness over time
 
 
-```{r overview, cache = TRUE, eval = TRUE}
+```{r overview, cache = TRUE}
 
 p <- roleParams(
     individuals_local = 100,
@@ -60,7 +60,7 @@ ggplot(stats, aes(iteration, rich)) +
 
 Create a set of parameters specifying every one
 
-```{r params, cache = TRUE, eval = TRUE}
+```{r params, cache = TRUE}
 
 p <- roleParams(individuals_local = 100, individuals_meta = 1000, species_meta = 100, 
                     speciation_local = 0.1, speciation_meta = 0.1, extinction_meta = 0.05, dispersal_prob = 0.1,
@@ -72,7 +72,7 @@ p <- roleParams(individuals_local = 100, individuals_meta = 1000, species_meta =
 Create a set of params per the Unified Neutral Theory of Biodiversity (UNTB).
 This creates a "UNTB-flavored" RoLE model 
 
-```{r untb_params, cache = TRUE, eval = TRUE}
+```{r untb_params, cache = TRUE}
 
 p_untb <- untbParams(individuals_local = 100, individuals_meta = 1000, 
                         species_meta = 50, 
@@ -90,7 +90,7 @@ See the roleParams documentation for descriptions of all available parameters
 
 Create a model (not yet run) using the params, then run it 
 
-```{r model, cache = TRUE, eval = TRUE}
+```{r model, cache = TRUE}
 
 model <- roleModel(p)
 model <- runRole(model)
@@ -101,7 +101,7 @@ Create an experiment (not yet run) containing two models created using both sets
 Experiment running can be parallelized on Windows, Mac, & Linux by specifying the number of cores to use. 
 When you run an experiment, it runs every model within it.
 
-```{r exp, cache = TRUE, eval = TRUE}
+```{r exp, cache = TRUE}
 
 exp <- roleExperiment(list(p,p_untb))
 library(parallel)
@@ -119,7 +119,7 @@ Get a summary stats over time for a single model, each row being a different sav
 Available raw stats are rawAbundance, rawSpAbundance, rawTraits, rawGenDiv, rawBranchLengths, and rawApePhylo.
 Available transformed stats are hillAbund, hillGenetic, hillTrait, hillPhylo, and richness.
 
-```{r series, cache = TRUE, eval = TRUE}
+```{r series, cache = TRUE}
 
 stats <- getSumStats(model, list(rich = richness,hill_abund=hillAbund))
 stats
@@ -128,14 +128,14 @@ stats
 
 Get summary stats over time for one model of an experiment 
 
-```{r series2, cache = TRUE, eval = TRUE} 
+```{r series2, cache = TRUE} 
 
 stats <- getSumStats(exp@modelRuns[[1]], list(hill_abund=hillAbund)) 
 ``` 
 
 Create a custom summary statistic and extract it 
 
-```{r series3, cache = TRUE, eval = TRUE} 
+```{r series3, cache = TRUE} 
 
 speciesWith5Indv <- function(x){return(sum(x@localComm@spAbund > 4))} 
 stats <- getSumStats(exp@modelRuns[[1]], list(sp_with_5=speciesWith5Indv)) 
@@ -150,7 +150,7 @@ stats <- getSumStats(exp@modelRuns[[1]], list(sp_with_5=speciesWith5Indv))
 
 Get a dataframe containing all saved timesteps of all models in the experiment 
 
-```{r data, cache = TRUE, eval = TRUE} 
+```{r data, cache = TRUE} 
 
 stats <- getSumStats(exp, list(hill_abund=hillAbund)) 
 
