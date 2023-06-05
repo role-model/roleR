@@ -19,6 +19,10 @@
 
 \item{j}{column index}
 
+\item{...}{additional arguemnts}
+
+\item{drop}{boolean, whether to drop dimensions}
+
 \item{name}{column name to extract}
 }
 \description{

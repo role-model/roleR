@@ -64,6 +64,8 @@ roleExperiment <- function(allParams) {
 #' @param x a `roleExperiment` object
 #' @param i row index
 #' @param j column index
+#' @param drop boolean, whether to drop dimensions
+#' @param ... additional arguemnts 
 #' 
 #' @name [
 #' @aliases [,roleExperiment-method
