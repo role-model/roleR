@@ -16,6 +16,7 @@
 #' 
 #' @rdname roleExperiment-class
 #' @include roleModel.R
+#' @import methods
 #' @export
 
 setClass('roleExperiment',
@@ -34,6 +35,7 @@ setClass('roleExperiment',
 #' @return a ready-to-run `roleExperiment`
 #' 
 #' @rdname roleExperiment
+#' @import methods
 #' @export
 
 roleExperiment <- function(allParams) {
@@ -58,6 +60,15 @@ roleExperiment <- function(allParams) {
 }
 
 
+#' Extract parts of `roleExperiment` object
+#' @param x a `roleExperiment` object
+#' @param i row index
+#' @param j column index
+#' 
+#' @name [
+#' @aliases [,roleExperiment-method
+#' @docType methods
+#' @rdname roleExperiment-methods
 
 setMethod("[", 
           signature(x = "roleExperiment", i = "ANY", j = "ANY"),
@@ -111,7 +122,15 @@ setMethod("[",
 
 
 
-
+#' Extract columns from `info` data.frame
+#' @param x a `roleExperiment` object
+#' @param name column name to extract
+#' 
+#' @name $
+#' @aliases $,roleExperiment-method
+#' @docType methods
+#' @rdname roleExperiment-methods
+#' 
 setMethod("$", "roleExperiment", function(x, name) {
     if(name %in% names(x@info)) {
         return(x@info[, name])
@@ -121,7 +140,7 @@ setMethod("$", "roleExperiment", function(x, name) {
 })
 
 
-# print method for `roleExperiment`
+# show method for `roleExperiment`
 setMethod('show', signature = signature(object = 'roleExperiment'),
           definition = function(object) {
               nmod <- length(unique(object@info$mod_id))
