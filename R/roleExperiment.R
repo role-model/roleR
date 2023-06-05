@@ -67,11 +67,11 @@ roleExperiment <- function(allParams) {
 #' @param drop boolean, whether to drop dimensions
 #' @param ... additional arguemnts 
 #' 
-#' @name [
+# @name [
 #' @aliases [,roleExperiment-method
 #' @docType methods
 #' @rdname roleExperiment-methods
-
+#'
 setMethod("[", 
           signature(x = "roleExperiment", i = "ANY", j = "ANY"),
           function(x, i, j, ..., drop = FALSE) {
