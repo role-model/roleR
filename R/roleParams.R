@@ -71,37 +71,37 @@
 #' @export
 
 setClass('roleParams',
-                        # slots that are 'functions' are allowed to time-vary across the simulation - all others are not
-                       slots = c(
-                           # number of individuals and species in the local and meta
-                           individuals_local = 'function',
-                           individuals_meta = 'integer',
-                           species_meta = 'integer',
-                           
-                           # probs of speciation, extinction, dispersal
-                           speciation_local = 'function',
-                           speciation_meta = 'numeric',
-                           extinction_meta = 'numeric',
-                           dispersal_prob = 'function',
-                           
-                           trait_sigma = 'numeric',
-                           env_sigma = 'numeric',
-                           comp_sigma = 'numeric',
-                           neut_delta = 'numeric',
-                           env_comp_delta = 'numeric',
-                           
-                           # gene evolution simulations
-                           mutation_rate = 'numeric',
-                           equilib_escape = 'numeric',
-                           alpha = 'function',
-                           num_basepairs = 'integer',
-                           
-                           init_type = 'character', 
-                           
-                           # iterations
-                           niter = 'integer', 
-                           niterTimestep = 'integer'
-                       )
+         # slots that are 'functions' are allowed to time-vary across the simulation - all others are not
+         slots = c(
+             # number of individuals and species in the local and meta
+             individuals_local = 'function',
+             individuals_meta = 'integer',
+             species_meta = 'integer',
+             
+             # probs of speciation, extinction, dispersal
+             speciation_local = 'function',
+             speciation_meta = 'numeric',
+             extinction_meta = 'numeric',
+             dispersal_prob = 'function',
+             
+             trait_sigma = 'numeric',
+             env_sigma = 'numeric',
+             comp_sigma = 'numeric',
+             neut_delta = 'numeric',
+             env_comp_delta = 'numeric',
+             
+             # gene evolution simulations
+             mutation_rate = 'numeric',
+             equilib_escape = 'numeric',
+             alpha = 'function',
+             num_basepairs = 'integer',
+             
+             init_type = 'character', 
+             
+             # iterations
+             niter = 'integer', 
+             niterTimestep = 'integer'
+         )
 )
 
 
@@ -300,14 +300,13 @@ untbParams <- function(individuals_local,
 }
 
 
-#' buildFun
-#'
-#'  helper that, given a single value, builds a function
-#   that returns that value stretched to niter in a vectorized fashion
-#' @param p something magical
-#'
-#' @return p stretched to niter
-#'
+# buildFun
+# helper that, given a single value, builds a function that returns that value 
+# stretched to niter in a vectorized fashion
+# @param p something magical
+#
+# @return p stretched to niter
+
 buildFun <- function(p) {
     p # what in the name of god why does this work
     f <- function(i) {

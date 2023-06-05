@@ -9,6 +9,7 @@
 #' 
 #' @rdname roleData
 #' @include rolePhylo.R
+#' @import methods
 #' @export
 
 setClass('roleData',
@@ -21,6 +22,7 @@ setClass('roleData',
 #' @param localComm A `localComm` object containing the local community.
 #' @param metaComm A `metaComm` object containing the meta community.
 #' @param phylo A `rolePhylo` object containing the model phylogeny. 
+#' @import methods
 #' @export
 
 roleData <- function(localComm,metaComm,phylo) {

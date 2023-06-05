@@ -1,3 +1,4 @@
+
 #' @title A phylogeny of all the species in a `roleData` object.
 #' 
 #' @description An S4 class to specify a phylogeny for the purpose of the RoLE model.
@@ -44,12 +45,13 @@ rolePhylo <- function(n, e, l, alive, tipNames, scale) {
         n = n, e = e, l = l, alive = alive, tipNames = tipNames, scale = scale)
 }
 
-#' @title check RolePhylo
-#' checker function for validation
-#'
-#' @param object a supposed rolePhylo
-#'
-#' @return t/f if it's a rolePhylo
+# @title check RolePhylo
+# checker function for validation
+#
+# @param object a supposed rolePhylo
+#
+# @return t/f if it's a rolePhylo
+
 checkRolePhylo <- function(object) {
     checks <- c()
     
@@ -90,7 +92,7 @@ checkRolePhylo <- function(object) {
 setValidity('rolePhylo', checkRolePhylo)
 
 # register ape phylo
-# setOldClass('phylo')
+setOldClass('phylo')
 
 setAs(from = 'phylo', to = 'rolePhylo',
       def = function(from) {

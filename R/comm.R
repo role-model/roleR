@@ -16,6 +16,7 @@
 #'     species in the local community
 #' @slot equilibProp numeric proportion of equilibrium achived 
 #' @rdname localComm
+#' @import methods
 #' @export
 
 setClass('localComm',
@@ -38,6 +39,7 @@ setClass('localComm',
 #' @param indTrait indTrait
 #' @param indSeqs indSeqs
 #' @param spGenDiv spGenDiv
+#' @import methods
 #' @export
 
 localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { 
@@ -73,6 +75,7 @@ localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) {
 #'     the meta community
 
 #' @rdname metaComm
+#' @import methods
 #' @export
 
 setClass('metaComm',
@@ -84,6 +87,7 @@ setClass('metaComm',
 #' @rdname metaComm
 #' @param spAbund spAbund
 #' @param spTrait spTrait
+#' @import methods
 #' @export
 
 metaComm <- function(spAbund, spTrait) {

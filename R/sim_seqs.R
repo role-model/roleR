@@ -1,12 +1,13 @@
 # Takes a roleModel and simulates seq data for it
-#' @param model a completed roleModel
-#'
-#' @return a roleModel with seqs added
+# @param model a completed roleModel
+#
+# @return a roleModel with seqs added
 
 sim_seqs <- function(model) {
     sim_seqs_path <- system.file("python", "role_msprime.py", package = "roleR")
         
-    reticulate::source_python(sim_seqs_path)
+    py_msprime_simulate <- function() # declare that this will be a function
+    reticulate::source_python(sim_seqs_path) # over-write with real py fun
     
     #exp = as(model, "roleExperiment")
     

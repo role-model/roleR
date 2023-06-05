@@ -117,17 +117,17 @@ setMethod('hillTrait',
           }
 )
 
-#' @title HillDivTrait
-#' function for trait-based
-#' @param X a matrix with first column = abund, second column = traits
-#' @param q order for hill number
+# HillDivTrait
+# function for trait-based
+# @param X a matrix with first column = abund, second column = traits
+# @param q order for hill number
 
 .hillDivTrait <- function(X, q) {
     n <- X[, 1]
     traits <- X[, 2]
     
     p <- n / sum(n)
-    dij <- as.matrix(dist(traits))
+    dij <- as.matrix(stats::dist(traits))
     Q <- as.vector(p %*% dij %*% p)
     a <- outer(p, p, '*') / Q
     
@@ -159,6 +159,8 @@ setGeneric('hillPhylo',
 #' @aliases hillPhylo,roleData-method
 #' @docType methods
 #' @rdname div-sumStats
+#' @export
+
 setMethod('hillPhylo', 
           signature = 'roleData', 
           definition = function(x, q = 1:4) {
