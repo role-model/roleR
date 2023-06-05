@@ -1,9 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 .github
-^LICENSE\.md$
 _pkgdown.yml
-about.Rmd
-binaries/
-docs/
-ms/
+^binaries$
+^docs$
+^scratch$
