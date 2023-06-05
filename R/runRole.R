@@ -75,6 +75,7 @@ setMethod('runRole',
 #' @aliases runRole,roleExperiment-method
 #' @docType methods
 #' @rdname runRole
+
 setMethod('runRole', 
           signature = 'roleExperiment', 
           definition = function(x, cores = 1) {
@@ -105,7 +106,7 @@ setMethod('runRole',
 # buffer model data
 # augment the data of the not-yet-run model based on what is expected from the 
 # params called right before the model is run in Cpp
-#' @param model model
+# @param model model
 
 .bufferModelData <- function(model) {
     p <- model@params 
@@ -155,6 +156,7 @@ setMethod('runRole',
 
 
 ###### should move this to rcpp ###########
+
 # helper to trim the data of unused indices after the model is run
 .trimModelData <- function(model) {
     
@@ -162,7 +164,7 @@ setMethod('runRole',
         # trim phylo
         model@modelSteps[[i]]@phylo@e <- model@modelSteps[[i]]@phylo@e[model@modelSteps[[i]]@phylo@e[,1] != -1,]
         model@modelSteps[[i]]@phylo@l <- model@modelSteps[[i]]@phylo@l[model@modelSteps[[i]]@phylo@l != 0] 
-        last_alive_index <- tail(which(model@modelSteps[[i]]@phylo@alive == TRUE), n = 1)
+        last_alive_index <- max(which(model@modelSteps[[i]]@phylo@alive == TRUE))
         model@modelSteps[[i]]@phylo@alive <- model@modelSteps[[i]]@phylo@alive[1:last_alive_index]
         model@modelSteps[[i]]@phylo@tipNames <- model@modelSteps[[i]]@phylo@tipNames[model@modelSteps[[i]]@phylo@tipNames != ''] # this MAY cause errors
         
@@ -180,21 +182,21 @@ setMethod('runRole',
 }
 
 
-#' @title getValuesFromParams
-#' @description
-#' run iter functions over params to generate a new object of class paramValues 
-#' that contains ONLY vectors of values and no functions
-#' @param p an object of class `roleParams`
-#' @param i the iterations over which to calculate parameter values
-#' @return a list of parameter vectors, each equal in length to `length(i)`
+# getValuesFromParams
+# @description
+# run iter functions over params to generate a new object of class paramValues 
+# that contains ONLY vectors of values and no functions
+# @param p an object of class `roleParams`
+# @param i the iterations over which to calculate parameter values
+# @return a list of parameter vectors, each equal in length to `length(i)`
 
 getValuesFromParams <- function(p, i) {
     # slot names
-    s <- slotNames(p)
+    s <- methods::slotNames(p)
     
     # apply over slots
     pvals <- lapply(s, function(x) {
-        thisP <- slot(p, x)
+        thisP <- methods::slot(p, x)
         
         if(inherits(thisP, 'function')) {
             return(thisP(i))

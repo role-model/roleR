@@ -120,11 +120,11 @@ roleModel <- function(params) {
     }
     
     # solve for alpha paramter
-    asol <- uniroot(interval = c(.Machine$double.eps^0.25,
-                                 .Machine$integer.max),
-                    f = function(a) {
-                        a * log(1 + N / a) - S
-                    })
+    asol <- stats::uniroot(interval = c(.Machine$double.eps^0.25,
+                                        .Machine$integer.max),
+                           f = function(a) {
+                               a * log(1 + N / a) - S
+                           })
     
     # calculate p parameter and beta (as used by pika)
     p <- 1 - exp(-S / asol$root)

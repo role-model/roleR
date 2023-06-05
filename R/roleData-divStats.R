@@ -127,7 +127,7 @@ setMethod('hillTrait',
     traits <- X[, 2]
     
     p <- n / sum(n)
-    dij <- as.matrix(dist(traits))
+    dij <- as.matrix(stats::dist(traits))
     Q <- as.vector(p %*% dij %*% p)
     a <- outer(p, p, '*') / Q
     
