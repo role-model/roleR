@@ -4,9 +4,6 @@
 ^LICENSE\.md$
 _pkgdown.yml
 about.Rmd
-binaries/*
-binaries
-docs/*
-docs
-ms/*
-ms
+binaries/
+docs/
+ms/
