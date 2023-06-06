@@ -42,16 +42,26 @@ setClass('localComm',
 #' @import methods
 #' @export
 
-localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { 
+localComm <- function(indSpecies, indTrait, indSeqs) { 
     
-    # create the species indexed vectors from individual index vectors
+    # create vectors indexed by spp ID from individual-indexed vectors
     spAbund <- as.vector(tabulate(indSpecies))
     spTrait <- as.vector(tapply(indTrait, indSpecies, mean))
     
-    # initialize other vectors that will be filled as the model runs
-    spAbundHarmMean <- as.numeric()
-    spLastOriginStep <- as.numeric()
-    spExtinctionStep <- as.numeric()
+    # initialize harmonic mean, with only 1 timestep harm mean = abund
+    spAbundHarmMean <- spAbund
+    
+    # origin index is all -1 (i.e. not there yet)
+    spLastOriginStep <- rep(-1, length(spAbundHarmMean))
+    
+    # except change origin to 0 for those that are there
+    spLastOriginStep[spAbund > 0] <- 0 
+    
+    # no one extinct yet so all -1
+    spExtinctionStep <- rep(-1, length(spAbundHarmMean))
+    
+    # all 0 for gen div (will be over-written by msprime code)
+    spGenDiv <- rep(0, length(spAbundHarmMean))
     
     return(new('localComm',
                indSpecies = indSpecies,

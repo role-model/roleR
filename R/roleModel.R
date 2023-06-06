@@ -71,8 +71,7 @@ roleModel <- function(params) {
     
     locs <- localComm(indSpecies = initSpp,
                       indTrait = initTrait,
-                      indSeqs = character(J),
-                      spGenDiv = numeric(0))
+                      indSeqs = character(J))
     
     dat <- roleData(localComm = locs, 
                     metaComm = meta, 

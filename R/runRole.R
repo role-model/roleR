@@ -139,17 +139,22 @@ setMethod('runRole',
     # calc buffer size for local species vects 
     local_add <- p@species_meta + expec_n_spec
     
-    # buffer local species vectors with 0s
+    # buffer local species vectors with 0s for abundances
+    # and -1s for timings
     model@modelSteps[[1]]@localComm@spAbund <- 
         c(model@modelSteps[[1]]@localComm@spAbund, rep(0, local_add))
+    
     model@modelSteps[[1]]@localComm@spTrait <- 
         c(model@modelSteps[[1]]@localComm@spTrait, rep(0, local_add))
+    
     model@modelSteps[[1]]@localComm@spAbundHarmMean <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+        c(model@modelSteps[[1]]@localComm@spAbundHarmMean, rep(0, local_add))
+    
     model@modelSteps[[1]]@localComm@spLastOriginStep <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+        c(model@modelSteps[[1]]@localComm@spLastOriginStep, rep(-1, local_add))
+    
     model@modelSteps[[1]]@localComm@spExtinctionStep <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+        c(model@modelSteps[[1]]@localComm@spExtinctionStep, rep(-1, local_add))
     
     return(model)
 }
