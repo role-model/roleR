@@ -1,10 +1,15 @@
-# reticulate::conda_list()
+cl <- reticulate::conda_list()
 condaenv_name <- "r-reticulate"
+
+if(!(condaenv_name %in% cl$name)) {
+    reticulate::conda_create("r-reticulate")
+}
+
 reticulate::use_condaenv(condaenv_name)
-#py_list_packages()
-msprime <- reticulate::import('msprime')
-newick <- reticulate::import('newick')
-collections <- reticulate::import('collections')
+
+msprime <- reticulate::import("msprime")
+newick <- reticulate::import("newick")
+collections <- reticulate::import("collections")
 
 
 
