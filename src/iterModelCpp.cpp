@@ -535,7 +535,7 @@ void update_env_filter_probs(int i, int dead_index,roleDataCpp &d,roleParamsCpp 
 void update_local_sp_sum_recipr(int i, int dead_index, roleDataCpp &d, roleParamsCpp &p){
 
     // for each species...
-    for(int s = 0; s < d.nTipsP(0)-1; s++){
+    for(int s = 0; s < d.nTipsP(0); s++) {
         // if species is currently alive in local
         if(d.spAbundL(s) > 0){
             
