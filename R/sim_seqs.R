@@ -6,7 +6,7 @@
 sim_seqs <- function(model) {
     sim_seqs_path <- system.file("python", "role_msprime.py", package = "roleR")
         
-    py_msprime_simulate <- function() # declare that this will be a function
+    # py_msprime_simulate <- function() # declare that this will be a function
     reticulate::source_python(sim_seqs_path) # over-write with real py fun
     
     #exp = as(model, "roleExperiment")
