@@ -44,7 +44,7 @@ setMethod('runRole',
               
               # augment the data in the model based on the params
               m <- .bufferModelData(m)
-                  
+              
               # returns the new modelSteps (a list of roleData)
               m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
                                            slot(m@modelSteps[[1]],"metaComm"),
@@ -150,7 +150,7 @@ setMethod('runRole',
         rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
     model@modelSteps[[1]]@localComm@spExtinctionStep <-  
         rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
-
+    
     return(model)
 }
 
@@ -209,5 +209,4 @@ getValuesFromParams <- function(p, i) {
     
     return(pvals)
 }
-
 
