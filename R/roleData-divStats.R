@@ -126,6 +126,14 @@ setMethod('hillTrait',
     n <- X[, 1]
     traits <- X[, 2]
     
+    if(length(unique(traits)) == 1) {
+        
+        D = 1 + (0 * q)
+        
+        return(D)
+        
+    }
+    
     p <- n / sum(n)
     dij <- as.matrix(stats::dist(traits))
     Q <- as.vector(p %*% dij %*% p)
