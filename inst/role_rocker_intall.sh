@@ -37,11 +37,14 @@ sudo -u rstudio bash -i -c '\
 echo "install.packages(\"remotes\")
 install.packages(\"reticulate\") # <- Necessary for installing/configuring conda base
 install.packages(c(\"dplyr\", \"tidyr\", \"ape\", \"taxize\", \"hillR\", \"spoc\", \"rotl\", \"rentrez\")) # <- Workshop Part I reqs
+install.packages(c(\"tidymodels\", \"tidyverse\")) <- For part II inference
+install.packages(\"shinyWidgets\") <- For RoLE-Shiny
 library(reticulate)
 library(remotes)
 reticulate::use_condaenv('base') # <- Tell reticulate to use the externally installed conda env
 # NB: use reticulate::conda_list() to check the env name if this is not correct, but it should be by default
-remotes::install_github('role-model/roleR', force=TRUE)" > tmp.txt
+remotes::install_github('role-model/roleR', force=TRUE)
+remotes::install_github(\"role-model/roleShiny\")" > tmp.txt
 
 sudo -u rstudio bash -i -c 'Rscript tmp.txt'
 
