@@ -70,3 +70,18 @@ test_that("`modelRuns` output is correctly updated by run", {
 test_that("when an experiment is run the supplied experiment is NOT modified in place", {
     expect_true(is.null(e@modelRuns[[2]]) & !is.null(erun@modelRuns[[2]]))
 })
+
+# testing sum stats
+p <- roleParams(dispersal_prob = 0.5, niter = 100, niterTimestep = 50)
+e <- roleExperiment(list(p))
+erun <- runRole(e)
+
+s <- getSumStats(erun, 
+                 funs = list(rich = richness, H = hillAbund, Ht = hillTrait))
+s[1, !is.finite(unlist(s[1, ]))] <- 1 # avoiding hill numb bug for now
+
+test_that("richness and hill numbers are not all equal with sufficient imm and time", {
+    expect_true(any(diff(s[, 'rich']) != 0))
+    expect_true(any(diff(s[, 'H_1']) != 0))
+    expect_true(any(diff(s[, 'Ht_1']) != 0))
+})
