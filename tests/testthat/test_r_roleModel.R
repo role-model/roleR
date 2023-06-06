@@ -60,3 +60,41 @@ test_that("when a model is run the supplied model is NOT modified in place", {
     
     expect_true(is.null(m@modelSteps[[2]]) & !is.null(mrun@modelSteps[[2]]))
 })
+
+test_that("big model with high speciation runs without error", {
+    params <- untbParams(
+        individuals_local = 900,
+        individuals_meta = 9000,
+        species_meta = 900,
+        speciation = 0.1,
+        dispersal_prob = 0.5,
+        init_type = "oceanic_island",
+        niter = 9000,
+        niterTimestep = 10
+    )
+    
+    m <- runRole(roleModel(params))
+    
+    expect_true(length(m@modelSteps) == 901)
+})
+
+test_that("model copying in C++ does not result in all timesteps being equal", {
+    p <- roleParams(niter = 200, speciation_local = .5) 
+    # create a test model and get data from a step and the params
+    m <- roleModel(p)
+    m <- runRole(m)    
+    
+    expect_false(setequal(m@modelSteps[[2]]@localComm@indSpecies,
+                          m@modelSteps[[11]]@localComm@indSpecies))
+})
+
+
+
+test_that("metacommunity logseries initialization is correct", {
+    S <- 20
+    N <- 1000
+    s <- meteR::meteDist2Rank(meteR::sad(meteR::meteESF(S0 = S, N0 = N)))
+    s <- s / sum(s)
+    m <- roleR:::.lseriesFromSN(S, N)
+    expect_lt(sum((s - m)^2), 0.0001)
+})
