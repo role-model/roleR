@@ -162,20 +162,31 @@ setMethod('runRole',
     
     for(i in 1:length(model@modelSteps)) {
         # trim phylo
-        model@modelSteps[[i]]@phylo@e <- model@modelSteps[[i]]@phylo@e[model@modelSteps[[i]]@phylo@e[,1] != -1,]
-        model@modelSteps[[i]]@phylo@l <- model@modelSteps[[i]]@phylo@l[model@modelSteps[[i]]@phylo@l != 0] 
-        last_alive_index <- max(which(model@modelSteps[[i]]@phylo@alive == TRUE))
-        model@modelSteps[[i]]@phylo@alive <- model@modelSteps[[i]]@phylo@alive[1:last_alive_index]
-        model@modelSteps[[i]]@phylo@tipNames <- model@modelSteps[[i]]@phylo@tipNames[model@modelSteps[[i]]@phylo@tipNames != ''] # this MAY cause errors
+        model@modelSteps[[i]]@phylo@e <- 
+            model@modelSteps[[i]]@phylo@e[model@modelSteps[[i]]@phylo@e[,1] != -1,]
+        model@modelSteps[[i]]@phylo@l <- 
+            model@modelSteps[[i]]@phylo@l[model@modelSteps[[i]]@phylo@l != 0] 
+        last_alive_index <- 
+            max(which(model@modelSteps[[i]]@phylo@alive == TRUE))
+        model@modelSteps[[i]]@phylo@alive <- 
+            model@modelSteps[[i]]@phylo@alive[1:last_alive_index]
+        model@modelSteps[[i]]@phylo@tipNames <-
+            model@modelSteps[[i]]@phylo@tipNames[1:length(model@modelSteps[[i]]@phylo@l)]
         
         # trim local
-        # find place where augmented 0s started, which is the number of species to ever have existed 
+        # find place where augmented 0s started, which is the number of species 
+        # to ever have existed 
         # I think this is the last alive index??
-        model@modelSteps[[i]]@localComm@spAbund <- model@modelSteps[[i]]@localComm@spAbund[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spTrait <- model@modelSteps[[i]]@localComm@spTrait[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spAbundHarmMean  <- model@modelSteps[[i]]@localComm@spAbundHarmMean [1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spLastOriginStep <- model@modelSteps[[i]]@localComm@spLastOriginStep[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spExtinctionStep <- model@modelSteps[[i]]@localComm@spExtinctionStep[1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spAbund <- 
+            model@modelSteps[[i]]@localComm@spAbund[1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spTrait <- 
+            model@modelSteps[[i]]@localComm@spTrait[1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spAbundHarmMean  <- 
+            model@modelSteps[[i]]@localComm@spAbundHarmMean [1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spLastOriginStep <- 
+            model@modelSteps[[i]]@localComm@spLastOriginStep[1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spExtinctionStep <- 
+            model@modelSteps[[i]]@localComm@spExtinctionStep[1:last_alive_index]
     }
     
     return(model)
