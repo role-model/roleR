@@ -150,29 +150,29 @@ setClass('roleParams',
 #' @rdname roleParams
 #' @export
 
-roleParams <- function(individuals_local=100,
-                       individuals_meta=1000,
-                       species_meta=10,
+roleParams <- function(individuals_local = 100,
+                       individuals_meta = 1000,
+                       species_meta = 10,
                        
-                       speciation_local=0,
-                       speciation_meta=1,
-                       extinction_meta=0.8,
-                       dispersal_prob=0.01,
+                       speciation_local = 0,
+                       speciation_meta = 1,
+                       extinction_meta = 0.8,
+                       dispersal_prob = 0.01,
                        
-                       trait_sigma=1,
-                       env_sigma=0,
-                       comp_sigma=0,
-                       neut_delta=1,
-                       env_comp_delta=0.5,
+                       trait_sigma = 1,
+                       env_sigma = 0,
+                       comp_sigma = 0,
+                       neut_delta = 1,
+                       env_comp_delta = 0.5,
                        
-                       mutation_rate=0,
-                       equilib_escape=0,
-                       alpha=1,
-                       num_basepairs=500,
+                       mutation_rate = 0,
+                       equilib_escape = 0,
+                       alpha = 100,
+                       num_basepairs = 500,
                        
-                       init_type='oceanic_island', 
-                       niter=10, 
-                       niterTimestep=NULL) {
+                       init_type = 'oceanic_island', 
+                       niter = 10, 
+                       niterTimestep = NULL) {
     
     # if niterTimestep unspecified calculate one as rounded 1/10 of the iter plus 1
     if(is.null(niterTimestep)){
