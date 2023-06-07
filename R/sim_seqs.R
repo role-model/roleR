@@ -43,9 +43,6 @@ sim_seqs <- function(model) {
         spAbundHarmMean <- model@modelSteps[[idx]]@localComm@spAbundHarmMean
         localTDiv <- model@modelSteps[[idx]]@localComm@spLastOriginStep
         
-        model@modelSteps[[4]]@localComm@spAbundHarmMean
-        model@modelSteps[[4]]@localComm@spAbund
-        
         ## Returns a dataframe with rows for pi, TajD and genotypes
         
         res <- py_msprime_simulate(J_m, J, curtime, metaTree, metaAbund, localAbund,
