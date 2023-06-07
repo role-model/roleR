@@ -6,7 +6,7 @@
 \alias{localComm}
 \title{The local community of a `roleData`}
 \usage{
-localComm(indSpecies, indTrait, indSeqs, spGenDiv)
+localComm(indSpecies, indTrait, indSeqs)
 }
 \arguments{
 \item{indSpecies}{indSpecies}

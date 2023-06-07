@@ -14,11 +14,3 @@ iterModelCpp <- function(local, meta, phylo, params, print) {
     .Call(`_roleR_iterModelCpp`, local, meta, phylo, params, print)
 }
 
-#' @name testRand
-#' @title testRand
-#' @param m m
-#' @return outMat
-testRand <- function(m) {
-    .Call(`_roleR_testRand`, m)
-}
-

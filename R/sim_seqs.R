@@ -45,6 +45,7 @@ sim_seqs <- function(model) {
         
         ## Returns a dataframe with rows for pi, TajD and genotypes
         
+        # if(idx > 1) browser()
         res <- py_msprime_simulate(J_m, J, curtime, metaTree, metaAbund, localAbund,
                                        spAbundHarmMean, localTDiv, alpha, sequence_length, mu,
                                        verbose = FALSE)

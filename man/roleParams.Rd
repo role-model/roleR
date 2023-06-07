@@ -21,8 +21,8 @@ roleParams(
   env_comp_delta = 0.5,
   mutation_rate = 0,
   equilib_escape = 0,
-  alpha = 1,
-  num_basepairs = 0,
+  alpha = 100,
+  num_basepairs = 500,
   init_type = "oceanic_island",
   niter = 10,
   niterTimestep = NULL

@@ -35,6 +35,7 @@ VignetteBuilder: knitr
 Collate: 
     'RcppExports.R'
     'comm.R'
+    'conda_env_housekeeping.R'
     'roleParams.R'
     'roleModel.R'
     'roleExperiment.R'

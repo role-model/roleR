@@ -27,3 +27,18 @@
 #     
 # }
 # 
+
+
+
+# # global references to required Python packages - inspired by:
+# # https://cran.r-project.org/web/packages/reticulate/vignettes/package.html
+# # (Python environment initialization is now being done using init_env())
+# tskit <- NULL
+# pyslim <- NULL
+# msp <- NULL
+# pylib <- NULL
+
+# define roleR's required Python dependencies and compose an environment name
+# that will be used specifically for them
+ROLER_PYTHON_ENV <- paste(c("Python", "msprime", "newick", "collections"), 
+                          collapse = "_")

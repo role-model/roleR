@@ -63,7 +63,7 @@ setMethod('runRole',
               }
               
               # add popgen
-              m <- sim_seqs(m)
+              # m <- sim_seqs(m)
               
               return(m)
           }
