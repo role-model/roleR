@@ -1,0 +1,25 @@
+---
+title: "`msprime` and founding bottleneck"
+format: html
+editor: visual
+jupyter: python3
+---
+
+## Set-up
+
+```{python}
+import msprime
+import newick
+import numpy as np
+import pandas as pd
+
+from collections import Counter, defaultdict
+```
+
+## How does founding bottleneck impact genetic diversity?
+
+```{python}
+demography = msprime.Demography()
+demography.add_population(name="A", initial_size=1000)
+
+```
