@@ -28,10 +28,15 @@ sudo -u rstudio bash -i -c '\
     cd ~
     which python
     conda install -c bioconda python-newick -y
-    conda install -c conda-forge pandas -y
+    conda install -c conda-forge pandas matplotlib scikit-learn toytree ipyparallel -y
     rm -rf msprime
     git clone --recurse-submodules https://github.com/tskit-dev/msprime.git
     cd msprime; pip install .
+    mkdir src
+    cd src
+    git clone https://github.com/iBioGen/iBioGen.git
+    cd iBioGen
+    pip install -e .
 '
 
 echo "install.packages(\"remotes\")
