@@ -15,6 +15,7 @@ Depends:
     R (>= 3.5.0)
 Imports: 
     Rcpp,
+    RcppArmadillo,
     ape,
     extraDistr,
     methods,
@@ -23,7 +24,6 @@ Imports:
     stats
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
-RcppModules: iterModelCpp
 Suggests: 
     ggplot2,
     knitr,

@@ -11,36 +11,48 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// iterModelCpp
-List iterModelCpp(RObject local, RObject meta, RObject phylo, List params, bool print);
-RcppExport SEXP _roleR_iterModelCpp(SEXP localSEXP, SEXP metaSEXP, SEXP phyloSEXP, SEXP paramsSEXP, SEXP printSEXP) {
+// compMatCalcTest
+NumericMatrix compMatCalcTest(NumericMatrix x, double sigC);
+RcppExport SEXP _roleR_compMatCalcTest(SEXP xSEXP, SEXP sigCSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< RObject >::type local(localSEXP);
-    Rcpp::traits::input_parameter< RObject >::type meta(metaSEXP);
-    Rcpp::traits::input_parameter< RObject >::type phylo(phyloSEXP);
-    Rcpp::traits::input_parameter< List >::type params(paramsSEXP);
-    Rcpp::traits::input_parameter< bool >::type print(printSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterModelCpp(local, meta, phylo, params, print));
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type sigC(sigCSEXP);
+    rcpp_result_gen = Rcpp::wrap(compMatCalcTest(x, sigC));
     return rcpp_result_gen;
 END_RCPP
 }
-// testRand
-NumericMatrix testRand(NumericMatrix m);
-RcppExport SEXP _roleR_testRand(SEXP mSEXP) {
+// envDistCalcTest
+NumericVector envDistCalcTest(NumericMatrix x, NumericMatrix envOptim, double sigE);
+RcppExport SEXP _roleR_envDistCalcTest(SEXP xSEXP, SEXP envOptimSEXP, SEXP sigESEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(testRand(m));
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type envOptim(envOptimSEXP);
+    Rcpp::traits::input_parameter< double >::type sigE(sigESEXP);
+    rcpp_result_gen = Rcpp::wrap(envDistCalcTest(x, envOptim, sigE));
+    return rcpp_result_gen;
+END_RCPP
+}
+// simOO
+List simOO(S4 x, S4 p);
+RcppExport SEXP _roleR_simOO(SEXP xSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< S4 >::type x(xSEXP);
+    Rcpp::traits::input_parameter< S4 >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(simOO(x, p));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_roleR_iterModelCpp", (DL_FUNC) &_roleR_iterModelCpp, 5},
-    {"_roleR_testRand", (DL_FUNC) &_roleR_testRand, 1},
+    {"_roleR_compMatCalcTest", (DL_FUNC) &_roleR_compMatCalcTest, 2},
+    {"_roleR_envDistCalcTest", (DL_FUNC) &_roleR_envDistCalcTest, 3},
+    {"_roleR_simOO", (DL_FUNC) &_roleR_simOO, 2},
     {NULL, NULL, 0}
 };
 
