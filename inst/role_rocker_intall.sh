@@ -1,11 +1,11 @@
 #!/bin/bash
 
-apt update; apt install libgsl-dev libpng-dev libxml2-dev libglpk-dev libfontconfig1-dev -y
+apt update; apt install libgsl-dev libpng-dev libxml2-dev libglpk-dev libfontconfig1-dev libharfbuzz-dev  libfribidi-dev libtiff-dev -y
 # libpng-dev is for 'remotes'
 # libgsl-dev is for 'msprime' (I think)
 # libxml2-dev is for 'taxize' <- RoLE workshop Part I
 # libglpk-dev is for hillR
-# libfontconfig1-dev is for tidyverse
+# libfontconfig1-dev libharfbuzz-dev libfribidi-dev libtiff-dev for tidyverse
 
 sudo -u rstudio bash -i -c '\
     cd ~
@@ -43,7 +43,12 @@ sudo -u rstudio bash -i -c '\
 
 echo "install.packages(\"remotes\")
 install.packages(\"reticulate\") # <- Necessary for installing/configuring conda base
-install.packages(c(\"tidyverse\", \"ape\", \"taxize\", \"hillR\", \"spoc\", \"rotl\", \"rentrez\", \"msa\", \"vcfR\")) # <- Workshop Part I reqs
+install.packages(c(\"tidyverse\", \"ape\", \"taxize\", \"hillR\", \"spocc\", \"rotl\", \"rentrez\", \"vcfR\")) # <- Workshop Part I reqs
+
+if (!require(\"BiocManager\", quietly = TRUE)) # <- msa is special and comes from BiocManager
+  install.packages(\"BiocManager\")
+BiocManager::install(\"msa\")
+
 install.packages(c(\"tidymodels\") <- For part II inference
 install.packages(\"shinyWidgets\") <- For RoLE-Shiny
 library(reticulate)
