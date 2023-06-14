@@ -1,10 +1,11 @@
 #!/bin/bash
 
-apt update; apt install libgsl-dev libpng-dev libxml2-dev libglpk-dev -y
+apt update; apt install libgsl-dev libpng-dev libxml2-dev libglpk-dev libfontconfig1-dev -y
 # libpng-dev is for 'remotes'
 # libgsl-dev is for 'msprime' (I think)
 # libxml2-dev is for 'taxize' <- RoLE workshop Part I
 # libglpk-dev is for hillR
+# libfontconfig1-dev is for tidyverse
 
 sudo -u rstudio bash -i -c '\
     cd ~
