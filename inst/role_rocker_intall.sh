@@ -49,7 +49,7 @@ if (!require(\"BiocManager\", quietly = TRUE)) # <- msa is special and comes fro
   install.packages(\"BiocManager\")
 BiocManager::install(\"msa\")
 
-install.packages(c(\"tidymodels\") <- For part II inference
+install.packages(\"tidymodels\") <- For part II inference
 install.packages(\"shinyWidgets\") <- For RoLE-Shiny
 library(reticulate)
 library(remotes)
