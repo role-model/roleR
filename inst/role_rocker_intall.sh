@@ -1,9 +1,10 @@
 #!/bin/bash
 
-apt update; apt install libgsl-dev libpng-dev libxml2-dev -y
+apt update; apt install libgsl-dev libpng-dev libxml2-dev libglpk-dev -y
 # libpng-dev is for 'remotes'
 # libgsl-dev is for 'msprime' (I think)
 # libxml2-dev is for 'taxize' <- RoLE workshop Part I
+# libglpk-dev is for hillR
 
 sudo -u rstudio bash -i -c '\
     cd ~
@@ -41,8 +42,8 @@ sudo -u rstudio bash -i -c '\
 
 echo "install.packages(\"remotes\")
 install.packages(\"reticulate\") # <- Necessary for installing/configuring conda base
-install.packages(c(\"dplyr\", \"tidyr\", \"ape\", \"taxize\", \"hillR\", \"spoc\", \"rotl\", \"rentrez\")) # <- Workshop Part I reqs
-install.packages(c(\"tidymodels\", \"tidyverse\")) <- For part II inference
+install.packages(c(\"tidyverse\", \"ape\", \"taxize\", \"hillR\", \"spoc\", \"rotl\", \"rentrez\", \"msa\", \"vcfR\")) # <- Workshop Part I reqs
+install.packages(c(\"tidymodels\") <- For part II inference
 install.packages(\"shinyWidgets\") <- For RoLE-Shiny
 library(reticulate)
 library(remotes)
