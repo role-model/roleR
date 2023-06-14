@@ -49,8 +49,8 @@ if (!require(\"BiocManager\", quietly = TRUE)) # <- msa is special and comes fro
   install.packages(\"BiocManager\")
 BiocManager::install(\"msa\")
 
-install.packages(\"tidymodels\") <- For part II inference
-install.packages(\"shinyWidgets\") <- For RoLE-Shiny
+install.packages(\"tidymodels\") # <- For part II inference
+install.packages(\"shinyWidgets\") # <- For RoLE-Shiny
 library(reticulate)
 library(remotes)
 reticulate::use_condaenv('base') # <- Tell reticulate to use the externally installed conda env
