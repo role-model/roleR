@@ -44,11 +44,10 @@ sim_seqs <- function(model) {
         localTDiv <- model@modelSteps[[idx]]@localComm@spLastOriginStep
         
         ## Returns a dataframe with rows for pi, TajD and genotypes
-        
-        # if(idx > 1) browser()
+        if(idx > 1) browser()
         res <- py_msprime_simulate(J_m, J, curtime, metaTree, metaAbund, localAbund,
                                        spAbundHarmMean, localTDiv, alpha, sequence_length, mu,
-                                       verbose = FALSE)
+                                       verbose = TRUE)
         
         ## Update the model with the results
         model@modelSteps[[idx]]@localComm@spGenDiv = unlist(res["pi",])
