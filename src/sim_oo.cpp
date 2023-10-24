@@ -329,7 +329,8 @@ public:
             Rcout << "got to speciation method \n";
 
             List newPhyInfo = updatePhylo(i, sMax, edge, edgeLength, alive);
-            edge = as<imat>(newPhyInfo["edge"]); // not ideal that we have to cast these things with as<type>
+            // not ideal that we have to cast these things with as<type>
+            edge = as<imat>(newPhyInfo["edge"]); 
             edgeLength = as<vec>(newPhyInfo["edgeLength"]);
             alive = newPhyInfo["alive"];
 
@@ -341,7 +342,8 @@ public:
 
             // update traits
             rowvec newTrt = localTrt.row(i) +
-                randn<rowvec>(localTrt.n_cols) * sig; // could re-scale lineage duration
+                randn<rowvec>(localTrt.n_cols) * sig; 
+                // could re-scale lineage duration
         }
     }
 
