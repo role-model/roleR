@@ -14,7 +14,7 @@
 #'     each species in the local community
 #' @slot spExtinctionStep numeric vector of most recent extirpation step of each 
 #'     species in the local community
-#' @slot equilibProp numeric proportion of equilibrium achived 
+#' @slot equilibProp numeric proportion of equilibrium achieved 
 #' @rdname localComm
 #' @import methods
 #' @export
