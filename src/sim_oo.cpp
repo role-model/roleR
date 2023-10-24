@@ -227,10 +227,10 @@ public:
         return params;
     }
 
-    // get the whole 'foo' class
-    List getFoo() {
+    // get all the data
+    List getData() {
         List locs = List::create(Named("indSpecies") = localSpp,
-                            Named("indTrait") = wrap(localTrt));
+                                 Named("indTrait") = wrap(localTrt));
 
         List meta = List::create(Named("sppAbund") = metaAbund,
                                  Named("sppTrait") = metaTrt);
@@ -352,8 +352,9 @@ public:
         // only need to update distances if we're in a non-neutral sim
         if (delta < 1) {
             // update comp distances
-            // note: `envDistCalc` can be used because we're calculating distances
-            //        between 1 ind (= the "optimum") and everybody else
+            // note: `envDistCalc` can be used because we're calculating 
+            //        distances between 1 ind (= the "optimum") and everybody 
+            //        else
             vec newComp = envDistCalc(localTrt, localTrt.row(i), sigC);
             compMat.col(i) = newComp;
             compMat.row(i) = newComp.t();
@@ -405,21 +406,66 @@ roleComm roleCommFromS4(S4 x, S4 p) {
 }
 
 
-// // [[Rcpp::export]]
-// List BigOlTester(S4 x) {
-//     roleComm wow = roleCommFromS4(x);
-// 
-//     List l = List::create(Named("locs") = wow.getLocal(),
-//                           Named("pzz") = wow.getParams());
-//     return l;
-// }
+// function to export data from a `roleComm` object back to S4 class of 
+// `roleData`. List argument `x` is assumed to be output from 
+// `[roleComm].getData()`
+// note: we can export data only because we don't need to export params back 
+//       out, they're already stored in other R objects that were supplied to 
+//       Rcpp
+// [[Rcpp::export]]
+S4 s4FromRcpp(List x) {
+    S4 out("roleData");
+    
+    // local comm
+    S4 locs("localComm");
+    
+    locs.slot("indSpecies") = x["indSpecies"];
+    locs.slot("indTrait") = x["indTrait"];
+    locs.slot("indSeqs") = 1; // what to do? make NULL?
+    locs.slot("spGenDiv") = 1; // what to do? make NULL?
+    locs.slot("spTrait") = 1; // remove?
+    locs.slot("spAbund") = 1; // remove?
+    locs.slot("spAbundHarmMean") = 1; // *** need to add to simulation
+    locs.slot("spLastOriginStep") = 1; // *** need to add to simulation
+    locs.slot("spExtinctionStep") = 1; // *** need to add to simulation
+    locs.slot("equilibProp") = 1; // *** need to add to simulation
+    
+    out.slot("localComm") = locs;
+    
+    // meta comm
+    S4 meta("metaComm");
+    
+    meta.slot("spAbund") = x["sppAbund"];
+    meta.slot("spTrait") = x["sppTrait"];
+    
+    out.slot("metaComm") = meta;
+    
+    // phylo
+    S4 phy("rolePhylo");
+    
+    
+    phy.slot("n") = x["n"];
+    phy.slot("e") = x["e"];
+    phy.slot("l") = x["l"];
+    phy.slot("alive") = x["alive"];
+    phy.slot("tipNames") = 1; // what to do? remove? or *make intentional?*
+    phy.slot("scale") = 1; // what to do? calc in cpp? pass from r?
+    
+    out.slot("phylo") = phy;
+    
+    return out;
+}
+
+
+
+
 
 // OO version of simulation function
 // [[Rcpp::export]]
-List simOO(S4 x, S4 p) {
+List simRole(S4 x, S4 p) {
     // consider alternatives to clone????
     x = clone(x);
-    roleComm wow = roleCommFromS4(x);
+    roleComm wow = roleCommFromS4(x, p);
 
     // get params
     // S4 p = wow.getParams();
@@ -430,11 +476,13 @@ List simOO(S4 x, S4 p) {
     int n = niter / niterTimestep + 1; // number of output values
     int k; // index for filling in output list `l`
 
-    // list to hold output
+    // list to hold output, each element will be of class `roleComm`
     List l(n);
 
     // record initial state
-    l[0] = clone(wow.getFoo());
+    // do we want to output a list or the s4 `roleData` object?
+    // probably should output `roleData`
+    l[0] = clone(wow.getData());
 
     // main loop of sim---starts at 1 because we already recorded the
     // initial state
@@ -454,9 +502,26 @@ List simOO(S4 x, S4 p) {
         // every `niterTimestep`, record state
         if (i % niterTimestep == 0) {
             k = i / niterTimestep;
-            l[k] = clone(wow.getFoo());
+            // do we want to output a list or the s4 `roleData` object?
+            // probably should output `roleData`
+            l[k] = clone(wow.getData());
         }
     }
 
     return l;
 }
+
+
+
+
+
+
+// // [[Rcpp::export]]
+// List BigOlTester(S4 x) {
+//     roleComm wow = roleCommFromS4(x);
+// 
+//     List l = List::create(Named("locs") = wow.getLocal(),
+//                           Named("pzz") = wow.getParams());
+//     return l;
+// }
+
