@@ -25,7 +25,7 @@ setClass('roleData',
 #' @import methods
 #' @export
 
-roleData <- function(localComm,metaComm,phylo) {
+roleData <- function(localComm, metaComm, phylo) {
   return(new('roleData',
              localComm = localComm,
              metaComm = metaComm,
