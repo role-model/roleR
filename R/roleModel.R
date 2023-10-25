@@ -63,7 +63,10 @@ roleModel <- function(params) {
         initSpp[2:length(initSpp)] <- 0
     }
     else{
-        stop('`init_type` must be one of "oceanic_island" or "bridge_island"')
+        stop('`init_type` must be one of', 
+             '"oceanic_island" or ', 
+             '"bridge_island" or ', 
+             '"bare_island"')
     }
     
     # initialize traits based on spp ID
