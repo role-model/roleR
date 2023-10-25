@@ -21,11 +21,9 @@
 
 setClass('localComm',
          slots = c(indSpecies = 'numeric',
-                   indTrait = 'numeric',
+                   indTrait = 'numeric', # convert to matrix for multiple trts
                    indSeqs = 'character',
                    spGenDiv = 'numeric',
-                   spTrait = 'numeric',
-                   spAbund = 'numeric',
                    spAbundHarmMean = 'numeric',
                    spLastOriginStep = 'numeric',
                    spExtinctionStep = 'numeric',
@@ -45,21 +43,21 @@ setClass('localComm',
 localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { 
     
     # create the species indexed vectors from individual index vectors
-    spAbund <- as.vector(tabulate(indSpecies))
-    spTrait <- as.vector(tapply(indTrait, indSpecies, mean))
+    # spAbund <- as.vector(tabulate(indSpecies))
+    # spTrait <- as.vector(tapply(indTrait, indSpecies, mean))
     
-    # initialize other vectors that will be filled as the model runs
-    spAbundHarmMean <- as.numeric()
-    spLastOriginStep <- as.numeric()
-    spExtinctionStep <- as.numeric()
+    # initialize spp-indexed vectors
+    spAbundHarmMean <- as.vector(tabulate(indSpecies))
+    spLastOriginStep <- as.numeric(rep(NA, length(spAbundHarmMean)))
+    spExtinctionStep <- as.numeric(rep(NA, length(spAbundHarmMean)))
     
     return(new('localComm',
                indSpecies = indSpecies,
                indTrait = indTrait,
                indSeqs = indSeqs,
                spGenDiv = spGenDiv,
-               spAbund = spAbund,
-               spTrait = spTrait,
+               # spAbund = spAbund,
+               # spTrait = spTrait,
                spAbundHarmMean = spAbundHarmMean,
                spLastOriginStep = spLastOriginStep,
                spExtinctionStep = spExtinctionStep))
