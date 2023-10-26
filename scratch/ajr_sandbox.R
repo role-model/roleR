@@ -13,9 +13,6 @@ model <- runRole(roleModel(p))
 
 
 
-
-
-
 J <- c(rep(500, 250), 100 * exp(0.007 * 0:249))
 
 plot(J)
