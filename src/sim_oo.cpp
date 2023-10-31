@@ -186,6 +186,10 @@ public:
     dist(0, 1),
     localSpp(localSpp_),
     localTrt(localTrt_),
+    // locs.slot("spAbundHarmMean") = 1; // *** need to add to simulation
+    // locs.slot("spLastOriginStep") = 1; // *** need to add to simulation
+    // locs.slot("spExtinctionStep") = 1; // *** need to add to simulation
+    // locs.slot("equilibProp") = 1; // *** need to add to simulation
     metaAbund(metaAbund_),
     metaTrt(metaTrt_),
     edge(edge_),
