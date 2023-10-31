@@ -9,7 +9,15 @@ envDistCalcTest <- function(x, envOptim, sigE) {
     .Call(`_roleR_envDistCalcTest`, x, envOptim, sigE)
 }
 
-simOO <- function(x, p) {
-    .Call(`_roleR_simOO`, x, p)
+s4FromRcpp <- function(x) {
+    .Call(`_roleR_s4FromRcpp`, x)
+}
+
+testUpdatePhylo <- function(tre, i) {
+    .Call(`_roleR_testUpdatePhylo`, tre, i)
+}
+
+simRole <- function(x, p) {
+    .Call(`_roleR_simRole`, x, p)
 }
 

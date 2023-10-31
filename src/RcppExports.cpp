@@ -36,15 +36,38 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// simOO
-List simOO(S4 x, S4 p);
-RcppExport SEXP _roleR_simOO(SEXP xSEXP, SEXP pSEXP) {
+// s4FromRcpp
+S4 s4FromRcpp(List x);
+RcppExport SEXP _roleR_s4FromRcpp(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(s4FromRcpp(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// testUpdatePhylo
+S4 testUpdatePhylo(List tre, int i);
+RcppExport SEXP _roleR_testUpdatePhylo(SEXP treSEXP, SEXP iSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type tre(treSEXP);
+    Rcpp::traits::input_parameter< int >::type i(iSEXP);
+    rcpp_result_gen = Rcpp::wrap(testUpdatePhylo(tre, i));
+    return rcpp_result_gen;
+END_RCPP
+}
+// simRole
+List simRole(S4 x, S4 p);
+RcppExport SEXP _roleR_simRole(SEXP xSEXP, SEXP pSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< S4 >::type x(xSEXP);
     Rcpp::traits::input_parameter< S4 >::type p(pSEXP);
-    rcpp_result_gen = Rcpp::wrap(simOO(x, p));
+    rcpp_result_gen = Rcpp::wrap(simRole(x, p));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -52,7 +75,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_roleR_compMatCalcTest", (DL_FUNC) &_roleR_compMatCalcTest, 2},
     {"_roleR_envDistCalcTest", (DL_FUNC) &_roleR_envDistCalcTest, 3},
-    {"_roleR_simOO", (DL_FUNC) &_roleR_simOO, 2},
+    {"_roleR_s4FromRcpp", (DL_FUNC) &_roleR_s4FromRcpp, 1},
+    {"_roleR_testUpdatePhylo", (DL_FUNC) &_roleR_testUpdatePhylo, 2},
+    {"_roleR_simRole", (DL_FUNC) &_roleR_simRole, 2},
     {NULL, NULL, 0}
 };
 
