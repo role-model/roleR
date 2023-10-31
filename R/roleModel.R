@@ -45,24 +45,20 @@ roleModel <- function(params) {
                      spTrait = ape::rTraitCont(phylo, 
                                                sigma = params@trait_sigma))
     
-    # initialize indSpecies from random draw from meta (based on oceanic or
-    # bridge island)
+    # initialize indSpecies from random draw from meta (based on `init_type`
     if(params@init_type == 'oceanic_island'){
         initSpp <- rep(sample(params@species_meta, 1, 
                               prob = meta@spAbund), 
                        J)
-    } 
-    else if(params@init_type == 'bridge_island'){
+    } else if(params@init_type == 'bridge_island'){
         initSpp <- sample(params@species_meta, J, 
                           replace = TRUE, prob = meta@spAbund)
-    } 
-    else if(params@init_type == 'bare_island'){
+    } else if(params@init_type == 'bare_island'){
         initSpp <- rep(sample(params@species_meta, 1, 
                               prob = meta@spAbund), 
                        J)
         initSpp[2:length(initSpp)] <- 0
-    }
-    else{
+    } else{
         stop('`init_type` must be one of', 
              '"oceanic_island" or ', 
              '"bridge_island" or ', 
