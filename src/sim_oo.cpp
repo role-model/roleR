@@ -92,8 +92,6 @@ List updatePhylo(int i, int sMax, imat edge, vec edgeLength,
     uvec inds = find(edge.col(1) == i);
     int j = inds(0);
 
-
-
     // add one to internal nodes
     uvec internalNode = find(edge > sMax); // should it be > or >=??????
     edge.elem(internalNode) += 1;
@@ -120,28 +118,28 @@ List updatePhylo(int i, int sMax, imat edge, vec edgeLength,
     // add tips
     edge(eNew, 1) = edge(j, 1); // add old tip
     edge(eNew + 1, 1) = sMax + 1; // add new tip
-
+    
     // update ancestry of internal nodes
     edge(j, 1) = newNode;
 
     // augment edge lengths
     edgeLength[eNew] = 0;
     edgeLength[1 + eNew] = 0;
-
+    
     // increase all tip edge lengths by 1 time step
     edgeLength(find(edge.col(1) <= eNew + 1)) += 1;
-
-    // update sMax
-    sMax++;
-
+    
     // update alive vector
     alive(sMax) = true;
+    
+    // update sMax
+    sMax++;
 
     List out = List::create(Named("edge") = edge,
                             Named("edgeLength") = edgeLength,
                             Named("alive") = alive,
                             Named("sMax") = sMax);
-
+    
     return out;
 }
 
@@ -444,7 +442,7 @@ S4 s4FromRcpp(List x) {
     S4 phy("rolePhylo");
     
     
-    phy.slot("n") = x["n"];
+    phy.slot("n") = x["n"]; // might be sMax, not n
     phy.slot("e") = x["e"];
     phy.slot("l") = x["l"];
     phy.slot("alive") = x["alive"];
@@ -457,7 +455,46 @@ S4 s4FromRcpp(List x) {
 }
 
 
-
+// tester function wrapping the updatePhylo fun
+// [[Rcpp::export]]
+S4 testUpdatePhylo(List tre, int i) {
+    // S4 testUpdatePhylo(S4 x, S4 p, int i) {
+    // List out = List::create(Named("edge") = edge,
+    //                         Named("edgeLength") = edgeLength,
+    //                         Named("alive") = alive,
+    //                         Named("sMax") = sMax);
+    // 
+    
+    List x = List::create(Named("edge") = tre["edge"], 
+                          Named("tipNames") = tre["tip.label"],
+                          Named("n") = tre["n"],
+                          Named("alive") = tre["alive"],
+                          Named("edgeLength") = tre["edge.length"]);
+    
+    // roleComm allDat = roleCommFromS4(x, p);
+    // 
+    // 
+    // List l = allDat.getData();
+    // List tre = l["phylo"]
+    // 
+    List newTre = updatePhylo(i, x["n"], x["edge"], 
+                                 x["edgeLength"], x["alive"]);
+    
+    
+    S4 phy("rolePhylo");
+    
+    
+    phy.slot("n") = newTre["sMax"];
+    phy.slot("e") = newTre["edge"];
+    phy.slot("l") = newTre["edgeLength"];
+    phy.slot("alive") = newTre["alive"];
+    phy.slot("tipNames") = "A"; 
+    phy.slot("scale") = 1; // what to do? calc in cpp? pass from r?
+    
+    
+    
+    return phy;
+}
 
 
 // OO version of simulation function
