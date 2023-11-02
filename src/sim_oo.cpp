@@ -461,7 +461,6 @@ S4 s4FromRcpp(List x) {
     phy.slot("l") = x["l"];
     phy.slot("alive") = x["alive"];
     phy.slot("tipNames") = 1; // what to do? remove? or *make intentional?*
-    phy.slot("scale") = 1; // what to do? calc in cpp? pass from r?
     
     out.slot("phylo") = phy;
     
@@ -492,9 +491,6 @@ S4 testUpdatePhylo(List tre, int i, double scale) {
     phy.slot("l") = newTre["edgeLength"];
     phy.slot("alive") = newTre["alive"];
     phy.slot("tipNames") = newTre["tipNames"]; 
-    phy.slot("scale") = scale; // what to do? calc in cpp? pass from r?
-    
-    
     
     return phy;
 }
