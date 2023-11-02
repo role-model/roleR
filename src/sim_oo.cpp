@@ -1,4 +1,5 @@
 #include <RcppArmadillo.h>
+#include <Rcpp.h>
 #include <random>
 using namespace Rcpp;
 using namespace arma;
@@ -82,8 +83,8 @@ double getParamDouble(S4 p, String s) {
 
 // function to update phylo objects
 // maybe we don't need to return anything, maybe pointers would work?
-List updatePhylo(int i, int sMax, imat edge, vec edgeLength,
-                 LogicalVector alive) {
+List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
+                 LogicalVector alive, StringVector tipNames) {
 
     // index of where unrealized edges in edge matrix start
     int eNew = 2 * sMax - 2;
@@ -93,25 +94,11 @@ List updatePhylo(int i, int sMax, imat edge, vec edgeLength,
     int j = inds(0);
 
     // add one to internal nodes
-    uvec internalNode = find(edge > sMax); // should it be > or >=??????
+    uvec internalNode = find(edge > sMax); 
     edge.elem(internalNode) += 1;
 
-    // might need to do it for each col separately
-    // uvec internal0 = find(edge.col(0) > sMax);
-    // uvec internal1 = find(edge.col(1) > sMax);
-
-    // old way
-    // for (int r = 0; r < eNew; r++) {
-    //     for (int c = 0; c < 2; c++){
-    //         if (e(r, c) > n) {
-    //             e(r, c) ++;
-    //         }
-    //     }
-    // }
-
-
     // add new internal node
-    int newNode = 2 * sMax + 1; // index of new node; maybe +1 maybe not?
+    int newNode = 2 * sMax + 1; // index of new node
     edge(eNew, 0) = newNode;
     edge(1 + eNew, 0) = newNode;
 
@@ -126,11 +113,22 @@ List updatePhylo(int i, int sMax, imat edge, vec edgeLength,
     edgeLength[eNew] = 0;
     edgeLength[1 + eNew] = 0;
     
-    // increase all tip edge lengths by 1 time step
-    edgeLength(find(edge.col(1) <= eNew + 1)) += 1;
-    
     // update alive vector
     alive(sMax) = true;
+    
+    // increase all tip edge lengths by 1 time step
+    IntegerVector x = as<IntegerVector>(wrap(edge.col(1)));
+    IntegerVector y = seq_len(alive.length());
+    IntegerVector z = y[alive];
+    
+    LogicalVector ind = in(x, z);
+    
+    uvec tipi = find((edge.col(1) <= eNew) && as<uvec>(ind));
+    
+    edgeLength(tipi) += 1 * scale;
+    
+    // update names
+    tipNames(sMax) = "s" + std::to_string(sMax + 1);
     
     // update sMax
     sMax++;
@@ -138,7 +136,8 @@ List updatePhylo(int i, int sMax, imat edge, vec edgeLength,
     List out = List::create(Named("edge") = edge,
                             Named("edgeLength") = edgeLength,
                             Named("alive") = alive,
-                            Named("sMax") = sMax);
+                            Named("sMax") = sMax, 
+                            Named("tipNames") = tipNames);
     
     return out;
 }
@@ -329,8 +328,19 @@ public:
         if (r < specProb) {
             // update phylo
             Rcout << "got to speciation method \n";
+            
+            // ****** PLACE HOLDER!!!!!
+            StringVector tipNames(sMax);
+            
+            for (int i = 0; i < alive.length(); i++) {
+                tipNames[i] = "t" + std::to_string(i + 1);
+            }
+            
+            double scale = 1;
+            // ***end PLACE HOLDER!!!!!
 
-            List newPhyInfo = updatePhylo(i, sMax, edge, edgeLength, alive);
+            List newPhyInfo = updatePhylo(i, sMax, scale, edge, edgeLength, alive, 
+                                          tipNames);
             // not ideal that we have to cast these things with as<type>
             edge = as<imat>(newPhyInfo["edge"]); 
             edgeLength = as<vec>(newPhyInfo["edgeLength"]);
@@ -461,39 +471,28 @@ S4 s4FromRcpp(List x) {
 
 // tester function wrapping the updatePhylo fun
 // [[Rcpp::export]]
-S4 testUpdatePhylo(List tre, int i) {
-    // S4 testUpdatePhylo(S4 x, S4 p, int i) {
-    // List out = List::create(Named("edge") = edge,
-    //                         Named("edgeLength") = edgeLength,
-    //                         Named("alive") = alive,
-    //                         Named("sMax") = sMax);
-    // 
-    
+S4 testUpdatePhylo(List tre, int i, double scale) {
     List x = List::create(Named("edge") = tre["edge"], 
                           Named("tipNames") = tre["tip.label"],
                           Named("n") = tre["n"],
                           Named("alive") = tre["alive"],
-                          Named("edgeLength") = tre["edge.length"]);
+                          Named("edgeLength") = tre["edge.length"],
+                          Named("tipNames") = tre["tip.label"]);
     
-    // roleComm allDat = roleCommFromS4(x, p);
-    // 
-    // 
-    // List l = allDat.getData();
-    // List tre = l["phylo"]
-    // 
-    List newTre = updatePhylo(i, x["n"], x["edge"], 
-                                 x["edgeLength"], x["alive"]);
+
+    List newTre = updatePhylo(i, x["n"], scale, x["edge"], x["edgeLength"], 
+                                 x["alive"], x["tipNames"]);
     
     
+    // create S4 output
     S4 phy("rolePhylo");
-    
     
     phy.slot("n") = newTre["sMax"];
     phy.slot("e") = newTre["edge"];
     phy.slot("l") = newTre["edgeLength"];
     phy.slot("alive") = newTre["alive"];
-    phy.slot("tipNames") = "A"; 
-    phy.slot("scale") = 1; // what to do? calc in cpp? pass from r?
+    phy.slot("tipNames") = newTre["tipNames"]; 
+    phy.slot("scale") = scale; // what to do? calc in cpp? pass from r?
     
     
     
