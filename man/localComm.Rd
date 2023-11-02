@@ -45,6 +45,6 @@ each species in the local community}
 \item{\code{spExtinctionStep}}{numeric vector of most recent extirpation step of each 
 species in the local community}
 
-\item{\code{equilibProp}}{numeric proportion of equilibrium achived}
+\item{\code{equilibProp}}{numeric proportion of equilibrium achieved}
 }}
 
