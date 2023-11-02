@@ -155,6 +155,7 @@ private:
     NumericMatrix metaTrt; // passed
     imat edge; // passed
     vec edgeLength; // passed
+    StringVector tipNames; // passed
     LogicalVector alive; // passed
     S4 params; // passed
     int sMax; // passed
@@ -176,6 +177,7 @@ public:
              NumericMatrix metaTrt_,
              imat edge_,
              vec edgeLength_,
+             StringVector tipNames_,
              LogicalVector alive_,
              int sMax_,
              S4 params_) :
@@ -191,6 +193,7 @@ public:
     metaTrt(metaTrt_),
     edge(edge_),
     edgeLength(edgeLength_),
+    tipNames(tipNames_),
     alive(alive_),
     params(params_),
     sMax(sMax_),
@@ -239,6 +242,7 @@ public:
         List phylo = List::create(Named("n") = sMax,
                                   Named("e") = wrap(edge),
                                   Named("l") = wrap(edgeLength),
+                                  Named("tipNames") = wrap(tipNames),
                                   Named("alive") = alive);
 
         List out = List::create(Named("localComm") = locs,
@@ -329,21 +333,18 @@ public:
             // update phylo
             Rcout << "got to speciation method \n";
             
-            // ****** PLACE HOLDER!!!!!
-            StringVector tipNames(sMax);
+            // scale factor converting time steps in the local comm to generations
+            double scale = 2 / localSpp.length();
             
-            for (int i = 0; i < alive.length(); i++) {
-                tipNames[i] = "t" + std::to_string(i + 1);
-            }
-            
-            double scale = 1;
-            // ***end PLACE HOLDER!!!!!
-
+            // run the method to update the phylo
             List newPhyInfo = updatePhylo(i, sMax, scale, edge, edgeLength, alive, 
                                           tipNames);
+            
             // not ideal that we have to cast these things with as<type>
+            // *** consider updating
             edge = as<imat>(newPhyInfo["edge"]); 
             edgeLength = as<vec>(newPhyInfo["edgeLength"]);
+            tipNames = newPhyInfo["tipNames"];
             alive = newPhyInfo["alive"];
 
             // update total number of spp
@@ -396,6 +397,7 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     S4 phy = x.slot("phylo");
     imat edge_ = as<imat>(phy.slot("e"));
     vec edgeLength_ = as<vec>(phy.slot("l"));
+    StringVector tipNames_ = phy.slot("tipNames");
     LogicalVector alive_ = phy.slot("alive");
     int sMax_ = as<int>(phy.slot("n"));
 
@@ -410,6 +412,7 @@ roleComm roleCommFromS4(S4 x, S4 p) {
                             metaTrt_,
                             edge_,
                             edgeLength_,
+                            tipNames_,
                             alive_,
                             sMax_,
                             p); // recall: p is passed to `roleCommFromS4`
@@ -471,6 +474,7 @@ S4 s4FromRcpp(List x) {
 // tester function wrapping the updatePhylo fun
 // [[Rcpp::export]]
 S4 testUpdatePhylo(List tre, int i, double scale) {
+    // *** don't need to make this list, could just pass right to `updatePhylo`
     List x = List::create(Named("edge") = tre["edge"], 
                           Named("tipNames") = tre["tip.label"],
                           Named("n") = tre["n"],
