@@ -9,6 +9,10 @@ envDistCalcTest <- function(x, envOptim, sigE) {
     .Call(`_roleR_envDistCalcTest`, x, envOptim, sigE)
 }
 
+roleCommTester <- function(x, p) {
+    .Call(`_roleR_roleCommTester`, x, p)
+}
+
 s4FromRcpp <- function(x) {
     .Call(`_roleR_s4FromRcpp`, x)
 }
