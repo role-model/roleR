@@ -40,10 +40,11 @@ roleModel <- function(params) {
     
     phylo <- ape::rphylo(Sm, params@speciation_meta, params@extinction_meta)
     
+    metaTrt <- ape::rTraitCont(phylo, sigma = params@trait_sigma)
+    
     meta <- metaComm(spAbund = .lseriesFromSN(params@species_meta, 
                                               params@individuals_meta), 
-                     spTrait = ape::rTraitCont(phylo, 
-                                               sigma = params@trait_sigma))
+                     spTrait = matrix(metaTrt, ncol = 1))
     
     # initialize indSpecies from random draw from meta (based on `init_type`
     if(params@init_type == 'oceanic_island'){
@@ -66,7 +67,7 @@ roleModel <- function(params) {
     }
     
     # initialize traits based on spp ID
-    initTrait <- meta@spTrait[initSpp]
+    initTrait <- meta@spTrait[initSpp, , drop = FALSE]
     
     locs <- localComm(indSpecies = initSpp,
                       indTrait = initTrait,
