@@ -235,6 +235,7 @@ public:
     List getData() {
         List locs = List::create(Named("indSpecies") = localSpp,
                                  Named("indTrait") = wrap(localTrt));
+        // should be more stuff in above ^
 
         List meta = List::create(Named("sppAbund") = metaAbund,
                                  Named("sppTrait") = metaTrt);
@@ -420,6 +421,15 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     return out;
 }
 
+// expose roleComm to R for testing
+// [[Rcpp::export]]
+List roleCommTester(S4 x, S4 p) {
+    roleComm wow = roleCommFromS4(x, p);
+
+    List l = List::create(Named("locs") = wow.getLocal(),
+                          Named("pzz") = wow.getParams());
+    return l;
+}
 
 // function to export data from a `roleComm` object back to S4 class of 
 // `roleData`. List argument `x` is assumed to be output from 
