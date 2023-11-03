@@ -6,29 +6,27 @@
 \alias{rolePhylo}
 \title{A phylogeny of all the species in a `roleData` object.}
 \usage{
-rolePhylo(n, e, l, alive, tipNames, scale)
+rolePhylo(n, e, l, alive, tipNames)
 }
 \arguments{
 \item{n}{The number of tips in the phylogeny}
 
-\item{e}{The numeric edge matrix of the phylogeny.
-Each row contains an ancestor-child pair where the 1st column is the ancestor and the 2nd is the child}
+\item{e}{The numeric edge matrix of the phylogeny. Each row contains an 
+ancestor-child pair where the 1st column is the ancestor and the 2nd is 
+the child}
 
-\item{l}{A numeric vector of edge lengths.
-The units of l are the time steps (iterations) of the model.
-Each time step unit is equal to 1/J generations where J is the number of individuals in the local community}
+\item{l}{A numeric vector of edge lengths.}
 
 \item{alive}{A logical vector indicating whether each tip is extant or not.}
 
 \item{tipNames}{A character vector of the tip names.}
-
-\item{scale}{A single numeric value of time scale translation to years.}
 }
 \value{
 A `rolePhylo` object.
 }
 \description{
-An S4 class to specify a phylogeny for the purpose of the RoLE model.
+An S4 class to specify a phylogeny for the purpose of the RoLE 
+    model.
 }
 \section{Slots}{
 
@@ -36,16 +34,16 @@ An S4 class to specify a phylogeny for the purpose of the RoLE model.
 \item{\code{n}}{The number of tips in the phylogeny}
 
 \item{\code{e}}{The numeric edge matrix of the phylogeny.
-Each row contains an ancestor-child pair where the 1st column is the ancestor and the 2nd is the child}
+Each row contains an ancestor-child pair where the 1st column is the ancestor 
+    and the 2nd is the child}
 
-\item{\code{l}}{A numeric vector of edge lengths.
-The units of l are the time steps (iterations) of the model.
-Each time step unit is equal to 1/J generations where J is the number of individuals in the local community}
+\item{\code{l}}{A numeric vector of edge lengths. The units of l are the time steps 
+    (iterations) of the model.
+Each time step unit is equal to 1/J generations where J is the number of 
+    individuals in the local community}
 
 \item{\code{alive}}{A logical vector indicating whether each tip is extant or not.}
 
 \item{\code{tipNames}}{A character vector of the tip names.}
-
-\item{\code{scale}}{A single numeric value of time scale translation to years.}
 }}
 
