@@ -75,9 +75,22 @@ mat getEnvOptim(S4 x) {
 
 // get a param when we know it will be of class `double`
 double getParamDouble(S4 p, String s) {
-    Rcout << "extracting param" << s.get_cstring() << "\n";
+    Rcout << "extracting param " << s.get_cstring() << "\n";
     double x = as<double>(p.slot(s));
 
+    return x;
+}
+
+// get a param vector from a function input
+// [[Rcpp::export]]
+NumericVector getParamFun(S4 p, String s) {
+    Rcout << "extracting fun param " << s.get_cstring() << "\n";
+    
+    int n = p.slot("niter");
+    IntegerVector ii = seq(1, n);
+    Function f = p.slot(s);
+    NumericVector x = f(ii);
+    
     return x;
 }
 
@@ -164,8 +177,8 @@ private:
     double sig; // from params.slot("trait_sigma")
     double delta; //
     double gamma; //
-    double immProb; // from params.slot("imm")
-    double specProb; // from params.slot("speciation_local")
+    NumericVector immProb; // from params.slot("imm")
+    NumericVector specProb; // from params.slot("speciation_local")
     mat envOptim; // from params.slot("envOptim")
     mat compMat; // from localTrt_ and sigC
     vec envDist; // from localTrt_ and sigE
@@ -201,9 +214,9 @@ public:
     sigE(getParamDouble(params_, "env_sigma")),
     sig(getParamDouble(params_, "trait_sigma")),
     delta(getParamDouble(params_, "neut_delta")),
-    gamma(getParamDouble(params_, "env_delta")),
-    immProb(getParamDouble(params_, "dispersal_prob")),
-    specProb(getParamDouble(params_, "speciation_local")),
+    gamma(getParamDouble(params_, "env_comp_delta")),
+    immProb(getParamFun(params_, "dispersal_prob")),
+    specProb(getParamFun(params_, "speciation_local")),
     envOptim(getEnvOptim(params_)),
     compMat(compMatCalc(localTrt_, sigC)),
     envDist(envDistCalc(localTrt_, envOptim, sigE)) {}
@@ -237,8 +250,8 @@ public:
                                  Named("indTrait") = wrap(localTrt));
         // should be more stuff in above ^
 
-        List meta = List::create(Named("sppAbund") = metaAbund,
-                                 Named("sppTrait") = metaTrt);
+        List meta = List::create(Named("spAbund") = metaAbund,
+                                 Named("spTrait") = metaTrt);
 
         List phylo = List::create(Named("n") = sMax,
                                   Named("e") = wrap(edge),
@@ -290,7 +303,7 @@ public:
 
 
 
-    void birthImm(int i) {
+    void birthImm(int i, int step) {
         // set up indexes
         int inew;
         int iborn;
@@ -302,7 +315,7 @@ public:
         rowvec newTrt = randn<rowvec>(localTrt.n_cols) * sig *
             2 / localSpp.size(); // re-scale by generation time
 
-        if (r < immProb) { // immigration
+        if (r < immProb[step]) { // immigration
             // sample the spp ID of the immigrating individual
             inew = sample(metaAbund.size(), 1, false, metaAbund)[0] - 1;
 
@@ -326,11 +339,11 @@ public:
         localTrt.row(i) = newTrt;
     }
 
-    void speciation(int i) {
+    void speciation(int i, int step) {
         // random number to determine if speciation happens
         double r = dist(rng);
 
-        if (r < specProb) {
+        if (r < specProb[step]) {
             // update phylo
             Rcout << "got to speciation method \n";
             
@@ -390,8 +403,8 @@ roleComm roleCommFromS4(S4 x, S4 p) {
 
     // meta comm stuff
     S4 meta = x.slot("metaComm");
-    NumericVector metaAbund_ = meta.slot("sppAbund");
-    NumericMatrix metaTrt_ = meta.slot("sppTrait");
+    NumericVector metaAbund_ = meta.slot("spAbund");
+    NumericMatrix metaTrt_ = meta.slot("spTrait");
 
     // phylo stuff
     Rcout << "got to extracting phylo \n";
@@ -460,8 +473,8 @@ S4 s4FromRcpp(List x) {
     // meta comm
     S4 meta("metaComm");
     
-    meta.slot("spAbund") = x["sppAbund"];
-    meta.slot("spTrait") = x["sppTrait"];
+    meta.slot("spAbund") = x["spAbund"];
+    meta.slot("spTrait") = x["spTrait"];
     
     out.slot("metaComm") = meta;
     
@@ -541,10 +554,10 @@ List simRole(S4 x, S4 p) {
         int idead = wow.death();
 
         // immigration or local birth
-        wow.birthImm(idead);
+        wow.birthImm(idead, i);
 
         // speciation or not
-        wow.speciation(idead);
+        wow.speciation(idead, i);
 
         // udate distances
         wow.updateDist(idead);
