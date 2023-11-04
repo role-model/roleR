@@ -36,6 +36,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getParamFun
+NumericVector getParamFun(S4 p, String s);
+RcppExport SEXP _roleR_getParamFun(SEXP pSEXP, SEXP sSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< S4 >::type p(pSEXP);
+    Rcpp::traits::input_parameter< String >::type s(sSEXP);
+    rcpp_result_gen = Rcpp::wrap(getParamFun(p, s));
+    return rcpp_result_gen;
+END_RCPP
+}
 // roleCommTester
 List roleCommTester(S4 x, S4 p);
 RcppExport SEXP _roleR_roleCommTester(SEXP xSEXP, SEXP pSEXP) {
@@ -88,6 +100,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_roleR_compMatCalcTest", (DL_FUNC) &_roleR_compMatCalcTest, 2},
     {"_roleR_envDistCalcTest", (DL_FUNC) &_roleR_envDistCalcTest, 3},
+    {"_roleR_getParamFun", (DL_FUNC) &_roleR_getParamFun, 2},
     {"_roleR_roleCommTester", (DL_FUNC) &_roleR_roleCommTester, 2},
     {"_roleR_s4FromRcpp", (DL_FUNC) &_roleR_s4FromRcpp, 1},
     {"_roleR_testUpdatePhylo", (DL_FUNC) &_roleR_testUpdatePhylo, 3},
