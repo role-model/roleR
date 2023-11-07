@@ -71,7 +71,7 @@
 #' @export
 
 setClass('roleParams',
-         # slots that are 'functions' are allowed to time-vary across the simulation - all others are not
+         # slots that are 'functions' are allowed to time-vary 
          slots = c(
              # number of individuals and species in the local and meta
              individuals_local = 'function',
@@ -176,7 +176,8 @@ roleParams <- function(individuals_local=100,
                        niter=10, 
                        niterTimestep=NULL) {
     
-    # if niterTimestep unspecified calculate one as rounded 1/10 of the iter plus 1
+    # if niterTimestep unspecified calculate one as rounded 1/10 of the iter 
+    # plus 1
     if(is.null(niterTimestep)){
         niterTimestep <- as.integer(niter/10)
         if(niterTimestep <= 1){
@@ -185,76 +186,47 @@ roleParams <- function(individuals_local=100,
     }
     
     # check that iters and timesteps are correct
-    if(!niter%%1==0 | !niterTimestep%%1==0){ # check integer
-        stop('niter and niterTimestep must be numeric integers (cannot be decimal)')
-    }
-    if(length(niter) > 1 | length(niterTimestep) > 1 | niterTimestep > niter) {
-        stop('must supply a single value for `niter`and niterTimestep, and niter cannot be less than niterTimestep')
+    if(niterTimestep > niter) {
+        stop('`niter` cannot be less than `niterTimestep`')
     }
     
     # get a list of all the user supplied parameters 
-    # old way of doing this is all_params <- list(individuals_local,...
-    # all_params <- as.list(environment())
-    all_params <- list(individuals_local,
-                       individuals_meta,
-                       species_meta,
-                       
-                       speciation_local,
-                       speciation_meta,
-                       extinction_meta,
-                       dispersal_prob,
-                       
-                       env_optim,
-                       trait_sigma,
-                       env_sigma,
-                       comp_sigma,
-                       neut_delta,
-                       env_comp_delta,
-                       
-                       mutation_rate,
-                       equilib_escape,
-                       alpha,
-                       num_basepairs,
-                       
-                       init_type, 
-                       niter, 
-                       niterTimestep)
+    all_params <- as.list(environment())
     
-    # get the types (i,e. 'function','numeric') of the slots of the roleParams class
+    # get the types (i.e. 'function', 'numeric') of the slots of roleParam
     slot_types <- getSlots("roleParams")
+    
     # get the names of each slot
     slot_names <- slotNames("roleParams")
     
+    # deal with special case of `env_optim`
+    all_params$env_optim <- matrix(all_params$env_optim, nrow = 1)
     
-    # for every slot in the list of slots
-    for(i in 1:length(all_params)){
-
-        # if the slot type is a function, and the user input is NOT a function...
-        if(slot_types[i] == "function" & (typeof(all_params[[i]]) != "closure")){
-            # replace the single user-supplied value with the function
-            # *** also need to check if a single value is supplied
-            all_params[[i]] <- buildFun(all_params[[i]])
+    # initialize new params object
+    out_params <-  new("roleParams")
+    
+    # fill in the params object slots
+    for(i in 1:length(all_params)) {
+        # if slot type should be function, and function not provided, 
+        # turn the user input into a function
+        if(slot_types[i] == "function" & typeof(all_params[[i]]) != "closure") {
+            if(length(all_params[[i]]) > 1) {
+                stop("must provide a single value to `", names(all_params[i]), 
+                     "`, or a function")
+            } else {
+                all_params[[i]] <- buildFun(all_params[[i]])
+            }
         }
-    }
-    
-    # singleValParams <- c('individuals_meta', 'species_meta',
-    #                      'speciation_meta', 'extinction_meta', 'trait_sigma', 'env_sigma', 'comp_sigma',
-    #                      'equilib_escape', 'num_basepairs', 'init_type', 
-    #                      'niter', 'niterTimestep', 'neut_delta', 'env_comp_delta')
-    
-    
-    # handle the special case of the env optim
-    
-    all_params$env_optim <- matrix(0, nrow = 1)
-    
-    # create params to return and populate with updated values (values that are replaced with functions)
-    out_params <-  new('roleParams')
-    for(i in 1:length(getSlots('roleParams'))){ # for each slot
-        val <- all_params[[i]] # get value to assign
-        if(slot_types[i] == "integer"){ # if slot needs an integer, coerce
+        
+        val <- all_params[[i]] 
+        
+        # if slot needs an integer, coerce
+        if(slot_types[i] == "integer") { 
             val <- as.integer(val)
         }
-        slot(out_params,slot_names[i]) <- val # add the value to the corresponding slot name in out
+        
+        # now value can be assigned to slot
+        slot(out_params, names(all_params[i])) <- val 
     }
     
     return(out_params)
