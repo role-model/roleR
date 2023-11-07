@@ -22,7 +22,7 @@
 #' Like speciation_meta, used in the initial phylogeny simulation and in relation to trait deviation.
 #' @slot dispersal_prob Probability of dispersal (immigration) occurring from the metacommunity to the local local community at each time step.
 #' Every time step, either birth or immigration happens, so the probability of birth is 1 minus the dispersal_prob.
-#' 
+#' @slot env_optim 
 #' @slot trait_sigma Rate of Brownian trait evolution in the metacommunity. 
 #' Determines how much the trait of a new individual deviates from its parent, i.e. how fast traits change.
 #' @slot env_sigma Selectivity of the environmental filter, i.e. how strongly the environment selects which trait values are a good match for it.
@@ -84,6 +84,7 @@ setClass('roleParams',
              extinction_meta = 'numeric',
              dispersal_prob = 'function',
              
+             env_optim = 'matrix',
              trait_sigma = 'numeric',
              env_sigma = 'numeric',
              comp_sigma = 'numeric',
@@ -159,6 +160,7 @@ roleParams <- function(individuals_local=100,
                        extinction_meta=0.8,
                        dispersal_prob=0.01,
                        
+                       env_optim = 0,
                        trait_sigma=1,
                        env_sigma=0,
                        comp_sigma=0,
@@ -202,6 +204,7 @@ roleParams <- function(individuals_local=100,
                        extinction_meta,
                        dispersal_prob,
                        
+                       env_optim,
                        trait_sigma,
                        env_sigma,
                        comp_sigma,
@@ -229,6 +232,7 @@ roleParams <- function(individuals_local=100,
         # if the slot type is a function, and the user input is NOT a function...
         if(slot_types[i] == "function" & (typeof(all_params[[i]]) != "closure")){
             # replace the single user-supplied value with the function
+            # *** also need to check if a single value is supplied
             all_params[[i]] <- buildFun(all_params[[i]])
         }
     }
@@ -237,6 +241,11 @@ roleParams <- function(individuals_local=100,
     #                      'speciation_meta', 'extinction_meta', 'trait_sigma', 'env_sigma', 'comp_sigma',
     #                      'equilib_escape', 'num_basepairs', 'init_type', 
     #                      'niter', 'niterTimestep', 'neut_delta', 'env_comp_delta')
+    
+    
+    # handle the special case of the env optim
+    
+    all_params$env_optim <- matrix(0, nrow = 1)
     
     # create params to return and populate with updated values (values that are replaced with functions)
     out_params <-  new('roleParams')

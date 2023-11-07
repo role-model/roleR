@@ -68,7 +68,8 @@ NumericVector envDistCalcTest(NumericMatrix x, NumericMatrix envOptim,
 
 // extract environmental optimum
 mat getEnvOptim(S4 x) {
-    mat m = as<mat>(x.slot("env_optim"));
+    NumericMatrix mm = as<NumericMatrix>(x.slot("env_optim"));
+    mat m = as<mat>(mm);
 
     return m;
 }
