@@ -231,15 +231,6 @@ public:
                             Named("trt") = trt);
     }
 
-    // method to extract spp ID vec and trt matrix
-    List getLocsData() {
-        IntegerVector spp = as<IntegerVector>(wrap(localSpp));
-        NumericMatrix trt = as<NumericMatrix>(wrap(localTrt));
-
-        return List::create(Named("spp") = spp,
-                            Named("trt") = trt);
-    }
-
     // method to extract params
     S4 getParams() {
         return params;
@@ -301,8 +292,6 @@ public:
         // return the index of the dead individual so it can be replaced
         return idead;
     }
-
-
 
     void birthImm(int i, int step) {
         // set up indexes
@@ -440,7 +429,7 @@ roleComm roleCommFromS4(S4 x, S4 p) {
 List roleCommTester(S4 x, S4 p) {
     roleComm wow = roleCommFromS4(x, p);
 
-    List l = List::create(Named("locs") = wow.getLocal(),
+    List l = List::create(Named("dat") = wow.getData(),
                           Named("pzz") = wow.getParams());
     return l;
 }
@@ -574,18 +563,3 @@ List simRole(S4 x, S4 p) {
 
     return l;
 }
-
-
-
-
-
-
-// // [[Rcpp::export]]
-// List BigOlTester(S4 x) {
-//     roleComm wow = roleCommFromS4(x);
-// 
-//     List l = List::create(Named("locs") = wow.getLocal(),
-//                           Named("pzz") = wow.getParams());
-//     return l;
-// }
-
