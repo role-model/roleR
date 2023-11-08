@@ -38,24 +38,17 @@ setGeneric('runRole',
 setMethod('runRole', 
           signature = 'roleModel', 
           definition = function(x) {
-              m <- x
-              
-              pvals <- getValuesFromParams(m@params, 1:m@params@niter)
-              
               # augment the data in the model based on the params
-              m <- .bufferModelData(m)
+              m <- .bufferModelData(x)
               
               # returns the new modelSteps (a list of roleData)
-              m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
-                                           slot(m@modelSteps[[1]],"metaComm"),
-                                           slot(m@modelSteps[[1]],"phylo"),
-                                           pvals,
-                                           print = FALSE)
+              m@modelSteps <- simRole(m@modelSteps[[1]], m@params)
               
               # trim data, removing the unused buffer
               m <- .trimModelData(m)
               
               # increment species ids and edges to shift indexing from Cpp to R
+              # ***** really????????
               for(d in 1:length(m@modelSteps)) {
                   m@modelSteps[[d]]@localComm@indSpecies <- 
                       m@modelSteps[[d]]@localComm@indSpecies + 1
@@ -81,13 +74,14 @@ setMethod('runRole',
           definition = function(x, cores = 1) {
               oldInits <- x@inits
               
-              # run consituent models
+              # run constituent models
               if(cores == 1){
                   modList <- lapply(x@inits, runRole)
+                  simRole()
               } else {
-                  cl <- snow::makeCluster(cores, type="SOCK")
-                  modList <- snow::clusterApply(cl, x@inits, runRole)
-                  snow::stopCluster(cl)
+                  modList <- parallel::parLapplyLB(X = 1, fun = function(i) {
+                      i
+                  })
               }
               
               # convert list of models to list of experiments
