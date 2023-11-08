@@ -20,7 +20,7 @@ Imports:
     extraDistr,
     methods,
     reticulate,
-    snow,
+    parallel,
     stats
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.2.3
