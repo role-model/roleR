@@ -383,7 +383,7 @@ public:
 };
 
 
-// function that takes a roleData S4 object and a roleParams S4 object, 
+// function that takes a `roleData` S4 object and a `roleParams` S4 object, 
 // and creates a roleComm rcpp object
 roleComm roleCommFromS4(S4 x, S4 p) {
     // local comm stuff
@@ -514,6 +514,8 @@ S4 testUpdatePhylo(List tre, int i, double scale) {
 
 
 // OO version of simulation function
+// `x` is a `roleData` object
+// `p` is a `roleParams` object
 // [[Rcpp::export]]
 List simRole(S4 x, S4 p) {
     // consider alternatives to clone????
