@@ -1,8 +1,10 @@
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
 #include <random>
+#include <fstream>
 using namespace Rcpp;
 using namespace arma;
+using namespace std;
 
 
 // function to calculate comp matrix
@@ -76,7 +78,6 @@ mat getEnvOptim(S4 x) {
 
 // get a param when we know it will be of class `double`
 double getParamDouble(S4 p, String s) {
-    Rcout << "extracting param " << s.get_cstring() << "\n";
     double x = as<double>(p.slot(s));
 
     return x;
@@ -85,8 +86,6 @@ double getParamDouble(S4 p, String s) {
 // get a param vector from a function input
 // [[Rcpp::export]]
 NumericVector getParamFun(S4 p, String s) {
-    Rcout << "extracting fun param " << s.get_cstring() << "\n";
-    
     int n = p.slot("niter");
     IntegerVector ii = seq(1, n);
     Function f = p.slot(s);
@@ -264,7 +263,6 @@ public:
         int idead;
 
         if (delta == 1) {
-            Rcout << "in neutral death \n";
             // fully neutral
             idead = sample(localSpp.size(), 1)[0] - 1;
         } else {
@@ -335,7 +333,6 @@ public:
 
         if (r < specProb[step]) {
             // update phylo
-            Rcout << "got to speciation method \n";
             
             // scale factor converting time steps in the local comm to generations
             double scale = 2 / localSpp.length();
@@ -365,7 +362,6 @@ public:
     }
 
     void updateDist(int i) {
-        Rcout << "got to updateDist method \n";
         // only need to update distances if we're in a non-neutral sim
         if (delta < 1) {
             // update comp distances
@@ -397,15 +393,12 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     NumericMatrix metaTrt_ = meta.slot("spTrait");
 
     // phylo stuff
-    Rcout << "got to extracting phylo \n";
     S4 phy = x.slot("phylo");
     imat edge_ = as<imat>(phy.slot("e"));
     vec edgeLength_ = as<vec>(phy.slot("l"));
     StringVector tipNames_ = phy.slot("tipNames");
     LogicalVector alive_ = phy.slot("alive");
     int sMax_ = as<int>(phy.slot("n"));
-
-    Rcout << "got through extracting phylo \n";
 
     // params
     // S4 params_ = x.slot("params");
@@ -436,7 +429,7 @@ List roleCommTester(S4 x, S4 p) {
 
 // function to export data from a `roleComm` object back to S4 class of 
 // `roleData`. List argument `x` is assumed to be output from 
-// `[roleComm].getData()`
+// `roleComm::.getData()`
 // note: we can export data only because we don't need to export params back 
 //       out, they're already stored in other R objects that were supplied to 
 //       Rcpp
@@ -446,13 +439,15 @@ S4 s4FromRcpp(List x) {
     
     // local comm
     S4 locs("localComm");
+    List locList = x["localComm"];
     
-    locs.slot("indSpecies") = x["indSpecies"];
-    locs.slot("indTrait") = x["indTrait"];
-    locs.slot("indSeqs") = 1; // what to do? make NULL?
+    locs.slot("indSpecies") = locList["indSpecies"];
+    
+    locs.slot("indTrait") = locList["indTrait"];
+    locs.slot("indSeqs") = "A"; // what to do? make NULL?
     locs.slot("spGenDiv") = 1; // what to do? make NULL?
-    locs.slot("spTrait") = 1; // remove?
-    locs.slot("spAbund") = 1; // remove?
+    // locs.slot("spTrait") = 1; // remove?
+    // locs.slot("spAbund") = 1; // remove?
     locs.slot("spAbundHarmMean") = 1; // *** need to add to simulation
     locs.slot("spLastOriginStep") = 1; // *** need to add to simulation
     locs.slot("spExtinctionStep") = 1; // *** need to add to simulation
@@ -462,21 +457,23 @@ S4 s4FromRcpp(List x) {
     
     // meta comm
     S4 meta("metaComm");
+    List metaList = x["metaComm"];
     
-    meta.slot("spAbund") = x["spAbund"];
-    meta.slot("spTrait") = x["spTrait"];
+    meta.slot("spAbund") = metaList["spAbund"];
+    meta.slot("spTrait") = metaList["spTrait"];
     
     out.slot("metaComm") = meta;
     
     // phylo
     S4 phy("rolePhylo");
+    List phyList = x["phylo"];
     
+    phy.slot("n") = phyList["n"]; // might be sMax, not n
     
-    phy.slot("n") = x["n"]; // might be sMax, not n
-    phy.slot("e") = x["e"];
-    phy.slot("l") = x["l"];
-    phy.slot("alive") = x["alive"];
-    phy.slot("tipNames") = 1; // what to do? remove? or *make intentional?*
+    phy.slot("e") = phyList["e"];
+    phy.slot("l") = phyList["l"];
+    phy.slot("alive") = phyList["alive"];
+    phy.slot("tipNames") = "A"; // what to do? remove? or *make intentional?*
     
     out.slot("phylo") = phy;
     
@@ -513,6 +510,20 @@ S4 testUpdatePhylo(List tre, int i, double scale) {
 }
 
 
+void writeToFile(ostream& myfile, std::string text) {
+    myfile << text << "\n";
+}
+
+
+void foo(std::string s, int n,  std::string file = "help.txt") {
+    ofstream myfile;
+    myfile.open(file.c_str());
+    
+    std::string text = std::to_string(n);
+    
+    writeToFile(myfile, text+": "+s);
+}
+
 // OO version of simulation function
 // `x` is a `roleData` object
 // `p` is a `roleParams` object
@@ -537,31 +548,38 @@ List simRole(S4 x, S4 p) {
     // record initial state
     // do we want to output a list or the s4 `roleData` object?
     // probably should output `roleData`
-    l[0] = clone(wow.getData());
+    l[0] = clone(s4FromRcpp(wow.getData()));
 
     // main loop of sim---starts at 1 because we already recorded the
     // initial state
     for (int i = 1; i <= niter; i++) {
         // death
         int idead = wow.death();
+        foo("dead", i);
 
         // immigration or local birth
         wow.birthImm(idead, i);
-
+        foo("birth", i);
+        
         // speciation or not
         wow.speciation(idead, i);
+        foo("spec", i);
 
-        // udate distances
+        // update distances
         wow.updateDist(idead);
+        foo("dist", i);
 
         // every `niterTimestep`, record state
         if (i % niterTimestep == 0) {
             k = i / niterTimestep;
-            // do we want to output a list or the s4 `roleData` object?
-            // probably should output `roleData`
-            l[k] = clone(wow.getData());
+            
+            l[k] = clone(s4FromRcpp(wow.getData()));
+            foo("write-out", i);
         }
     }
 
     return l;
 }
+
+
+
