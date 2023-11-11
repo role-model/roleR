@@ -56,7 +56,7 @@ all(x$edge == xold$edge)
 xold$alive <- y$alive[1:nspp]
 x$alive <- y$alive[1:nspp]
 all(xold$edge.length[xold$edge[, 2] %in% (1:nspp)[xold$alive]] - 
-              x$edge.length[x$edge[, 2] %in% (1:nspp)[x$alive]] == 1)
+              x$edge.length[x$edge[, 2] %in% (1:nspp)[x$alive]] == 1 * s)
 
 
 
