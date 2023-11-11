@@ -555,26 +555,26 @@ List simRole(S4 x, S4 p) {
     for (int i = 1; i <= niter; i++) {
         // death
         int idead = wow.death();
-        foo("dead", i);
+        // foo("dead", i);
 
         // immigration or local birth
         wow.birthImm(idead, i);
-        foo("birth", i);
+        // foo("birth", i);
         
         // speciation or not
         wow.speciation(idead, i);
-        foo("spec", i);
+        // foo("spec", i);
 
         // update distances
         wow.updateDist(idead);
-        foo("dist", i);
+        // foo("dist", i);
 
         // every `niterTimestep`, record state
         if (i % niterTimestep == 0) {
             k = i / niterTimestep;
             
             l[k] = clone(s4FromRcpp(wow.getData()));
-            foo("write-out", i);
+            // foo("write-out", i);
         }
     }
 
