@@ -134,16 +134,19 @@ setMethod('runRole',
     local_add <- p@species_meta + expec_n_spec
     
     # buffer local species vectors with 0s
-    model@modelSteps[[1]]@localComm@spAbund <- 
-        c(model@modelSteps[[1]]@localComm@spAbund, rep(0, local_add))
-    model@modelSteps[[1]]@localComm@spTrait <- 
-        c(model@modelSteps[[1]]@localComm@spTrait, rep(0, local_add))
+    # model@modelSteps[[1]]@localComm@spAbund <- 
+    #     c(model@modelSteps[[1]]@localComm@spAbund, rep(0, local_add))
+    # model@modelSteps[[1]]@localComm@spTrait <- 
+    #     c(model@modelSteps[[1]]@localComm@spTrait, rep(0, local_add))
     model@modelSteps[[1]]@localComm@spAbundHarmMean <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+        rep(0, length(model@modelSteps[[1]]@localComm@spAbundHarmMean) + 
+                local_add)
     model@modelSteps[[1]]@localComm@spLastOriginStep <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+        rep(0, length(model@modelSteps[[1]]@localComm@spLastOriginStep) + 
+                local_add)
     model@modelSteps[[1]]@localComm@spExtinctionStep <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+        rep(0, length(model@modelSteps[[1]]@localComm@spExtinctionStep) + 
+                local_add)
     
     return(model)
 }
@@ -156,6 +159,7 @@ setMethod('runRole',
     
     for(i in 1:length(model@modelSteps)) {
         # trim phylo
+        # browser()
         model@modelSteps[[i]]@phylo@e <- model@modelSteps[[i]]@phylo@e[model@modelSteps[[i]]@phylo@e[,1] != -1,]
         model@modelSteps[[i]]@phylo@l <- model@modelSteps[[i]]@phylo@l[model@modelSteps[[i]]@phylo@l != 0] 
         last_alive_index <- max(which(model@modelSteps[[i]]@phylo@alive == TRUE))
@@ -165,8 +169,8 @@ setMethod('runRole',
         # trim local
         # find place where augmented 0s started, which is the number of species to ever have existed 
         # I think this is the last alive index??
-        model@modelSteps[[i]]@localComm@spAbund <- model@modelSteps[[i]]@localComm@spAbund[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spTrait <- model@modelSteps[[i]]@localComm@spTrait[1:last_alive_index]
+        # model@modelSteps[[i]]@localComm@spAbund <- model@modelSteps[[i]]@localComm@spAbund[1:last_alive_index]
+        # model@modelSteps[[i]]@localComm@spTrait <- model@modelSteps[[i]]@localComm@spTrait[1:last_alive_index]
         model@modelSteps[[i]]@localComm@spAbundHarmMean  <- model@modelSteps[[i]]@localComm@spAbundHarmMean [1:last_alive_index]
         model@modelSteps[[i]]@localComm@spLastOriginStep <- model@modelSteps[[i]]@localComm@spLastOriginStep[1:last_alive_index]
         model@modelSteps[[i]]@localComm@spExtinctionStep <- model@modelSteps[[i]]@localComm@spExtinctionStep[1:last_alive_index]
