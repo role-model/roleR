@@ -7,6 +7,21 @@ using namespace arma;
 using namespace std;
 
 
+void writeToFile(ostream& myfile, std::string text) {
+    myfile << text << "\n";
+}
+
+
+void foo(std::string s, int n,  std::string file = "help.txt") {
+    ofstream myfile;
+    myfile.open(file.c_str());
+    
+    std::string text = std::to_string(n);
+    
+    writeToFile(myfile, text+": "+s);
+}
+
+
 // function to calculate comp matrix
 mat compMatCalc(mat x, double sigC) {
     // make a matrix to hold distances
@@ -274,7 +289,7 @@ public:
             if (gamma < 1) {
                 // competition calcs
                 // the `compMat` is symmetric, so fastest way to sum is by col
-                vec cd = sum(compMat, 0);
+                vec compD = sum(compMat, 0);
             } else {
                 // set competition term to 0
                 compD = zeros(compMat.n_cols);
@@ -283,6 +298,8 @@ public:
             // non-neutral death probabilities
             probs = gamma * envDist + (1 - gamma) * compD;
 
+            Rcout << "non-neut death" << std::endl;
+            
             // index of dead individual
             idead = sample(localSpp.size(), 1, false, wrap(probs))[0] - 1;
         }
@@ -333,6 +350,10 @@ public:
 
         if (r < specProb[step]) {
             // update phylo
+            Rcout << "iteration is " << step << std::endl;
+            Rcout << "yes speciation; r = " << r << std::endl;
+            Rcout << "specProb = " << specProb[step] << std::endl;
+            Rcout << "specProb size is " << specProb.size() << std::endl;
             
             // scale factor converting time steps in the local comm to generations
             double scale = 2 / localSpp.length();
@@ -372,8 +393,11 @@ public:
             compMat.col(i) = newComp;
             compMat.row(i) = newComp.t();
 
+            Rcout << "dist calcs" << std::endl;
+            
             // update env dist
             envDist.row(i) = envDistCalc(localTrt.row(i), envOptim, sigE);
+            Rcout << "dist update" << std::endl;
         }
     }
 };
@@ -510,19 +534,7 @@ S4 testUpdatePhylo(List tre, int i, double scale) {
 }
 
 
-void writeToFile(ostream& myfile, std::string text) {
-    myfile << text << "\n";
-}
 
-
-void foo(std::string s, int n,  std::string file = "help.txt") {
-    ofstream myfile;
-    myfile.open(file.c_str());
-    
-    std::string text = std::to_string(n);
-    
-    writeToFile(myfile, text+": "+s);
-}
 
 // OO version of simulation function
 // `x` is a `roleData` object
@@ -558,11 +570,11 @@ List simRole(S4 x, S4 p) {
         // foo("dead", i);
 
         // immigration or local birth
-        wow.birthImm(idead, i);
+        wow.birthImm(idead, i - 1); // pass i - 1 because loop starts at 1
         // foo("birth", i);
         
         // speciation or not
-        wow.speciation(idead, i);
+        wow.speciation(idead, i - 1); // pass i - 1 because loop starts at 1
         // foo("spec", i);
 
         // update distances
@@ -582,4 +594,23 @@ List simRole(S4 x, S4 p) {
 }
 
 
+
+void fun(double num) {
+    Rcpp::stop("Exception occured!");
+}
+
+
+double takeLog(double val) {
+    try {
+        fun(val);
+    } catch(std::exception &ex) {
+        // throw std::range_error("fuuuuuuuuck");
+        Rcout << "The value is \n" << val << std::endl;
+        return 10;
+        // forward_exception_to_r(ex);
+    } catch(...) { 
+        ::Rf_error("c++ exception (unknown reason)"); 
+    }
+    return NA_REAL;             // not reached
+}
 
