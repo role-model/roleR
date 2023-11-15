@@ -96,6 +96,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// wtf
+NumericVector wtf(NumericVector x);
+RcppExport SEXP _roleR_wtf(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(wtf(x));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_roleR_compMatCalcTest", (DL_FUNC) &_roleR_compMatCalcTest, 2},
@@ -105,6 +116,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_roleR_s4FromRcpp", (DL_FUNC) &_roleR_s4FromRcpp, 1},
     {"_roleR_testUpdatePhylo", (DL_FUNC) &_roleR_testUpdatePhylo, 3},
     {"_roleR_simRole", (DL_FUNC) &_roleR_simRole, 2},
+    {"_roleR_wtf", (DL_FUNC) &_roleR_wtf, 1},
     {NULL, NULL, 0}
 };
 
