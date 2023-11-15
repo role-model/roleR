@@ -288,23 +288,24 @@ public:
             // gamma determines amount of env filtering v. comp
             if (gamma < 1) {
                 // competition calcs
-                // the `compMat` is symmetric, so fastest way to sum is by col
-                vec compD = sum(compMat, 0);
+                // the `compMat` is symmetric, so could sum either by row or col
+                // (i.e. could pass either 0 or 1 for dim); we pass 1 because 
+                // it returns a vec (= colvec) which is what we need elsewhere
+                compD = sum(compMat, 1);
             } else {
                 // set competition term to 0
                 compD = zeros(compMat.n_cols);
             }
 
             // non-neutral death probabilities
-            probs = gamma * envDist + (1 - gamma) * compD;
+            // note: death due to env is captured by `1 - envDist` because
+            //       the further you are from the optim, the worse your chances
+            probs = gamma * (1 - envDist) + (1 - gamma) * compD;
 
-            Rcout << "non-neut death" << std::endl;
-            
-            // index of dead individual
+            // sample index of dead individual
             idead = sample(localSpp.size(), 1, false, wrap(probs))[0] - 1;
         }
 
-        // return the index of the dead individual so it can be replaced
         return idead;
     }
 
@@ -350,10 +351,10 @@ public:
 
         if (r < specProb[step]) {
             // update phylo
-            Rcout << "iteration is " << step << std::endl;
-            Rcout << "yes speciation; r = " << r << std::endl;
-            Rcout << "specProb = " << specProb[step] << std::endl;
-            Rcout << "specProb size is " << specProb.size() << std::endl;
+            // Rcout << "iteration is " << step << std::endl;
+            // Rcout << "yes speciation; r = " << r << std::endl;
+            // Rcout << "specProb = " << specProb[step] << std::endl;
+            // Rcout << "specProb size is " << specProb.size() << std::endl;
             
             // scale factor converting time steps in the local comm to generations
             double scale = 2 / localSpp.length();
@@ -393,11 +394,11 @@ public:
             compMat.col(i) = newComp;
             compMat.row(i) = newComp.t();
 
-            Rcout << "dist calcs" << std::endl;
+            // Rcout << "dist calcs" << std::endl;
             
             // update env dist
             envDist.row(i) = envDistCalc(localTrt.row(i), envOptim, sigE);
-            Rcout << "dist update" << std::endl;
+            // Rcout << "dist update" << std::endl;
         }
     }
 };
@@ -423,6 +424,11 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     StringVector tipNames_ = phy.slot("tipNames");
     LogicalVector alive_ = phy.slot("alive");
     int sMax_ = as<int>(phy.slot("n"));
+    
+    // decrement species indeces (so they start at 0)
+    localSpp_ = localSpp_ - 1;
+    // edge_ // need to for phylo stuff????
+    // edgeLength_
 
     // params
     // S4 params_ = x.slot("params");
@@ -614,3 +620,8 @@ double takeLog(double val) {
     return NA_REAL;             // not reached
 }
 
+// [[Rcpp::export]]
+NumericVector wtf(NumericVector x) {
+    x = x - 1;
+    return x;
+}
