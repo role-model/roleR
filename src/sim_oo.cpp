@@ -116,11 +116,19 @@ List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
 
     // index of where unrealized edges in edge matrix start
     int eNew = 2 * sMax - 2;
+    
+    // check if there is room in the objects for new edges/nodes/tips,
+    // if not, then make room
+    if (eNew >= edgeLength.size()) {
+        
+    }
 
     // index of the edge matrix of where to add new edge
     uvec inds = find(edge.col(1) == i);
     int j = inds(0);
 
+    Rcout << "124" << std::endl;
+    
     // add one to internal nodes
     uvec internalNode = find(edge > sMax); 
     edge.elem(internalNode) += 1;
@@ -330,12 +338,12 @@ public:
         } else { // local birth
             // sample the individual that gives birth
             iborn = sample(localSpp.size(), 1)[0] - 1;
-
+            
+            // update traits from local comm
+            newTrt += localTrt.row(iborn);
+            
             // spp ID of individual that gave birth
             inew = localSpp[iborn];
-
-            // update traits from local comm
-            newTrt += localTrt.row(inew);
         }
 
         // update local comm spp ID
@@ -350,18 +358,29 @@ public:
         double r = dist(rng);
 
         if (r < specProb[step]) {
+            // determine parent ID from individual ID
+            int iparent = localSpp[i];
             // update phylo
             // Rcout << "iteration is " << step << std::endl;
             // Rcout << "yes speciation; r = " << r << std::endl;
             // Rcout << "specProb = " << specProb[step] << std::endl;
             // Rcout << "specProb size is " << specProb.size() << std::endl;
             
-            // scale factor converting time steps in the local comm to generations
+            // scale factor converting iterations to generations
             double scale = 2 / localSpp.length();
             
             // run the method to update the phylo
-            List newPhyInfo = updatePhylo(i, sMax, scale, edge, edgeLength, alive, 
-                                          tipNames);
+            // Rcout << "index of new sp is " << iparent << std::endl;
+            Rcout << "sMax = " << sMax << std::endl;
+            Rcout << "number of edges is " << edgeLength.size() << std::endl;
+            
+            // updatePhylo assumes R-style indexing starting at 1, so need
+            // to add 1 to `iparent` which has C-style indexing starting at 0
+            List newPhyInfo = updatePhylo(iparent + 1, sMax, scale, edge, 
+                                          edgeLength, alive, tipNames);
+            Rcout << "got through `updatePhylo`" << std::endl;
+            
+            
             
             // not ideal that we have to cast these things with as<type>
             // *** consider updating
@@ -370,16 +389,19 @@ public:
             tipNames = newPhyInfo["tipNames"];
             alive = newPhyInfo["alive"];
 
+            Rcout << "got through casting" << std::endl;
+            
             // update total number of spp
             sMax = newPhyInfo["sMax"];
 
             // update ID of local individual
-            localSpp[i] = sMax;
+            localSpp[i] = sMax; // *** make sure this is right
 
             // update traits
             rowvec newTrt = localTrt.row(i) +
                 randn<rowvec>(localTrt.n_cols) * sig; 
-                // could re-scale lineage duration
+            // could re-scale lineage duration
+            Rcout << "got through `newTrt`" << std::endl;
         }
     }
 
