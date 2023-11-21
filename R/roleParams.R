@@ -281,6 +281,35 @@ untbParams <- function(individuals_local,
 }
 
 
+
+# print method for `roleExperiment`
+setMethod('show', signature = signature(object = 'roleParams'),
+          definition = function(object) {
+              n <- slotNames(object)
+              tab <- data.frame(param = n, type = "function", 
+                                starting_val = 1, ending_val = 1)
+              
+              for(i in 1:length(n)) {
+                  s <- slot(object, n[i])
+                  
+                  if(is.function(s)) {
+                      vals <- s(1:object@niter)
+                      if(all(diff(vals) == 0)) {
+                          tab[i, 2] <- "constant"
+                          tab[i, 3:4] <- vals[1]
+                      } else {
+                          tab[i, 3:4] <- vals[c(1, object@niter)]
+                      }
+                  } else {
+                      tab[i, 2] <- "constant"
+                      tab[i, 3:4] <- s
+                  }
+              }
+              
+              print(tab, row.names = FALSE)
+          }
+)
+
 # buildFun
 # helper that, given a single value, builds a function that returns that value 
 # stretched to niter in a vectorized fashion
