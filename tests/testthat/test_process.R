@@ -111,7 +111,7 @@ p <- roleParams(niter = n,
                 individuals_meta = 100, 
                 individuals_local = indsLocs, 
                 dispersal_prob = 0.25,
-                speciation_local = 0.1, # high ass speciation prob for testing
+                speciation_local = 0.001, # high ass speciation prob for testing
                 comp_sigma = 0.5,
                 env_sigma = 0.5,
                 neut_delta = 0.5, 
@@ -121,3 +121,5 @@ m <- roleModel(p)
 mr <- runRole(m)
 
 
+
+# test speciation updates spp IDs correctly ----
