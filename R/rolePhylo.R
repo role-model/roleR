@@ -1,14 +1,16 @@
 
 #' @title A phylogeny of all the species in a `roleData` object.
 #' 
-#' @description An S4 class to specify a phylogeny for the purpose of the RoLE model.
+#' @description An S4 class to specify a phylogeny optimized for the RoLE model.
 #'
 #' @slot n The number of tips in the phylogeny
-#' @slot e The numeric edge matrix of the phylogeny.
-#' Each row contains an ancestor-child pair where the 1st column is the ancestor and the 2nd is the child
-#' @slot l A numeric vector of edge lengths.
-#' The units of l are the time steps (iterations) of the model.
-#' Each time step unit is equal to 1/J generations where J is the number of individuals in the local community
+#' @slot e The numeric edge matrix of the phylogeny. Each row contains an 
+#'         ancestor-child pair where the 1st column is the ancestor and the 2nd 
+#'         is the child
+#' @slot l A numeric vector of edge lengths. The units of l are the time steps 
+#'         (iterations) of the model. Each time step unit is equal to 1/J 
+#'         generations where J is the number of individuals in the local 
+#'         community
 #' @slot alive A logical vector indicating whether each tip is extant or not.
 #' @slot tipNames A character vector of the tip names.
 #' @slot scale A single numeric value of time scale translation to years.
@@ -28,10 +30,12 @@ setClass('rolePhylo',
 #'
 #' @param n The number of tips in the phylogeny
 #' @param e The numeric edge matrix of the phylogeny.
-#' Each row contains an ancestor-child pair where the 1st column is the ancestor and the 2nd is the child
+#' Each row contains an ancestor-child pair where the 1st column is the ancestor 
+#' and the 2nd is the child
 #' @param l A numeric vector of edge lengths.
 #' The units of l are the time steps (iterations) of the model.
-#' Each time step unit is equal to 1/J generations where J is the number of individuals in the local community
+#' Each time step unit is equal to 1/J generations where J is the number of 
+#' individuals in the local community
 #' @param alive A logical vector indicating whether each tip is extant or not.
 #' @param tipNames A character vector of the tip names.
 #' @param scale  A single numeric value of time scale translation to years.
@@ -92,13 +96,13 @@ checkRolePhylo <- function(object) {
 setValidity('rolePhylo', checkRolePhylo)
 
 # register ape phylo
-setOldClass('phylo')
+# setOldClass('phylo')
 
 setAs(from = 'phylo', to = 'rolePhylo',
       def = function(from) {
           # extract number of times
           n <- ape::Ntip(from)
-
+          
           # extract edge matrix and edge lengths
           e <- from$edge
           l <- from$edge.length

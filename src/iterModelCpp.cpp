@@ -400,10 +400,11 @@ void update_speciation_phylo(int i, roleDataCpp &d, roleParamsCpp &p, int specia
     d.lengthsP[eNew] = 0;
     d.lengthsP[1 + eNew] = 0;
     
-    // increase all tip edge lengths by 1 time step
+    // increase all tip edge lengths by 1 time step scaled to generations
+    double inc = 2 / p.individuals_local[0];
     for (int r = 0; r <= eNew + 1; r++) {
         if (d.edgesP(r, 1) <= n + 1) { //n+1
-            d.lengthsP(r) ++;
+            d.lengthsP(r) += inc;
         }
     }
     
