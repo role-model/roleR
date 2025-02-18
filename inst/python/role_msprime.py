@@ -2,6 +2,7 @@ import msprime
 import newick
 import numpy as np
 import pandas as pd
+import pdb
 
 from collections import Counter, OrderedDict, defaultdict
 
@@ -54,8 +55,13 @@ def py_msprime_simulate(J_m,
 
     ## Get tdiv in generations before present
     ## Subtract localTDiv from curtime (current time in iterations) and divide by iterations per generation (J/2)
-    localTDiv = np.array(localTDiv)[lidx]
+    localTDiv = np.array(localTDiv)[lidx] - 1
+    
+    print("localTDiv:", localTDiv)
+    
     tdiv = {x+1:(curtime-y)/(J/2) for x,y in zip(lidx, localTDiv)}
+    
+    print("Divergence times:", tdiv)
     
     ## Make dataframe from list of dictionaries where all keys are species IDs
     full_df = pd.DataFrame([local_sad, meta_sad, tdiv], index=["local_abund", "meta_abund", "tdiv"])
@@ -88,8 +94,29 @@ def py_msprime_simulate(J_m,
         local_sp = f"{sp}_l"
         local_Ne = local_df[sp]["local_abund"]*alpha
         tdiv = local_df[sp]["tdiv"]
+        
+        ## debug:
+        # print(f"\nProcessing species {sp}")
+        # print(f"Split time: {tdiv}")
+        # print(f"Local Ne: {local_Ne}")
+        
         demography.add_population(name=meta_sp, initial_size=meta_Nes[sp])
         demography.add_population(name=local_sp, initial_size=local_Ne)
+        
+        
+        
+        ## debug:
+        # print("Current populations:")
+        # for pop in demography.populations:
+        #     print(f"Population {pop.name}: active={pop.initially_active}")
+        # 
+        # try:
+        #     demography.add_population_split(time=tdiv+0.1, derived=[meta_sp, local_sp], ancestral=sp)
+        # except Exception as e:
+        #     print(f"Error adding split for {sp}: {str(e)}")
+        #     raise
+        
+        
         demography.add_population_split(time=tdiv+0.1, derived=[meta_sp, local_sp], ancestral=sp)
         ## Strong colonization bottleneck after colonization
         ##demography.add_instantaneous_bottleneck(time=tdiv, strength=2*local_Ne, population=local_sp)
