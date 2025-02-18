@@ -1,6 +1,7 @@
 .Rproj.user
 .Rhistory
 .RData
+.Rprofile
 .Ruserdata
 .DS_Store
 *.dll
