@@ -5,18 +5,21 @@
 #' @slot indTrait a numeric vector of the trait values for each individual
 #' @slot indSeqs a character vector of the gene sequences for each individual
 #' @slot spGenDiv a numeric vector of the genetic diversities for each species
-#' @slot spTrait a numeric vector of the mean trait value of each species
-#' @slot spAbund a numeric vector of the abundance (number of individuals) of 
-#'     each species
-#' @slot spAbundHarmMean numeric vector of the harmonic mean of species 
-#'     abundances
+# @slot spTrait a numeric vector of the mean trait value of each species
+# @slot spAbund a numeric vector of the abundance (number of individuals) of 
+#     each species
+# @slot spAbundHarmMean numeric vector of the harmonic mean of species 
+#     abundances
 #' @slot spLastOriginStep numeric vector holding time of most recent origin of 
 #'     each species in the local community
-#' @slot spExtinctionStep numeric vector of most recent extirpation step of each 
-#'     species in the local community
+# @slot spExtinctionStep numeric vector of most recent extirpation step of each 
+#     species in the local community
 #' @slot equilibProp numeric proportion of equilibrium achieved 
+#' 
 #' @rdname localComm
+#' 
 #' @import methods
+#' 
 #' @export
 
 setClass('localComm',
@@ -24,9 +27,9 @@ setClass('localComm',
                    indTrait = 'numeric', # convert to matrix for multiple trts
                    indSeqs = 'character',
                    spGenDiv = 'numeric',
-                   spAbundHarmMean = 'numeric',
+                   # spAbundHarmMean = 'numeric',
                    spLastOriginStep = 'numeric',
-                   spExtinctionStep = 'numeric',
+                   # spExtinctionStep = 'numeric',
                    equilibProp = 'numeric'
          ))
 
@@ -36,31 +39,28 @@ setClass('localComm',
 #' @param indSpecies indSpecies
 #' @param indTrait indTrait
 #' @param indSeqs indSeqs
-#' @param spGenDiv spGenDiv
+# @param spGenDiv spGenDiv
 #' @import methods
 #' @export
 
-localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { 
+localComm <- function(indSpecies, indTrait, indSeqs) { 
     
-    # create the species indexed vectors from individual index vectors
+    # create the species indexed vectors from individual index vectors and 
+    # initialize with NAs
+    nspp <- length(unique(indSpecies))
     # spAbund <- as.vector(tabulate(indSpecies))
     # spTrait <- as.vector(tapply(indTrait, indSpecies, mean))
-    
-    # initialize spp-indexed vectors
-    spAbundHarmMean <- as.vector(tabulate(indSpecies))
-    spLastOriginStep <- as.numeric(rep(NA, length(spAbundHarmMean)))
-    spExtinctionStep <- as.numeric(rep(NA, length(spAbundHarmMean)))
+    # spAbundHarmMean <- as.vector(tabulate(indSpecies))
+    spLastOriginStep <- as.numeric(rep(NA, nspp))
+    # spExtinctionStep <- as.numeric(rep(NA, nspp))
+    spGenDiv <- as.numeric(rep(NA, nspp))
     
     return(new('localComm',
                indSpecies = indSpecies,
                indTrait = indTrait,
                indSeqs = indSeqs,
                spGenDiv = spGenDiv,
-               # spAbund = spAbund,
-               # spTrait = spTrait,
-               spAbundHarmMean = spAbundHarmMean,
-               spLastOriginStep = spLastOriginStep,
-               spExtinctionStep = spExtinctionStep))
+               spLastOriginStep = spLastOriginStep))
 }
 
 #' @title The metacommunity of a `roleData` 

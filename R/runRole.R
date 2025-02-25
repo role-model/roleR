@@ -46,11 +46,7 @@ setMethod('runRole',
               m <- .bufferModelData(m)
               
               # returns the new modelSteps (a list of roleData)
-              m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
-                                           slot(m@modelSteps[[1]],"metaComm"),
-                                           slot(m@modelSteps[[1]],"phylo"),
-                                           pvals,
-                                           print = FALSE)
+              m@modelSteps <- iterModelCpp(m@modelSteps[[1]], pvals)
               
               # trim data, removing the unused buffer
               m <- .trimModelData(m)
@@ -139,17 +135,19 @@ setMethod('runRole',
     # calc buffer size for local species vects 
     local_add <- p@species_meta + expec_n_spec
     
-    # buffer local species vectors with 0s
-    model@modelSteps[[1]]@localComm@spAbund <- 
-        c(model@modelSteps[[1]]@localComm@spAbund, rep(0, local_add))
-    model@modelSteps[[1]]@localComm@spTrait <- 
-        c(model@modelSteps[[1]]@localComm@spTrait, rep(0, local_add))
-    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+    # buffer local species vectors with 0s ----
+    
+    # model@modelSteps[[1]]@localComm@spAbund <- 
+    #     c(model@modelSteps[[1]]@localComm@spAbund, rep(0, local_add))
+    # model@modelSteps[[1]]@localComm@spTrait <- 
+    #     c(model@modelSteps[[1]]@localComm@spTrait, rep(0, local_add))
+    # model@modelSteps[[1]]@localComm@spAbundHarmMean <-  
+    #     rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
     model@modelSteps[[1]]@localComm@spLastOriginStep <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
-    model@modelSteps[[1]]@localComm@spExtinctionStep <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+        c(model@modelSteps[[1]]@localComm@spLastOriginStep, 
+          rep(0, local_add))
+    # model@modelSteps[[1]]@localComm@spExtinctionStep <-  
+    #     rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
     
     return(model)
 }
@@ -171,11 +169,12 @@ setMethod('runRole',
         # trim local
         # find place where augmented 0s started, which is the number of species to ever have existed 
         # I think this is the last alive index??
-        model@modelSteps[[i]]@localComm@spAbund <- model@modelSteps[[i]]@localComm@spAbund[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spTrait <- model@modelSteps[[i]]@localComm@spTrait[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spAbundHarmMean  <- model@modelSteps[[i]]@localComm@spAbundHarmMean [1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spLastOriginStep <- model@modelSteps[[i]]@localComm@spLastOriginStep[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spExtinctionStep <- model@modelSteps[[i]]@localComm@spExtinctionStep[1:last_alive_index]
+        # model@modelSteps[[i]]@localComm@spAbund <- model@modelSteps[[i]]@localComm@spAbund[1:last_alive_index]
+        # model@modelSteps[[i]]@localComm@spTrait <- model@modelSteps[[i]]@localComm@spTrait[1:last_alive_index]
+        # model@modelSteps[[i]]@localComm@spAbundHarmMean  <- model@modelSteps[[i]]@localComm@spAbundHarmMean [1:last_alive_index]
+        model@modelSteps[[i]]@localComm@spLastOriginStep <- 
+            model@modelSteps[[i]]@localComm@spLastOriginStep[1:last_alive_index]
+        # model@modelSteps[[i]]@localComm@spExtinctionStep <- model@modelSteps[[i]]@localComm@spExtinctionStep[1:last_alive_index]
     }
     
     return(model)
