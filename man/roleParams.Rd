@@ -14,6 +14,7 @@ roleParams(
   speciation_meta = 1,
   extinction_meta = 0.8,
   dispersal_prob = 0.01,
+  env_optim = 0,
   trait_sigma = 1,
   env_sigma = 0,
   comp_sigma = 0,
@@ -117,6 +118,8 @@ Like speciation_meta, used in the initial phylogeny simulation and in relation t
 
 \item{\code{dispersal_prob}}{Probability of dispersal (immigration) occurring from the metacommunity to the local local community at each time step.
 Every time step, either birth or immigration happens, so the probability of birth is 1 minus the dispersal_prob.}
+
+\item{\code{env_optim}}{}
 
 \item{\code{trait_sigma}}{Rate of Brownian trait evolution in the metacommunity. 
 Determines how much the trait of a new individual deviates from its parent, i.e. how fast traits change.}
