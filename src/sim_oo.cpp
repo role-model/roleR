@@ -1,7 +1,25 @@
 #include <RcppArmadillo.h>
+#include <Rcpp.h>
 #include <random>
+#include <fstream>
 using namespace Rcpp;
 using namespace arma;
+using namespace std;
+
+
+void writeToFile(ostream& myfile, std::string text) {
+    myfile << text << "\n";
+}
+
+
+void foo(std::string s, int n,  std::string file = "help.txt") {
+    ofstream myfile;
+    myfile.open(file.c_str());
+    
+    std::string text = std::to_string(n);
+    
+    writeToFile(myfile, text+": "+s);
+}
 
 
 // function to calculate comp matrix
@@ -67,51 +85,56 @@ NumericVector envDistCalcTest(NumericMatrix x, NumericMatrix envOptim,
 
 // extract environmental optimum
 mat getEnvOptim(S4 x) {
-    mat m = as<mat>(x.slot("env_optim"));
+    NumericMatrix mm = as<NumericMatrix>(x.slot("env_optim"));
+    mat m = as<mat>(mm);
 
     return m;
 }
 
 // get a param when we know it will be of class `double`
 double getParamDouble(S4 p, String s) {
-    Rcout << "extracting param" << s.get_cstring() << "\n";
     double x = as<double>(p.slot(s));
 
     return x;
 }
 
+// get a param vector from a function input
+// [[Rcpp::export]]
+NumericVector getParamFun(S4 p, String s) {
+    int n = p.slot("niter");
+    IntegerVector ii = seq(1, n);
+    Function f = p.slot(s);
+    NumericVector x = f(ii);
+    
+    return x;
+}
+
 // function to update phylo objects
 // maybe we don't need to return anything, maybe pointers would work?
-List updatePhylo(int i, int sMax, imat edge, vec edgeLength,
-                 LogicalVector alive) {
+List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
+                 LogicalVector alive, StringVector tipNames) {
 
     // index of where unrealized edges in edge matrix start
     int eNew = 2 * sMax - 2;
+    
+    // check if there is room in the objects for new edges/nodes/tips,
+    // if not, then make room
+    if (eNew >= edgeLength.size()) {
+        
+    }
 
     // index of the edge matrix of where to add new edge
     uvec inds = find(edge.col(1) == i);
     int j = inds(0);
 
+    Rcout << "124" << std::endl;
+    
     // add one to internal nodes
-    uvec internalNode = find(edge > sMax); // should it be > or >=??????
+    uvec internalNode = find(edge > sMax); 
     edge.elem(internalNode) += 1;
 
-    // might need to do it for each col separately
-    // uvec internal0 = find(edge.col(0) > sMax);
-    // uvec internal1 = find(edge.col(1) > sMax);
-
-    // old way
-    // for (int r = 0; r < eNew; r++) {
-    //     for (int c = 0; c < 2; c++){
-    //         if (e(r, c) > n) {
-    //             e(r, c) ++;
-    //         }
-    //     }
-    // }
-
-
     // add new internal node
-    int newNode = 2 * sMax + 1; // index of new node; maybe +1 maybe not?
+    int newNode = 2 * sMax + 1; // index of new node
     edge(eNew, 0) = newNode;
     edge(1 + eNew, 0) = newNode;
 
@@ -126,11 +149,22 @@ List updatePhylo(int i, int sMax, imat edge, vec edgeLength,
     edgeLength[eNew] = 0;
     edgeLength[1 + eNew] = 0;
     
-    // increase all tip edge lengths by 1 time step
-    edgeLength(find(edge.col(1) <= eNew + 1)) += 1;
-    
     // update alive vector
     alive(sMax) = true;
+    
+    // increase all tip edge lengths by 1 time step
+    IntegerVector x = as<IntegerVector>(wrap(edge.col(1)));
+    IntegerVector y = seq_len(alive.length());
+    IntegerVector z = y[alive];
+    
+    LogicalVector ind = in(x, z);
+    
+    uvec tipi = find((edge.col(1) <= eNew) && as<uvec>(ind));
+    
+    edgeLength(tipi) += 1 * scale;
+    
+    // update names
+    tipNames(sMax) = "s" + std::to_string(sMax + 1);
     
     // update sMax
     sMax++;
@@ -138,7 +172,8 @@ List updatePhylo(int i, int sMax, imat edge, vec edgeLength,
     List out = List::create(Named("edge") = edge,
                             Named("edgeLength") = edgeLength,
                             Named("alive") = alive,
-                            Named("sMax") = sMax);
+                            Named("sMax") = sMax, 
+                            Named("tipNames") = tipNames);
     
     return out;
 }
@@ -156,6 +191,7 @@ private:
     NumericMatrix metaTrt; // passed
     imat edge; // passed
     vec edgeLength; // passed
+    StringVector tipNames; // passed
     LogicalVector alive; // passed
     S4 params; // passed
     int sMax; // passed
@@ -164,8 +200,8 @@ private:
     double sig; // from params.slot("trait_sigma")
     double delta; //
     double gamma; //
-    double immProb; // from params.slot("imm")
-    double specProb; // from params.slot("speciation_local")
+    NumericVector immProb; // from params.slot("imm")
+    NumericVector specProb; // from params.slot("speciation_local")
     mat envOptim; // from params.slot("envOptim")
     mat compMat; // from localTrt_ and sigC
     vec envDist; // from localTrt_ and sigE
@@ -177,6 +213,7 @@ public:
              NumericMatrix metaTrt_,
              imat edge_,
              vec edgeLength_,
+             StringVector tipNames_,
              LogicalVector alive_,
              int sMax_,
              S4 params_) :
@@ -192,6 +229,7 @@ public:
     metaTrt(metaTrt_),
     edge(edge_),
     edgeLength(edgeLength_),
+    tipNames(tipNames_),
     alive(alive_),
     params(params_),
     sMax(sMax_),
@@ -199,24 +237,15 @@ public:
     sigE(getParamDouble(params_, "env_sigma")),
     sig(getParamDouble(params_, "trait_sigma")),
     delta(getParamDouble(params_, "neut_delta")),
-    gamma(getParamDouble(params_, "env_delta")),
-    immProb(getParamDouble(params_, "dispersal_prob")),
-    specProb(getParamDouble(params_, "speciation_local")),
+    gamma(getParamDouble(params_, "env_comp_delta")),
+    immProb(getParamFun(params_, "dispersal_prob")),
+    specProb(getParamFun(params_, "speciation_local")),
     envOptim(getEnvOptim(params_)),
     compMat(compMatCalc(localTrt_, sigC)),
     envDist(envDistCalc(localTrt_, envOptim, sigE)) {}
 
     // `get` methods
     List getLocal() {
-        IntegerVector spp = as<IntegerVector>(wrap(localSpp));
-        NumericMatrix trt = as<NumericMatrix>(wrap(localTrt));
-
-        return List::create(Named("spp") = spp,
-                            Named("trt") = trt);
-    }
-
-    // method to extract spp ID vec and trt matrix
-    List getLocsData() {
         IntegerVector spp = as<IntegerVector>(wrap(localSpp));
         NumericMatrix trt = as<NumericMatrix>(wrap(localTrt));
 
@@ -233,13 +262,15 @@ public:
     List getData() {
         List locs = List::create(Named("indSpecies") = localSpp,
                                  Named("indTrait") = wrap(localTrt));
+        // should be more stuff in above ^
 
-        List meta = List::create(Named("sppAbund") = metaAbund,
-                                 Named("sppTrait") = metaTrt);
+        List meta = List::create(Named("spAbund") = metaAbund,
+                                 Named("spTrait") = metaTrt);
 
         List phylo = List::create(Named("n") = sMax,
                                   Named("e") = wrap(edge),
                                   Named("l") = wrap(edgeLength),
+                                  Named("tipNames") = wrap(tipNames),
                                   Named("alive") = alive);
 
         List out = List::create(Named("localComm") = locs,
@@ -255,7 +286,6 @@ public:
         int idead;
 
         if (delta == 1) {
-            Rcout << "in neutral death \n";
             // fully neutral
             idead = sample(localSpp.size(), 1)[0] - 1;
         } else {
@@ -266,27 +296,28 @@ public:
             // gamma determines amount of env filtering v. comp
             if (gamma < 1) {
                 // competition calcs
-                // the `compMat` is symmetric, so fastest way to sum is by col
-                vec cd = sum(compMat, 0);
+                // the `compMat` is symmetric, so could sum either by row or col
+                // (i.e. could pass either 0 or 1 for dim); we pass 1 because 
+                // it returns a vec (= colvec) which is what we need elsewhere
+                compD = sum(compMat, 1);
             } else {
                 // set competition term to 0
                 compD = zeros(compMat.n_cols);
             }
 
             // non-neutral death probabilities
-            probs = gamma * envDist + (1 - gamma) * compD;
+            // note: death due to env is captured by `1 - envDist` because
+            //       the further you are from the optim, the worse your chances
+            probs = gamma * (1 - envDist) + (1 - gamma) * compD;
 
-            // index of dead individual
+            // sample index of dead individual
             idead = sample(localSpp.size(), 1, false, wrap(probs))[0] - 1;
         }
 
-        // return the index of the dead individual so it can be replaced
         return idead;
     }
 
-
-
-    void birthImm(int i) {
+    void birthImm(int i, int step) {
         // set up indexes
         int inew;
         int iborn;
@@ -298,7 +329,7 @@ public:
         rowvec newTrt = randn<rowvec>(localTrt.n_cols) * sig *
             2 / localSpp.size(); // re-scale by generation time
 
-        if (r < immProb) { // immigration
+        if (r < immProb[step]) { // immigration
             // sample the spp ID of the immigrating individual
             inew = sample(metaAbund.size(), 1, false, metaAbund)[0] - 1;
 
@@ -307,12 +338,12 @@ public:
         } else { // local birth
             // sample the individual that gives birth
             iborn = sample(localSpp.size(), 1)[0] - 1;
-
+            
+            // update traits from local comm
+            newTrt += localTrt.row(iborn);
+            
             // spp ID of individual that gave birth
             inew = localSpp[iborn];
-
-            // update traits from local comm
-            newTrt += localTrt.row(inew);
         }
 
         // update local comm spp ID
@@ -322,35 +353,59 @@ public:
         localTrt.row(i) = newTrt;
     }
 
-    void speciation(int i) {
+    void speciation(int i, int step) {
         // random number to determine if speciation happens
         double r = dist(rng);
 
-        if (r < specProb) {
+        if (r < specProb[step]) {
+            // determine parent ID from individual ID
+            int iparent = localSpp[i];
             // update phylo
-            Rcout << "got to speciation method \n";
-
-            List newPhyInfo = updatePhylo(i, sMax, edge, edgeLength, alive);
+            // Rcout << "iteration is " << step << std::endl;
+            // Rcout << "yes speciation; r = " << r << std::endl;
+            // Rcout << "specProb = " << specProb[step] << std::endl;
+            // Rcout << "specProb size is " << specProb.size() << std::endl;
+            
+            // scale factor converting iterations to generations
+            double scale = 2 / localSpp.length();
+            
+            // run the method to update the phylo
+            // Rcout << "index of new sp is " << iparent << std::endl;
+            Rcout << "sMax = " << sMax << std::endl;
+            Rcout << "number of edges is " << edgeLength.size() << std::endl;
+            
+            // updatePhylo assumes R-style indexing starting at 1, so need
+            // to add 1 to `iparent` which has C-style indexing starting at 0
+            List newPhyInfo = updatePhylo(iparent + 1, sMax, scale, edge, 
+                                          edgeLength, alive, tipNames);
+            Rcout << "got through `updatePhylo`" << std::endl;
+            
+            
+            
             // not ideal that we have to cast these things with as<type>
+            // *** consider updating
             edge = as<imat>(newPhyInfo["edge"]); 
             edgeLength = as<vec>(newPhyInfo["edgeLength"]);
+            tipNames = newPhyInfo["tipNames"];
             alive = newPhyInfo["alive"];
 
+            Rcout << "got through casting" << std::endl;
+            
             // update total number of spp
             sMax = newPhyInfo["sMax"];
 
             // update ID of local individual
-            localSpp[i] = sMax;
+            localSpp[i] = sMax; // *** make sure this is right
 
             // update traits
             rowvec newTrt = localTrt.row(i) +
                 randn<rowvec>(localTrt.n_cols) * sig; 
-                // could re-scale lineage duration
+            // could re-scale lineage duration
+            Rcout << "got through `newTrt`" << std::endl;
         }
     }
 
     void updateDist(int i) {
-        Rcout << "got to updateDist method \n";
         // only need to update distances if we're in a non-neutral sim
         if (delta < 1) {
             // update comp distances
@@ -361,14 +416,17 @@ public:
             compMat.col(i) = newComp;
             compMat.row(i) = newComp.t();
 
+            // Rcout << "dist calcs" << std::endl;
+            
             // update env dist
             envDist.row(i) = envDistCalc(localTrt.row(i), envOptim, sigE);
+            // Rcout << "dist update" << std::endl;
         }
     }
 };
 
 
-// function that takes a roleData S4 object and a roleParams S4 object, 
+// function that takes a `roleData` S4 object and a `roleParams` S4 object, 
 // and creates a roleComm rcpp object
 roleComm roleCommFromS4(S4 x, S4 p) {
     // local comm stuff
@@ -378,18 +436,21 @@ roleComm roleCommFromS4(S4 x, S4 p) {
 
     // meta comm stuff
     S4 meta = x.slot("metaComm");
-    NumericVector metaAbund_ = meta.slot("sppAbund");
-    NumericMatrix metaTrt_ = meta.slot("sppTrait");
+    NumericVector metaAbund_ = meta.slot("spAbund");
+    NumericMatrix metaTrt_ = meta.slot("spTrait");
 
     // phylo stuff
-    Rcout << "got to extracting phylo \n";
     S4 phy = x.slot("phylo");
     imat edge_ = as<imat>(phy.slot("e"));
     vec edgeLength_ = as<vec>(phy.slot("l"));
+    StringVector tipNames_ = phy.slot("tipNames");
     LogicalVector alive_ = phy.slot("alive");
     int sMax_ = as<int>(phy.slot("n"));
-
-    Rcout << "got through extracting phylo \n";
+    
+    // decrement species indeces (so they start at 0)
+    localSpp_ = localSpp_ - 1;
+    // edge_ // need to for phylo stuff????
+    // edgeLength_
 
     // params
     // S4 params_ = x.slot("params");
@@ -400,6 +461,7 @@ roleComm roleCommFromS4(S4 x, S4 p) {
                             metaTrt_,
                             edge_,
                             edgeLength_,
+                            tipNames_,
                             alive_,
                             sMax_,
                             p); // recall: p is passed to `roleCommFromS4`
@@ -407,10 +469,19 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     return out;
 }
 
+// expose roleComm to R for testing
+// [[Rcpp::export]]
+List roleCommTester(S4 x, S4 p) {
+    roleComm wow = roleCommFromS4(x, p);
+
+    List l = List::create(Named("dat") = wow.getData(),
+                          Named("pzz") = wow.getParams());
+    return l;
+}
 
 // function to export data from a `roleComm` object back to S4 class of 
 // `roleData`. List argument `x` is assumed to be output from 
-// `[roleComm].getData()`
+// `roleComm::.getData()`
 // note: we can export data only because we don't need to export params back 
 //       out, they're already stored in other R objects that were supplied to 
 //       Rcpp
@@ -420,13 +491,15 @@ S4 s4FromRcpp(List x) {
     
     // local comm
     S4 locs("localComm");
+    List locList = x["localComm"];
     
-    locs.slot("indSpecies") = x["indSpecies"];
-    locs.slot("indTrait") = x["indTrait"];
-    locs.slot("indSeqs") = 1; // what to do? make NULL?
+    locs.slot("indSpecies") = locList["indSpecies"];
+    
+    locs.slot("indTrait") = locList["indTrait"];
+    locs.slot("indSeqs") = "A"; // what to do? make NULL?
     locs.slot("spGenDiv") = 1; // what to do? make NULL?
-    locs.slot("spTrait") = 1; // remove?
-    locs.slot("spAbund") = 1; // remove?
+    // locs.slot("spTrait") = 1; // remove?
+    // locs.slot("spAbund") = 1; // remove?
     locs.slot("spAbundHarmMean") = 1; // *** need to add to simulation
     locs.slot("spLastOriginStep") = 1; // *** need to add to simulation
     locs.slot("spExtinctionStep") = 1; // *** need to add to simulation
@@ -436,22 +509,23 @@ S4 s4FromRcpp(List x) {
     
     // meta comm
     S4 meta("metaComm");
+    List metaList = x["metaComm"];
     
-    meta.slot("spAbund") = x["sppAbund"];
-    meta.slot("spTrait") = x["sppTrait"];
+    meta.slot("spAbund") = metaList["spAbund"];
+    meta.slot("spTrait") = metaList["spTrait"];
     
     out.slot("metaComm") = meta;
     
     // phylo
     S4 phy("rolePhylo");
+    List phyList = x["phylo"];
     
+    phy.slot("n") = phyList["n"]; // might be sMax, not n
     
-    phy.slot("n") = x["n"]; // might be sMax, not n
-    phy.slot("e") = x["e"];
-    phy.slot("l") = x["l"];
-    phy.slot("alive") = x["alive"];
-    phy.slot("tipNames") = 1; // what to do? remove? or *make intentional?*
-    phy.slot("scale") = 1; // what to do? calc in cpp? pass from r?
+    phy.slot("e") = phyList["e"];
+    phy.slot("l") = phyList["l"];
+    phy.slot("alive") = phyList["alive"];
+    phy.slot("tipNames") = "A"; // what to do? remove? or *make intentional?*
     
     out.slot("phylo") = phy;
     
@@ -461,47 +535,38 @@ S4 s4FromRcpp(List x) {
 
 // tester function wrapping the updatePhylo fun
 // [[Rcpp::export]]
-S4 testUpdatePhylo(List tre, int i) {
-    // S4 testUpdatePhylo(S4 x, S4 p, int i) {
-    // List out = List::create(Named("edge") = edge,
-    //                         Named("edgeLength") = edgeLength,
-    //                         Named("alive") = alive,
-    //                         Named("sMax") = sMax);
-    // 
-    
+S4 testUpdatePhylo(List tre, int i, double scale) {
+    // *** don't need to make this list, could just pass right to `updatePhylo`
     List x = List::create(Named("edge") = tre["edge"], 
                           Named("tipNames") = tre["tip.label"],
                           Named("n") = tre["n"],
                           Named("alive") = tre["alive"],
-                          Named("edgeLength") = tre["edge.length"]);
+                          Named("edgeLength") = tre["edge.length"],
+                          Named("tipNames") = tre["tip.label"]);
     
-    // roleComm allDat = roleCommFromS4(x, p);
-    // 
-    // 
-    // List l = allDat.getData();
-    // List tre = l["phylo"]
-    // 
-    List newTre = updatePhylo(i, x["n"], x["edge"], 
-                                 x["edgeLength"], x["alive"]);
+
+    List newTre = updatePhylo(i, x["n"], scale, x["edge"], x["edgeLength"], 
+                                 x["alive"], x["tipNames"]);
     
     
+    // create S4 output
     S4 phy("rolePhylo");
-    
     
     phy.slot("n") = newTre["sMax"];
     phy.slot("e") = newTre["edge"];
     phy.slot("l") = newTre["edgeLength"];
     phy.slot("alive") = newTre["alive"];
-    phy.slot("tipNames") = "A"; 
-    phy.slot("scale") = 1; // what to do? calc in cpp? pass from r?
-    
-    
+    phy.slot("tipNames") = newTre["tipNames"]; 
     
     return phy;
 }
 
 
+
+
 // OO version of simulation function
+// `x` is a `roleData` object
+// `p` is a `roleParams` object
 // [[Rcpp::export]]
 List simRole(S4 x, S4 p) {
     // consider alternatives to clone????
@@ -523,29 +588,33 @@ List simRole(S4 x, S4 p) {
     // record initial state
     // do we want to output a list or the s4 `roleData` object?
     // probably should output `roleData`
-    l[0] = clone(wow.getData());
+    l[0] = clone(s4FromRcpp(wow.getData()));
 
     // main loop of sim---starts at 1 because we already recorded the
     // initial state
     for (int i = 1; i <= niter; i++) {
         // death
         int idead = wow.death();
+        // foo("dead", i);
 
         // immigration or local birth
-        wow.birthImm(idead);
-
+        wow.birthImm(idead, i - 1); // pass i - 1 because loop starts at 1
+        // foo("birth", i);
+        
         // speciation or not
-        wow.speciation(idead);
+        wow.speciation(idead, i - 1); // pass i - 1 because loop starts at 1
+        // foo("spec", i);
 
-        // udate distances
+        // update distances
         wow.updateDist(idead);
+        // foo("dist", i);
 
         // every `niterTimestep`, record state
         if (i % niterTimestep == 0) {
             k = i / niterTimestep;
-            // do we want to output a list or the s4 `roleData` object?
-            // probably should output `roleData`
-            l[k] = clone(wow.getData());
+            
+            l[k] = clone(s4FromRcpp(wow.getData()));
+            // foo("write-out", i);
         }
     }
 
@@ -554,15 +623,27 @@ List simRole(S4 x, S4 p) {
 
 
 
+void fun(double num) {
+    Rcpp::stop("Exception occured!");
+}
 
 
+double takeLog(double val) {
+    try {
+        fun(val);
+    } catch(std::exception &ex) {
+        // throw std::range_error("fuuuuuuuuck");
+        Rcout << "The value is \n" << val << std::endl;
+        return 10;
+        // forward_exception_to_r(ex);
+    } catch(...) { 
+        ::Rf_error("c++ exception (unknown reason)"); 
+    }
+    return NA_REAL;             // not reached
+}
 
-// // [[Rcpp::export]]
-// List BigOlTester(S4 x) {
-//     roleComm wow = roleCommFromS4(x);
-// 
-//     List l = List::create(Named("locs") = wow.getLocal(),
-//                           Named("pzz") = wow.getParams());
-//     return l;
-// }
-
+// [[Rcpp::export]]
+NumericVector wtf(NumericVector x) {
+    x = x - 1;
+    return x;
+}

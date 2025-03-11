@@ -9,15 +9,27 @@ envDistCalcTest <- function(x, envOptim, sigE) {
     .Call(`_roleR_envDistCalcTest`, x, envOptim, sigE)
 }
 
+getParamFun <- function(p, s) {
+    .Call(`_roleR_getParamFun`, p, s)
+}
+
+roleCommTester <- function(x, p) {
+    .Call(`_roleR_roleCommTester`, x, p)
+}
+
 s4FromRcpp <- function(x) {
     .Call(`_roleR_s4FromRcpp`, x)
 }
 
-testUpdatePhylo <- function(tre, i) {
-    .Call(`_roleR_testUpdatePhylo`, tre, i)
+testUpdatePhylo <- function(tre, i, scale) {
+    .Call(`_roleR_testUpdatePhylo`, tre, i, scale)
 }
 
 simRole <- function(x, p) {
     .Call(`_roleR_simRole`, x, p)
+}
+
+wtf <- function(x) {
+    .Call(`_roleR_wtf`, x)
 }
 
