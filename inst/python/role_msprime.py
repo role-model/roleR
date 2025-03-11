@@ -1,4 +1,5 @@
 import msprime
+import tskit
 import newick
 import numpy as np
 import pandas as pd
@@ -25,7 +26,8 @@ def py_msprime_simulate(J_m,
     if verbose:
         print(INIT_MSG.format(J_m=J_m, J=J, curtime=curtime, metaTree=metaTree,
                             metaAbund=metaAbund, localAbundHmean=spAbundHarmMean, 
-                            localTDiv=localTDiv, alpha=alpha, sequence_length=sequence_length, mu=mu))
+                            localTDiv=localTDiv, alpha=alpha, 
+                            sequence_length=sequence_length, mu=mu))
 
     ## Sanity check
     if alpha <= 0:
@@ -54,8 +56,9 @@ def py_msprime_simulate(J_m,
         if verbose: print("local_sad Hmean - ", local_sad)
 
     ## Get tdiv in generations before present
-    ## Subtract localTDiv from curtime (current time in iterations) and divide by iterations per generation (J/2)
-    localTDiv = np.array(localTDiv)[lidx] - 1
+    # Subtract localTDiv from curtime (current time in iterations) and divide 
+    # by iterations per generation (J/2)
+    localTDiv = np.array(localTDiv)[lidx]
     
     print("localTDiv:", localTDiv)
     
@@ -75,9 +78,13 @@ def py_msprime_simulate(J_m,
     if verbose: print(local_df)
     ## format the metacommunity abundances as a dictionary to pass in to msprime
     meta_Nes = (full_df.loc["meta_abund"]*alpha).to_dict()
-    ## Create a default dict so internal nodes have a default Ne. Arbitrarily set to 10,000.
-    ## TODO: What is a reasonable default Ne. This is necessary.
-    meta_Nes = defaultdict(lambda: 10000, meta_Nes)
+    ## Create a default dict so internal nodes have a default Ne. 
+    dNe = J / len(metaAbund) * alpha
+    meta_Nes = defaultdict(lambda: dNe, meta_Nes)
+    
+    
+    print("default Ne:", dNe)
+    
 
     ## Create msprime demography from newick tree
     ## TODO: generation_time is fixed to 1 here. This should be more flexible.    
@@ -145,7 +152,10 @@ def py_msprime_simulate(J_m,
         if n.is_sample():
             nodeIDs[ts.population(n.population).metadata["name"]].append(n.id)
 
+    # print("new new new version")
+    
     ## Return all the simulated genotypes and some sumstats as a dataframe
+    refseq = tskit.random_nucleotides(ts.sequence_length, seed=seed)
     res = {}
     for popname, idxs in nodeIDs.items():
         ## Split off the _l so the pop name agrees with the names in roleModel localComm
@@ -153,6 +163,7 @@ def py_msprime_simulate(J_m,
         res[pname] = []
         res[pname].append(ts.diversity(sample_sets=idxs))
         res[pname].append(ts.Tajimas_D(sample_sets=idxs))
+        # res[pname].append(list(ts.alignments(samples=idxs, reference_sequence=refseq)))
         res[pname].append(list(ts.haplotypes(samples=idxs)))
     res_df = pd.DataFrame(res, index=["pi", "TajD", "gtypes"])
 

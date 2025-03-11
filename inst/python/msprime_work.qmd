@@ -21,29 +21,36 @@ py_module_available("msprime")
 newick <- function(phylo){
     ape_tree <- as(phylo, "phylo")
     # ape_tree <- phylo
-    write.tree(ape_tree, file = 'temp.nwk', append = FALSE, digits = 30, tree.names = FALSE)
+    write.tree(ape_tree, file = 'temp.nwk', append = FALSE, digits = 30, 
+               tree.names = FALSE)
     nwk <- readChar('temp.nwk', file.info('temp.nwk')$size)
     unlink('temp.nwk')
     return(nwk)
 }
 
 # init_type may be bridge_island or oceanic_island
-la <- 0.00005
+la <- 0.5
 mu <- 0.95 * la
-p <- roleParams(individuals_local = 100, individuals_meta = 10000,
+p <- roleParams(individuals_local = 100, individuals_meta = 1000000,
                 species_meta = 3, speciation_local = 0, 
                 speciation_meta = la, extinction_meta = mu, env_sigma = 0.5,
                 trait_sigma=1, comp_sigma = 0.5, dispersal_prob = 0.01, 
                 mutation_rate = 1e-6,
-                equilib_escape = 1, num_basepairs = 500, alpha = 10000,
-                init_type = 'bridge_island', niter = 100, niterTimestep = 100)
+                equilib_escape = 1, num_basepairs = 500, alpha = 10000000,
+                init_type = 'bridge_island', 
+                niter = 10000, niterTimestep = 10000)
+
 temp <- roleModel(p)
+temp@modelSteps[[1]]@metaComm@spAbund <- rep(1/3, 3)
+temp@modelSteps[[1]]@localComm@indSpecies <- sample(1:3, 
+                                                    size = p@individuals_local(1), 
+                                                    replace = TRUE)
+
 model <- runRole(temp)
+model@modelSteps[[2]]@localComm@spAbundHarmMean <- rep(33, 3)
 
 tre <- model@modelSteps[[1]]@phylo
 a <- as(tre, "phylo")
-a$edge 
-
 plot(a)
 axis(1)
 ```
@@ -54,9 +61,12 @@ sim_seqs <- function(model){
     source_python("inst/python/role_msprime.py")
     #exp = as(model, "roleExperiment")
     
+    # browser()
+    
     ## the timesteps at which data were recorded
     ## TODO: Doing it this way because the as() above is broken atm
-    iterations <- c(0, which(1:model@params@niter %% model@params@niterTimestep == 0))
+    iterations <- c(0, which(1:model@params@niter %% 
+                                 model@params@niterTimestep == 0))
     
     ## Global parameters
     J_m <- model@params@individuals_meta
@@ -64,12 +74,15 @@ sim_seqs <- function(model){
     sequence_length <- model@params@num_basepairs
     
     ## For each snapshot
-    for (idx in 1:length(model@modelSteps)){
+    for (idx in 2:length(model@modelSteps)){
+        print(idx)
+        browser()
         ## Fetch the data that we need to run the msprime simulation
-        ## Current time in timesteps (necessary to get divergence counting from t_0)
-        ## TODO: If as(model, "roleExperiment") works then you can do this instead.
+        ## Current time in timesteps (necessary to get divergence counting from 
+        ## t_0)
+        ## TODO: If as(model, "roleExperiment") works then do this instead.
         #curtime = exp@experimentMeta$iterations[[idx]]
-        curtime = iterations[[idx]]
+        curtime <- iterations[[idx]] * 1000
         
         ## Prior to iterFun it was done this way:
         ##J <- model@params@individuals_local[[idx]]
@@ -87,18 +100,33 @@ sim_seqs <- function(model){
         metaTree <- newick(metaTree)
         
         localAbund <- model@modelSteps[[idx]]@localComm@indSpecies
+        localAbund <- rep(1:3, floor(J / 3))
+        localAbund <- c(localAbund, rep(1, J - length(localAbund)))
+        
         spAbundHarmMean <- model@modelSteps[[idx]]@localComm@spAbundHarmMean
+        spAbundHarmMean <- rep(J / 3, 3)
         localTDiv <- model@modelSteps[[idx]]@localComm@spLastOriginStep
+        localTDiv <- rep(0, 3)
         
         ## Returns a dataframe with rows for pi, TajD and genotypes
-        res <- py_msprime_simulate(J_m, J, curtime, metaTree, metaAbund, localAbund,
-                                   spAbundHarmMean, localTDiv, alpha, sequence_length, mu,
-                                   verbose=FALSE)
+        res <- py_msprime_simulate(J_m, J, curtime, metaTree, metaAbund, 
+                                   localAbund, spAbundHarmMean, localTDiv, 
+                                   alpha, sequence_length, mu,
+                                   verbose = FALSE)
         
         ## Update the model with the results
-        model@modelSteps[[idx]]@localComm@spGenDiv = unlist(res["pi",])
-        model@modelSteps[[idx]]@localComm@indSeqs = unlist(res["gtypes",])
+        model@modelSteps[[idx]]@localComm@spGenDiv <- unlist(res["pi",])
+        model@modelSteps[[idx]]@localComm@indSeqs <- unlist(res["gtypes",])
         
+        
+        # make a nj tree
+        foo <- strsplit(unlist(res["gtypes",]), "")
+        foo <- do.call(rbind, foo)
+        boo <- as.DNAbin(foo)
+        wtf <- dist.dna(boo, model = "raw")
+        
+        plot(nj(wtf))
+    
     }
     return(model)
 }
@@ -108,4 +136,20 @@ sim_seqs <- function(model){
 res <- sim_seqs(model)
 res
 res@modelSteps[[2]]@localComm@spGenDiv
+```
+
+
+```{python}
+import msprime
+
+demography = msprime.Demography.from_species_tree(
+    "(((human:5.6,chimpanzee:5.6):3.0,gorilla:8.6):9.4,orangutan:18.0)",
+    time_units="myr",
+    initial_size=10**4,
+    generation_time=20)
+
+ts = msprime.sim_ancestry({"gorilla": 2, "human": 4}, 
+    demography=demography, sequence_length=100)
+
+ts.draw_text
 ```
