@@ -24,7 +24,7 @@
 
 setClass('localComm',
          slots = c(indSpecies = 'numeric',
-                   indTrait = 'numeric', # convert to matrix for multiple trts
+                   indTrait = 'matrix', # convert to matrix for multiple trts
                    indSeqs = 'character',
                    spGenDiv = 'numeric',
                    # spAbundHarmMean = 'numeric',
@@ -78,7 +78,7 @@ localComm <- function(indSpecies, indTrait, indSeqs) {
 
 setClass('metaComm',
          slots = c(spAbund = 'numeric',
-                   spTrait = 'numeric'))
+                   spTrait = 'matrix'))
 
 
 # constructor 
