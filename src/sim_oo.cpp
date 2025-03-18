@@ -2,24 +2,10 @@
 #include <Rcpp.h>
 #include <random>
 #include <fstream>
+
 using namespace Rcpp;
 using namespace arma;
 using namespace std;
-
-
-void writeToFile(ostream& myfile, std::string text) {
-    myfile << text << "\n";
-}
-
-
-void foo(std::string s, int n,  std::string file = "help.txt") {
-    ofstream myfile;
-    myfile.open(file.c_str());
-    
-    std::string text = std::to_string(n);
-    
-    writeToFile(myfile, text+": "+s);
-}
 
 
 // function to calculate comp matrix
@@ -43,6 +29,7 @@ mat compMatCalc(mat x, double sigC) {
 
     return D;
 }
+
 
 // exposing `compMatCalc` to R for testing purposes
 // [[Rcpp::export]]
@@ -112,7 +99,7 @@ NumericVector getParamFun(S4 p, String s) {
 // function to update phylo objects
 // maybe we don't need to return anything, maybe pointers would work?
 List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
-                 LogicalVector alive, StringVector tipNames) {
+                 std::vector<bool> alive, std::vector<std::string> tipNames) {
 
     // index of where unrealized edges in edge matrix start
     int eNew = 2 * sMax - 2;
@@ -120,24 +107,33 @@ List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
     // check if there is room in the objects for new edges/nodes/tips,
     // if not, then make room
     if (eNew >= edgeLength.size()) {
+        // add edges to all relevant objects
+        int edgeAdd = 100;
+        int startRow = edge.n_rows;
         
+        edge.insert_rows(startRow, edgeAdd);
+        edge.rows(startRow, startRow + edgeAdd - 1).fill(-1);
+        
+        edgeLength.resize(startRow + edgeAdd);
+        edgeLength.subvec(startRow, edgeLength.n_elem - 1).fill(-1.0);
+        
+        alive.resize(alive.size() + edgeAdd, false);
+        tipNames.resize(tipNames.size() + edgeAdd, "");
     }
 
     // index of the edge matrix of where to add new edge
     uvec inds = find(edge.col(1) == i);
     int j = inds(0);
-
-    Rcout << "124" << std::endl;
     
     // add one to internal nodes
     uvec internalNode = find(edge > sMax); 
     edge.elem(internalNode) += 1;
-
+    
     // add new internal node
     int newNode = 2 * sMax + 1; // index of new node
     edge(eNew, 0) = newNode;
     edge(1 + eNew, 0) = newNode;
-
+    
     // add tips
     edge(eNew, 1) = edge(j, 1); // add old tip
     edge(eNew + 1, 1) = sMax + 1; // add new tip
@@ -150,12 +146,16 @@ List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
     edgeLength[1 + eNew] = 0;
     
     // update alive vector
-    alive(sMax) = true;
+    alive[sMax] = true;
     
     // increase all tip edge lengths by 1 time step
     IntegerVector x = as<IntegerVector>(wrap(edge.col(1)));
-    IntegerVector y = seq_len(alive.length());
-    IntegerVector z = y[alive];
+    IntegerVector y = seq_len(alive.size());
+    LogicalVector alive_rcpp = Rcpp::wrap(alive);
+    IntegerVector z = y[alive_rcpp];
+    
+    // IntegerVector foo = IntegerVector::create();
+    // foo = y[alive_rcpp];
     
     LogicalVector ind = in(x, z);
     
@@ -164,7 +164,7 @@ List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
     edgeLength(tipi) += 1 * scale;
     
     // update names
-    tipNames(sMax) = "s" + std::to_string(sMax + 1);
+    tipNames[sMax] = "s" + std::to_string(sMax + 1);
     
     // update sMax
     sMax++;
@@ -191,8 +191,8 @@ private:
     NumericMatrix metaTrt; // passed
     imat edge; // passed
     vec edgeLength; // passed
-    StringVector tipNames; // passed
-    LogicalVector alive; // passed
+    std::vector<string> tipNames; // passed
+    std::vector<bool> alive; // passed
     S4 params; // passed
     int sMax; // passed
     double sigC; // from params.slot("sigC")
@@ -213,8 +213,8 @@ public:
              NumericMatrix metaTrt_,
              imat edge_,
              vec edgeLength_,
-             StringVector tipNames_,
-             LogicalVector alive_,
+             std::vector<string> tipNames_,
+             std::vector<bool> alive_,
              int sMax_,
              S4 params_) :
     rng(std::mt19937(std::random_device{}())),
@@ -378,6 +378,7 @@ public:
             // to add 1 to `iparent` which has C-style indexing starting at 0
             List newPhyInfo = updatePhylo(iparent + 1, sMax, scale, edge, 
                                           edgeLength, alive, tipNames);
+            
             Rcout << "got through `updatePhylo`" << std::endl;
             
             
@@ -386,8 +387,8 @@ public:
             // *** consider updating
             edge = as<imat>(newPhyInfo["edge"]); 
             edgeLength = as<vec>(newPhyInfo["edgeLength"]);
-            tipNames = newPhyInfo["tipNames"];
-            alive = newPhyInfo["alive"];
+            tipNames = as<std::vector<string>>(newPhyInfo["tipNames"]);
+            alive = as<std::vector<bool>>(newPhyInfo["alive"]);
 
             Rcout << "got through casting" << std::endl;
             
@@ -443,8 +444,8 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     S4 phy = x.slot("phylo");
     imat edge_ = as<imat>(phy.slot("e"));
     vec edgeLength_ = as<vec>(phy.slot("l"));
-    StringVector tipNames_ = phy.slot("tipNames");
-    LogicalVector alive_ = phy.slot("alive");
+    std::vector<string> tipNames_ = phy.slot("tipNames");
+    std::vector<bool> alive_ = phy.slot("alive");
     int sMax_ = as<int>(phy.slot("n"));
     
     // decrement species indeces (so they start at 0)
@@ -535,18 +536,19 @@ S4 s4FromRcpp(List x) {
 
 // tester function wrapping the updatePhylo fun
 // [[Rcpp::export]]
-S4 testUpdatePhylo(List tre, int i, double scale) {
+S4 testUpdatePhylo(S4 tre, int i, double scale) {
     // *** don't need to make this list, could just pass right to `updatePhylo`
-    List x = List::create(Named("edge") = tre["edge"], 
-                          Named("tipNames") = tre["tip.label"],
-                          Named("n") = tre["n"],
-                          Named("alive") = tre["alive"],
-                          Named("edgeLength") = tre["edge.length"],
-                          Named("tipNames") = tre["tip.label"]);
+    // List x = List::create(Named("edge") = tre["edge"], 
+    //                       Named("tipNames") = tre["tip.label"],
+    //                       Named("n") = tre["n"],
+    //                       Named("alive") = tre["alive"],
+    //                       Named("edgeLength") = tre["edge.length"],
+    //                       Named("tipNames") = tre["tip.label"]);
     
 
-    List newTre = updatePhylo(i, x["n"], scale, x["edge"], x["edgeLength"], 
-                                 x["alive"], x["tipNames"]);
+    List newTre = updatePhylo(i, tre.slot("n"), scale, tre.slot("e"), 
+                              tre.slot("l"), tre.slot("alive"), 
+                              tre.slot("tipNames"));
     
     
     // create S4 output
@@ -595,26 +597,21 @@ List simRole(S4 x, S4 p) {
     for (int i = 1; i <= niter; i++) {
         // death
         int idead = wow.death();
-        // foo("dead", i);
 
         // immigration or local birth
         wow.birthImm(idead, i - 1); // pass i - 1 because loop starts at 1
-        // foo("birth", i);
         
         // speciation or not
         wow.speciation(idead, i - 1); // pass i - 1 because loop starts at 1
-        // foo("spec", i);
 
         // update distances
         wow.updateDist(idead);
-        // foo("dist", i);
 
         // every `niterTimestep`, record state
         if (i % niterTimestep == 0) {
             k = i / niterTimestep;
             
             l[k] = clone(s4FromRcpp(wow.getData()));
-            // foo("write-out", i);
         }
     }
 

@@ -72,12 +72,12 @@ BEGIN_RCPP
 END_RCPP
 }
 // testUpdatePhylo
-S4 testUpdatePhylo(List tre, int i, double scale);
+S4 testUpdatePhylo(S4 tre, int i, double scale);
 RcppExport SEXP _roleR_testUpdatePhylo(SEXP treSEXP, SEXP iSEXP, SEXP scaleSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type tre(treSEXP);
+    Rcpp::traits::input_parameter< S4 >::type tre(treSEXP);
     Rcpp::traits::input_parameter< int >::type i(iSEXP);
     Rcpp::traits::input_parameter< double >::type scale(scaleSEXP);
     rcpp_result_gen = Rcpp::wrap(testUpdatePhylo(tre, i, scale));
