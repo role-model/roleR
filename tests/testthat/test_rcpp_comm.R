@@ -1,3 +1,19 @@
+# function to take a run role model object and return a time-series-like
+# matrix where rows are time steps and there is a column for each spp
+# cells are proportional abundances
+
+ats <- function(r) {
+    nspp <- r@modelSteps[[length(r@modelSteps)]]@phylo@n
+    
+    res <- lapply(r@modelSteps, function(x) {
+        sapply(1:nspp, function(i) {
+            mean(x@localComm@indSpecies == i)
+        })
+    })
+    
+    return(do.call(rbind, res))
+}
+
 test_that("roleData and params extraction into rcpp works", {
     p <- roleParams(niter = 10, 
                     niterTimestep = 5,
@@ -207,14 +223,8 @@ test_that("species with distinct trait is more abundant than others", {
     rComp <- runRole(mComp)
     
     # time steps 1--3 are burn in (based on ocular analysis)
-    a <- lapply(rComp@modelSteps[-(1:3)], function(y) {
-        x <- y@localComm@indSpecies
-        c(s1 = mean(x == 1), 
-          s2 = mean(x == 2), 
-          s3 = mean(x == 3))
-    })
+    a <- ats(rComp)[-(1:3), ]
     
-    a <- do.call(rbind, a) 
     a <- apply(a, 2, function(x) {
         c(mean(x), mean(x) + sd(x) * c(-2, 2))
     })
@@ -257,26 +267,14 @@ test_that("decreased width of comp kernal lessens impact of trait diffs", {
     rCompNrw <- runRole(mCompNrw)
     
     # time steps 1--3 are burn in (based on ocular analysis)
-    a <- lapply(rComp@modelSteps[-(1:3)], function(y) {
-        x <- y@localComm@indSpecies
-        c(s1 = mean(x == 1), 
-          s2 = mean(x == 2), 
-          s3 = mean(x == 3))
-    })
+    a <- ats(rComp)[-(1:3), ]
     
-    a <- do.call(rbind, a) 
     a <- apply(a, 2, function(x) {
         c(mean(x), sd(x))
     })
     
-    aNrw <- lapply(rCompNrw@modelSteps[-(1:3)], function(y) {
-        x <- y@localComm@indSpecies
-        c(s1 = mean(x == 1), 
-          s2 = mean(x == 2), 
-          s3 = mean(x == 3))
-    })
+    aNrw <- ats(rCompNrw)
     
-    aNrw <- do.call(rbind, aNrw) 
     aNrw <- apply(aNrw, 2, function(x) {
         c(mean(x), sd(x))
     })
@@ -335,17 +333,7 @@ m@modelSteps[[1]]@localComm@indTrait <- matrix(-3, nrow = 100, ncol = 1)
 
 r <- runRole(m)
 
-ats <- function(r) {
-    nspp <- r@modelSteps[[length(r@modelSteps)]]@phylo@n
-    
-    res <- lapply(r@modelSteps, function(x) {
-        sapply(1:nspp, function(i) {
-            mean(x@localComm@indSpecies == i)
-        })
-    })
-    
-    return(do.call(rbind, res))
-}
+
 
 matplot(ats(r), type = "l", lty = 1, col = hsv(c(0, 0.15, 0.8)))
 
