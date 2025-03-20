@@ -8,7 +8,7 @@
 # @slot spTrait a numeric vector of the mean trait value of each species
 # @slot spAbund a numeric vector of the abundance (number of individuals) of 
 #     each species
-# @slot spAbundHarmMean numeric vector of the harmonic mean of species 
+#' @slot spAbundHarmMean numeric vector of the harmonic mean of species 
 #     abundances
 #' @slot spLastOriginStep numeric vector holding time of most recent origin of 
 #'     each species in the local community
@@ -24,14 +24,13 @@
 
 setClass('localComm',
          slots = c(indSpecies = 'numeric',
-                   indTrait = 'matrix', # convert to matrix for multiple trts
+                   indTrait = 'matrix', 
                    indSeqs = 'character',
                    spGenDiv = 'numeric',
-                   # spAbundHarmMean = 'numeric',
+                   spAbundHarmMean = 'numeric',
                    spLastOriginStep = 'numeric',
                    # spExtinctionStep = 'numeric',
-                   equilibProp = 'numeric'
-         ))
+                   equilibProp = 'numeric'))
 
 
 # constructor 
@@ -50,7 +49,7 @@ localComm <- function(indSpecies, indTrait, indSeqs) {
     nspp <- length(unique(indSpecies))
     # spAbund <- as.vector(tabulate(indSpecies))
     # spTrait <- as.vector(tapply(indTrait, indSpecies, mean))
-    # spAbundHarmMean <- as.vector(tabulate(indSpecies))
+    spAbundHarmMean <- as.vector(tabulate(indSpecies))
     spLastOriginStep <- as.numeric(rep(NA, nspp))
     # spExtinctionStep <- as.numeric(rep(NA, nspp))
     spGenDiv <- as.numeric(rep(NA, nspp))
@@ -60,6 +59,7 @@ localComm <- function(indSpecies, indTrait, indSeqs) {
                indTrait = indTrait,
                indSeqs = indSeqs,
                spGenDiv = spGenDiv,
+               spAbundHarmMean = spAbundHarmMean,
                spLastOriginStep = spLastOriginStep))
 }
 

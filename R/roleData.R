@@ -1,7 +1,7 @@
 #' @title A collection of data representing one state of a roleModel.
 #' 
 #' @description An S4 class to represent a roleModel state using `localComm`,
-#' `metaComm`, & `rolephylo` bojects.
+#' `metaComm`, & `rolephylo` ojects.
 #' 
 #' @slot localComm A `localComm` object containing the local community.
 #' @slot metaComm A `metaComm` object containing the meta community.

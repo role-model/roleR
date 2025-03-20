@@ -143,9 +143,9 @@ setMethod('runRole',
         c(model@modelSteps[[1]]@localComm@spAbundHarmMean, 
           rep(NA, local_add))
     
-    model@modelSteps[[1]]@localComm@spExtinctionStep <-  
-        c(model@modelSteps[[1]]@localComm@spExtinctionStep, 
-          rep(NA, local_add))
+    # model@modelSteps[[1]]@localComm@spExtinctionStep <-  
+    #     c(model@modelSteps[[1]]@localComm@spExtinctionStep, 
+    #       rep(NA, local_add))
     
     return(model)
 }
@@ -156,25 +156,25 @@ setMethod('runRole',
 # helper to trim the data of unused indices after the model is run
 .trimModelData <- function(model) {
     
-    for(i in 1:length(model@modelSteps)) {
-        # trim phylo
-        # browser()
-        model@modelSteps[[i]]@phylo@e <- model@modelSteps[[i]]@phylo@e[model@modelSteps[[i]]@phylo@e[,1] != -1,]
-        model@modelSteps[[i]]@phylo@l <- model@modelSteps[[i]]@phylo@l[model@modelSteps[[i]]@phylo@l != 0] 
-        last_alive_index <- max(which(model@modelSteps[[i]]@phylo@alive == TRUE))
-        model@modelSteps[[i]]@phylo@alive <- model@modelSteps[[i]]@phylo@alive[1:last_alive_index]
-        model@modelSteps[[i]]@phylo@tipNames <- model@modelSteps[[i]]@phylo@tipNames[model@modelSteps[[i]]@phylo@tipNames != ''] # this MAY cause errors
-        
-        # trim local
-        model@modelSteps[[i]]@localComm@spLastOriginStep <- 
-            model@modelSteps[[i]]@localComm@spLastOriginStep[1:last_alive_index]
-        
-        model@modelSteps[[i]]@localComm@spAbundHarmMean <- 
-            model@modelSteps[[i]]@localComm@spAbundHarmMean[1:last_alive_index]
-        
-        model@modelSteps[[i]]@localComm@spExtinctionStep <- 
-            model@modelSteps[[i]]@localComm@spExtinctionStep[1:last_alive_index]
-    }
+    # for(i in 1:length(model@modelSteps)) {
+    #     # trim phylo
+    #     # browser()
+    #     model@modelSteps[[i]]@phylo@e <- model@modelSteps[[i]]@phylo@e[model@modelSteps[[i]]@phylo@e[,1] != -1,]
+    #     model@modelSteps[[i]]@phylo@l <- model@modelSteps[[i]]@phylo@l[model@modelSteps[[i]]@phylo@l != 0] 
+    #     last_alive_index <- max(which(model@modelSteps[[i]]@phylo@alive == TRUE))
+    #     model@modelSteps[[i]]@phylo@alive <- model@modelSteps[[i]]@phylo@alive[1:last_alive_index]
+    #     model@modelSteps[[i]]@phylo@tipNames <- model@modelSteps[[i]]@phylo@tipNames[model@modelSteps[[i]]@phylo@tipNames != ''] # this MAY cause errors
+    #     
+    #     # trim local
+    #     model@modelSteps[[i]]@localComm@spLastOriginStep <- 
+    #         model@modelSteps[[i]]@localComm@spLastOriginStep[1:last_alive_index]
+    #     
+    #     model@modelSteps[[i]]@localComm@spAbundHarmMean <- 
+    #         model@modelSteps[[i]]@localComm@spAbundHarmMean[1:last_alive_index]
+    #     
+    #     model@modelSteps[[i]]@localComm@spExtinctionStep <- 
+    #         model@modelSteps[[i]]@localComm@spExtinctionStep[1:last_alive_index]
+    # }
     
     return(model)
 }
