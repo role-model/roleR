@@ -27,6 +27,10 @@ mat compMatCalc(mat x, double sigC) {
         }
     }
 
+    // Rcout << "initial comp mat calculation complete" << std::endl;
+    // Rcout << "min value is " << D.min() << std::endl;
+    // Rcout << "max value is " << D.max() << std::endl;
+    
     return D;
 }
 
@@ -304,7 +308,7 @@ public:
                 // set competition term to 0
                 compD = zeros(compMat.n_cols);
             }
-
+            
             // non-neutral death probabilities
             // note: death due to env is captured by `1 - envDist` because
             //       the further you are from the optim, the worse your chances
@@ -503,7 +507,7 @@ S4 s4FromRcpp(List x) {
     // locs.slot("spAbund") = 1; // remove?
     locs.slot("spAbundHarmMean") = 1; // *** need to add to simulation
     locs.slot("spLastOriginStep") = 1; // *** need to add to simulation
-    locs.slot("spExtinctionStep") = 1; // *** need to add to simulation
+    // locs.slot("spExtinctionStep") = 1; // *** need to add to simulation
     locs.slot("equilibProp") = 1; // *** need to add to simulation
     
     out.slot("localComm") = locs;
