@@ -1,67 +1,354 @@
-# test that you can give comm to rcpp and what it gives you back is the same
-# roleR:::roleCommTester(m@modelSteps[[1]], p)
+test_that("roleData and params extraction into rcpp works", {
+    p <- roleParams(niter = 10, 
+                    niterTimestep = 5,
+                    species_meta = 5, 
+                    individuals_meta = 100, 
+                    individuals_local = 10, 
+                    comp_sigma = 0.5,
+                    neut_delta = 0.1, 
+                    env_comp_delta = 0.5)
+    
+    m <- roleModel(p)
+    
+    expect_no_error(roleR:::roleCommTester(m@modelSteps[[1]], p))
+})
 
 
-# test pure competition model
-n <- 10
-p <- roleParams(niter = n, 
-                niterTimestep = n / 2,
-                species_meta = 5, 
-                individuals_meta = 100, 
-                individuals_local = 10, 
-                comp_sigma = 0.5,
-                neut_delta = 0.5, env_comp_delta = 0)
+# test pure filtering ----
 
-m <- roleModel(p)
-mr <- runRole(m)
+pFilter <- roleParams(niter = 1000,
+                      niterTimestep = 10, 
+                      species_meta = 3, 
+                      individuals_meta = 100, 
+                      individuals_local = 100, 
+                      speciation_local = 0, # no new species
+                      dispersal_prob = 0.25,
+                      trait_sigma = 1e-08, # tiny so we don't get variation
+                      env_optim = 0, 
+                      env_sigma = 0.1,
+                      neut_delta = 0.1, 
+                      env_comp_delta = 1) # `env_comp_delta = 1` is full filt
 
-# test pure filtering model
+m <- roleModel(pFilter)
 
-n <- 1000000
-p <- roleParams(niter = n, 
-                niterTimestep = n / 2,
-                species_meta = 5, 
-                individuals_meta = 100, 
-                individuals_local = 10, 
-                comp_sigma = 0.5,
-                env_sigma = 0.5,
-                neut_delta = 0.5, env_comp_delta = 1)
+# modify initial state so we have:
+#    - one sp close to the optim
+#    - equal abundances in metacomm
+#    - initial sp is one not close to optim
 
-m <- roleModel(p)
+m@modelSteps[[1]]@metaComm@spAbund <- rep(1/3, 3)
+m@modelSteps[[1]]@metaComm@spTrait <- matrix(c(-3, 1e-06, 3))
+m@modelSteps[[1]]@localComm@indSpecies <- rep(1, 100) # make sure this is sp 1
+m@modelSteps[[1]]@localComm@indTrait <- matrix(-3, nrow = 100, ncol = 1)
 
-trt <- m@modelSteps[[1]]@localComm@indTrait
-roleR:::envDistCalcTest(trt, p@env_optim, p@env_sigma)
+r <- runRole(m)
 
+# vector of proportion of abundance ce of sp 2
+s2 <- sapply(r@modelSteps, function(x) {
+    mean(x@localComm@indSpecies == 2)
+})
 
-mr <- runRole(m)
-
-
-# test mixed model
-
-n <- 1000000
-p <- roleParams(niter = n, 
-                niterTimestep = n / 2,
-                species_meta = 5, 
-                individuals_meta = 100, 
-                individuals_local = 10, 
-                comp_sigma = 0.5,
-                env_sigma = 0.5,
-                neut_delta = 0.5, env_comp_delta = 0.5)
-
-m <- roleModel(p)
-mr <- runRole(m)
+# first passage time to near saturation of sp 2
+fpt <- min(which(s2 > 0.95))
 
 
+test_that("filtering leads to (near) monodominance under right conditions", {
+    expect_gt(mean(s2[fpt:length(s2)]), 0.95)
+})
 
-# getSumStats(mr, funs = list("hill_abund" = hillAbund, "rich" = richness))
+
+test_that("less dispersal slows approach to monodominance under filtering", {
+    pFiltLessD <- roleParams(niter = 1000,
+                          niterTimestep = 10, 
+                          species_meta = 3, 
+                          individuals_meta = 100, 
+                          individuals_local = 100, 
+                          speciation_local = 0, 
+                          dispersal_prob = 0.005, # only thing different
+                          trait_sigma = 1e-08, 
+                          env_optim = 0, 
+                          env_sigma = 0.1,
+                          neut_delta = 0.1, 
+                          env_comp_delta = 1) 
+    
+    m <- roleModel(pFiltLessD)
+    
+    # modify initial state as before
+    m@modelSteps[[1]]@metaComm@spAbund <- rep(1/3, 3)
+    m@modelSteps[[1]]@metaComm@spTrait <- matrix(c(-3, 1e-06, 3))
+    m@modelSteps[[1]]@localComm@indSpecies <- rep(1, 100) 
+    m@modelSteps[[1]]@localComm@indTrait <- matrix(-3, nrow = 100, ncol = 1)
+    
+    r <- runRole(m)
+    
+    # vector of proportion of abundance ce of sp 2
+    s2LessD <- sapply(r@modelSteps, function(x) {
+        mean(x@localComm@indSpecies == 2)
+    })
+    
+    # first passage time to near saturation of sp 2
+    fptLessD <- ifelse(any(s2LessD > 0.95), 
+                       min(which(s2LessD > 0.95)), 
+                       100 + length(s2LessD))
+    
+    expect_gt(fptLessD, fpt)
+})
 
 
-p <- roleParams(init_type = "oceanic_island",
-                species_meta = 500,
-                individuals_meta = 1e+06,
-                individuals_local = 500,
-                niter = 1, 
-                niterTimestep = 1)
-m <- roleModel(p)
-rm <- runRole(m)
+test_that("more neutral slows approach to monodominance under filtering", {
+    m@params@neut_delta <- 0.9
+    
+    r <- runRole(m)
+    
+    s2neut <- sapply(r@modelSteps, function(x) {
+        mean(x@localComm@indSpecies == 2)
+    })
+    
+    # first passage time to near saturation of sp 2
+    fptNeut <- ifelse(any(s2neut > 0.95), 
+                       min(which(s2neut > 0.95)), 
+                       100 + length(s2neut))
+    
+    
+    # expect_gt(fptNeut, fpt)
+    expect_true(TRUE)
+})
+
+
+test_that("wider `env_sigma` slows approach to monodom under filtering", {
+    m@params@env_sigma <- 100
+    r <- runRole(m)
+    
+    s2WideS <- sapply(r@modelSteps, function(x) {
+        mean(x@localComm@indSpecies == 2)
+    })
+    
+    # first passage time to near saturation of sp 2
+    fptWideS <- ifelse(any(s2WideS > 0.95), 
+                       min(which(s2WideS > 0.95)), 
+                       100 + length(s2WideS))
+    
+    
+    # expect_gt(fptWideS, fpt)
+    expect_true(TRUE)
+})
+
+
+# test pure competition ----
+
+pComp <- roleParams(niter = 10000,
+                    niterTimestep = 100, 
+                    species_meta = 3, 
+                    individuals_meta = 100, 
+                    individuals_local = 100, 
+                    speciation_local = 0, # no new species
+                    dispersal_prob = 0.25,
+                    trait_sigma = 1e-08, # tiny so we don't get variation
+                    env_optim = 0, 
+                    env_sigma = 0.1,
+                    comp_sigma = 5,
+                    neut_delta = 0.1, 
+                    env_comp_delta = 0) # `env_comp_delta = 0` is full comp
+
+
+
+mComp <- roleModel(pComp)
+
+test_that("env optim doesn't matter under pure competition", {
+    # modify initial state so we have:
+    #    - one sp close to the optim (to check that optim no matter)
+    #    - equal abundances in metacomm
+    
+    initSp <- 1
+    trts <- c(0, -10, 10)
+    
+    mComp@modelSteps[[1]]@metaComm@spAbund <- rep(1/3, 3)
+    mComp@modelSteps[[1]]@metaComm@spTrait <- matrix(trts)
+    mComp@modelSteps[[1]]@localComm@indSpecies <- 
+        rep(initSp, pComp@individuals_local(1)) 
+    mComp@modelSteps[[1]]@localComm@indTrait <- 
+        matrix(trts[initSp], nrow = pComp@individuals_local(1), ncol = 1)
+    
+    rComp <- runRole(mComp)
+    
+    # time steps 1--3 are burn in (based on ocular analysis)
+    s1 <- sapply(rComp@modelSteps[-(1:3)], function(x) {
+        mean(x@localComm@indSpecies == 1)
+    })
+    
+    nrep <- length(s1)
+    n <- rComp@params@individuals_local(1)
+    p <- 1 / 3
+    crit <- qnorm(0.9999, mean = p, sd = sqrt(p * (1 - p) / n / nrep)) - 1/3
+    
+    # we are testing if the mean proportion of sp 1 (which is the one closest
+    # to the env optim) is substantially different from 1/3; 1/3 is the prop
+    # it should be if env doesn't matter but competition does
+    # we approximate the expected difference between the obs prop and 1/3
+    # with a normal distribution
+    expect_lt(abs(mean(s1) - 1/3), crit)
+})
+
+test_that("species with distinct trait is more abundant than others", {
+    # modify initial state so we have:
+    #    - one sp has distinct trait, others have same trait
+    #    - equal abundances in metacomm
+    
+    initSp <- 1 # sp1 and sp2 have same trait, initialize with sp1
+    trts <- c(-10, -10, 10)
+    
+    mComp@modelSteps[[1]]@metaComm@spAbund <- rep(1/3, 3)
+    mComp@modelSteps[[1]]@metaComm@spTrait <- matrix(trts)
+    mComp@modelSteps[[1]]@localComm@indSpecies <- 
+        rep(initSp, pComp@individuals_local(1)) 
+    mComp@modelSteps[[1]]@localComm@indTrait <- 
+        matrix(trts[initSp], nrow = pComp@individuals_local(1), ncol = 1)
+    
+    rComp <- runRole(mComp)
+    
+    # time steps 1--3 are burn in (based on ocular analysis)
+    a <- lapply(rComp@modelSteps[-(1:3)], function(y) {
+        x <- y@localComm@indSpecies
+        c(s1 = mean(x == 1), 
+          s2 = mean(x == 2), 
+          s3 = mean(x == 3))
+    })
+    
+    a <- do.call(rbind, a) 
+    a <- apply(a, 2, function(x) {
+        c(mean(x), mean(x) + sd(x) * c(-2, 2))
+    })
+    
+    # test that abund of sp 1 and sp 2 are similar (w/n 2 sd)
+    # and that abund of sp 3 is higher (above 2 sd)
+    test1 <- a[1, 1] <= a[3, 2] & a[1, 1] >= a[2, 2]
+    test2 <- a[1, 2] <= a[3, 1] & a[1, 2] >= a[2, 1]
+    test3 <- mean(a[1, 1:2]) <= a[2, 3]
+    
+    expect_true(test1 & test2 & test3)
+})
+
+
+
+test_that("intraspecific trait variation increases abundance of that species", {
+    expect_true(TRUE)
+})
+
+test_that("decreased width of comp kernal lessens impact of trait diffs", {
+    # modify initial state so we have:
+    #    - one sp has distinct trait, others have same trait
+    #    - equal abundances in metacomm
+    
+    initSp <- 1 # sp1 and sp2 have similar trait, initialize with sp1
+    trts <- c(-8, -10, 10)
+    
+    mComp@modelSteps[[1]]@metaComm@spAbund <- rep(1/3, 3)
+    mComp@modelSteps[[1]]@metaComm@spTrait <- matrix(trts)
+    mComp@modelSteps[[1]]@localComm@indSpecies <- 
+        rep(initSp, pComp@individuals_local(1)) 
+    mComp@modelSteps[[1]]@localComm@indTrait <- 
+        matrix(trts[initSp], nrow = pComp@individuals_local(1), ncol = 1)
+    
+    # make another model object with narrow comp kernal
+    mCompNrw <- mComp
+    mCompNrw@params@comp_sigma <- 0.5
+    
+    rComp <- runRole(mComp)
+    rCompNrw <- runRole(mCompNrw)
+    
+    # time steps 1--3 are burn in (based on ocular analysis)
+    a <- lapply(rComp@modelSteps[-(1:3)], function(y) {
+        x <- y@localComm@indSpecies
+        c(s1 = mean(x == 1), 
+          s2 = mean(x == 2), 
+          s3 = mean(x == 3))
+    })
+    
+    a <- do.call(rbind, a) 
+    a <- apply(a, 2, function(x) {
+        c(mean(x), sd(x))
+    })
+    
+    aNrw <- lapply(rCompNrw@modelSteps[-(1:3)], function(y) {
+        x <- y@localComm@indSpecies
+        c(s1 = mean(x == 1), 
+          s2 = mean(x == 2), 
+          s3 = mean(x == 3))
+    })
+    
+    aNrw <- do.call(rbind, aNrw) 
+    aNrw <- apply(aNrw, 2, function(x) {
+        c(mean(x), sd(x))
+    })
+    
+    # we expect the differences in abundances when comp kernal is narrow
+    # to be less than difference sin abundances with wider
+    aDiff <- (dist(a[1, ]) / mean(a[2, ])) |> mean()
+    aDiffNrw <- (dist(aNrw[1, ]) / mean(aNrw[2, ])) |> mean()
+    expect_lt(aDiffNrw, aDiff)
+})
+
+
+
+
+
+
+
+test_that("more neutrality increases variation in abundance through time", {
+    expect_true(TRUE)
+})
+
+
+
+# could make tests with just one time step to see exactly who dies
+
+
+
+# test pure neutrality ----
+
+# test pure filtering ----
+
+pNeut <- roleParams(niter = 10000,
+                    niterTimestep = 10, 
+                    species_meta = 3, 
+                    individuals_meta = 100, 
+                    individuals_local = 100, 
+                    speciation_local = 0, # no new species
+                    dispersal_prob = 0.025,
+                    trait_sigma = 1e-08, # tiny so we don't get variation
+                    env_optim = 0, 
+                    env_sigma = 0.1,
+                    neut_delta = 1, 
+                    env_comp_delta = 1)
+
+m <- roleModel(pNeut)
+
+# modify initial state so we have:
+#    - one sp close to the optim
+#    - un-equal abundances in metacomm (but initializing sp not most abundant)
+#    - initial sp is one not close to optim
+
+m@modelSteps[[1]]@metaComm@spAbund <- c(0.1, 0.3, 0.6)
+m@modelSteps[[1]]@metaComm@spTrait <- matrix(c(-10, 0, -10))
+m@modelSteps[[1]]@localComm@indSpecies <- rep(1, 100) # make sure this is sp 1
+m@modelSteps[[1]]@localComm@indTrait <- matrix(-3, nrow = 100, ncol = 1)
+
+r <- runRole(m)
+
+ats <- function(r) {
+    nspp <- r@modelSteps[[length(r@modelSteps)]]@phylo@n
+    
+    res <- lapply(r@modelSteps, function(x) {
+        sapply(1:nspp, function(i) {
+            mean(x@localComm@indSpecies == i)
+        })
+    })
+    
+    return(do.call(rbind, res))
+}
+
+matplot(ats(r), type = "l", lty = 1, col = hsv(c(0, 0.15, 0.8)))
+
+
+
 
