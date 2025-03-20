@@ -10,14 +10,14 @@ test_that("model using default params initializes without error", {
     expect_true(inherits(m, 'roleModel'))
 })
 
+# keep this for multipole tests
+initInfo <- m@info
 
 test_that("model info data.frame is of correct dimension", {
-    df <- m@info
-    expect_equal(nrow(df), p@niter / p@niterTimestep + 1)
+    expect_equal(nrow(initInfo), p@niter / p@niterTimestep + 1)
 })
 
-# keep this for later
-initInfo <- m@info
+
 
 test_that("`modelSteps` output of model is initialized correctly", {
     msteps <- m@modelSteps
@@ -28,11 +28,7 @@ test_that("`modelSteps` output of model is initialized correctly", {
     expect_true(all(notInit))
 })
 
-
-# should continue to add tests to make sure sub-objects of data are valid
-
 # tests on run model ----
-
 
 # run model
 m <- try(runRole(m), silent = TRUE)
