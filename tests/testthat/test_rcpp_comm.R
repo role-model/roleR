@@ -304,8 +304,6 @@ test_that("more neutrality increases variation in abundance through time", {
 
 # test pure neutrality ----
 
-# test pure filtering ----
-
 pNeut <- roleParams(niter = 10000,
                     niterTimestep = 10, 
                     species_meta = 3, 
@@ -323,20 +321,94 @@ m <- roleModel(pNeut)
 
 # modify initial state so we have:
 #    - one sp close to the optim
-#    - un-equal abundances in metacomm (but initializing sp not most abundant)
+#    - equal abundances in metacomm 
 #    - initial sp is one not close to optim
 
-m@modelSteps[[1]]@metaComm@spAbund <- c(0.1, 0.3, 0.6)
+m@modelSteps[[1]]@metaComm@spAbund <- rep(1/3, 3) 
 m@modelSteps[[1]]@metaComm@spTrait <- matrix(c(-10, 0, -10))
 m@modelSteps[[1]]@localComm@indSpecies <- rep(1, 100) # make sure this is sp 1
 m@modelSteps[[1]]@localComm@indTrait <- matrix(-3, nrow = 100, ncol = 1)
 
-r <- runRole(m)
+rNeut <- runRole(m)
 
 
+test_that("variance of abundances under neutral is greater than under comp", {
+    aNeut <- ats(rNeut)
+    aComp <- mComp |> runRole() |> ats()
+    
+    vNeut <- apply(aNeut, 2, var) |> mean()
+    vComp <- apply(aComp, 2, var) |> mean()
+    
+    expect_gt(vNeut, vComp)
+})
 
-matplot(ats(r), type = "l", lty = 1, col = hsv(c(0, 0.15, 0.8)))
+
+test_that("species closest to env optim is not dominant", {
+    pNeut@niter <- 100000L
+    pNeut@niterTimestep <- 500L
+    pNeut@env_comp_delta <- 1 # as if this was filtering
+    m <- roleModel(pNeut)
+    
+    # modify initial state so we have:
+    #    - one sp close to the optim
+    #    - equal abundances in metacomm 
+    #    - initial sp is one not close to optim
+    
+    m@modelSteps[[1]]@metaComm@spAbund <- rep(1/3, 3) 
+    m@modelSteps[[1]]@metaComm@spTrait <- matrix(c(-10, 0, 10))
+    m@modelSteps[[1]]@localComm@indSpecies <- rep(1, 100) 
+    m@modelSteps[[1]]@localComm@indTrait <- matrix(-3, nrow = 100, ncol = 1)
+    
+    rNeut <- runRole(m)
+    
+    # removing "burn-in" (1:10) from time series
+    a <- ats(rNeut)[-(1:10), ]
+    
+    a <- apply(a, 2, function(x) {
+        c(mean(x), sd(x))
+    })
+    
+    # sp closest to optim is 2, is 2 within 95% CI of other spp?
+    sp2v1 <- a[1, 2] >= a[1, 1] - 2 * a[2, 1] &
+        a[1, 2] <= a[1, 1] + 2 * a[2, 1]
+    sp2v3 <- a[1, 2] >= a[1, 3] - 2 * a[2, 3] &
+        a[1, 2] <= a[1, 3] + 2 * a[2, 3]
+    
+    expect_true(sp2v1 & sp2v3)
+})
 
 
-
+test_that("species with most distinct trait is not dominant", {
+    pNeut@niter <- 100000L
+    pNeut@niterTimestep <- 500L
+    pNeut@env_comp_delta <- 0 # as if this was comp
+    m <- roleModel(pNeut)
+    
+    # modify initial state so we have:
+    #    - one sp close to the optim
+    #    - equal abundances in metacomm 
+    #    - initial sp is one not close to optim
+    
+    m@modelSteps[[1]]@metaComm@spAbund <- rep(1/3, 3) 
+    m@modelSteps[[1]]@metaComm@spTrait <- matrix(c(-10, 0, -10))
+    m@modelSteps[[1]]@localComm@indSpecies <- rep(1, 100) 
+    m@modelSteps[[1]]@localComm@indTrait <- matrix(-3, nrow = 100, ncol = 1)
+    
+    rNeut <- runRole(m)
+    
+    # removing "burn-in" (1:10) from time series
+    a <- ats(rNeut)[-(1:10), ]
+    
+    a <- apply(a, 2, function(x) {
+        c(mean(x), sd(x))
+    })
+    
+    # sp closest to optim is 2, is 2 within 95% CI of other spp?
+    sp2v1 <- a[1, 2] >= a[1, 1] - 2 * a[2, 1] &
+        a[1, 2] <= a[1, 1] + 2 * a[2, 1]
+    sp2v3 <- a[1, 2] >= a[1, 3] - 2 * a[2, 3] &
+        a[1, 2] <= a[1, 3] + 2 * a[2, 3]
+    
+    expect_true(sp2v1 & sp2v3)
+})
 
