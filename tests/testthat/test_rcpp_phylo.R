@@ -1,5 +1,21 @@
 # test that you can give something to rcpp and what it gives you back is the same
 
+test_that("rcpp trimming gives you back the same thing you give it", {
+    m <- roleParams(species_meta = 5, speciation_local = 0.1) |> 
+        roleModel()
+    r <- runRole(m)
+    
+    # initialized phylo (never saw rcpp or trimming)
+    tre0 <- as(m@modelSteps[[1]]@phylo, "phylo") 
+    
+    # initialized phylo but having gone through rcpp stuff
+    tre1 <- as(r@modelSteps[[6]]@phylo, "phylo") 
+    
+    expect_equivalent(tre0, tre1)
+})
+
+
+
 # test updatePhylo with simple phylo
 
 library(ape)

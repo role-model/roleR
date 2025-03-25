@@ -44,15 +44,12 @@ setMethod('runRole',
               # returns the new modelSteps (a list of roleData)
               m@modelSteps <- simRole(m@modelSteps[[1]], m@params)
               
-              # trim data, removing the unused buffer
-              m <- .trimModelData(m)
-              
               # increment species ids and edges to shift indexing from Cpp to R
               # ***** really????????
               for(d in 1:length(m@modelSteps)) {
                   m@modelSteps[[d]]@localComm@indSpecies <- 
                       m@modelSteps[[d]]@localComm@indSpecies + 1
-                  m@modelSteps[[d]]@phylo@e <- m@modelSteps[[d]]@phylo@e + 1
+                  # m@modelSteps[[d]]@phylo@e <- m@modelSteps[[d]]@phylo@e + 1
               }
               
               # add popgen

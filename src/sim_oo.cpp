@@ -105,6 +105,7 @@ NumericVector getParamFun(S4 p, String s) {
 List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
                  std::vector<bool> alive, std::vector<std::string> tipNames) {
 
+    // Rcout << "edge mat from updatePhylo (before anything) \n" << edge << std::endl;
     // index of where unrealized edges in edge matrix start
     int eNew = 2 * sMax - 2;
     
@@ -132,6 +133,8 @@ List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
     // add one to internal nodes
     uvec internalNode = find(edge > sMax); 
     edge.elem(internalNode) += 1;
+    
+    // Rcout << "edge mat from updatePhylo (after internal node increment) \n" << edge << std::endl;
     
     // add new internal node
     int newNode = 2 * sMax + 1; // index of new node
@@ -173,6 +176,8 @@ List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
     // update sMax
     sMax++;
 
+    // Rcout << "edge mat from updatePhylo (at end) \n" << edge << std::endl;
+    
     List out = List::create(Named("edge") = edge,
                             Named("edgeLength") = edgeLength,
                             Named("alive") = alive,
@@ -264,24 +269,78 @@ public:
 
     // get all the data
     List getData() {
+        // get all the data, trimmed to remove unused elements
+        
+        // Find rows where edge has -1 values and keep only valid edges
+        uvec validEdgeRows = find(edge.col(0) != -1);
+        imat trimmedEdge = edge.rows(validEdgeRows);
+        vec trimmedEdgeLength = edgeLength.elem(validEdgeRows);
+        
+        Rcout << "edge mat from .getData() \n" << trimmedEdge << std::endl;
+        // Keep only non-zero edge lengths
+        // uvec nonZeroLengths = find(trimmedEdgeLength != 0);
+        // if (nonZeroLengths.n_elem > 0) {
+        //     trimmedEdgeLength = trimmedEdgeLength.elem(nonZeroLengths);
+        // }
+        
+        // use sMax to trim vectors relating to tips 
+        std::vector<bool> trimmedAlive;
+        auto starta = alive.begin();
+        auto enda = alive.begin() + sMax;
+        trimmedAlive.assign(starta, enda);
+        
+        std::vector<string> trimmedTipNames;
+        auto startt = tipNames.begin();
+        auto endt = tipNames.begin() + sMax;
+        trimmedTipNames.assign(startt, endt);
+        
+        
+
+        // Find the last TRUE value in alive
+        // int lastAliveIndex = 0;
+        // for (size_t j = 0; j < alive.size(); j++) {
+        //     if (alive[j]) {
+        //         lastAliveIndex = j;
+        //     }
+        // }
+        // 
+        // // Create trimmed alive vector
+        // std::vector<bool> trimmedAlive;
+        // for (size_t j = 0; j <= lastAliveIndex && j < alive.size(); j++) {
+        //     trimmedAlive.push_back(alive[j]);
+        // }
+        // 
+        // // Trim tipNames - remove empty strings
+        // std::vector<string> trimmedTipNames;
+        // for (const auto& name : tipNames) {
+        //     if (!name.empty()) {
+        //         trimmedTipNames.push_back(name);
+        //     }
+        // }
+        // 
+        // // Update sMax to match the actual number of species (if needed)
+        // int trimmedSMax = lastAliveIndex + 1;
+        
+        // Now create the output lists with trimmed data
         List locs = List::create(Named("indSpecies") = localSpp,
                                  Named("indTrait") = wrap(localTrt));
         // should be more stuff in above ^
-
+        
         List meta = List::create(Named("spAbund") = metaAbund,
                                  Named("spTrait") = metaTrt);
-
+        
         List phylo = List::create(Named("n") = sMax,
-                                  Named("e") = wrap(edge),
-                                  Named("l") = wrap(edgeLength),
-                                  Named("tipNames") = wrap(tipNames),
-                                  Named("alive") = alive);
-
+                                  Named("e") = wrap(trimmedEdge),
+                                  Named("l") = wrap(trimmedEdgeLength),
+                                  Named("tipNames") = wrap(trimmedTipNames),
+                                  Named("alive") = trimmedAlive);
+        
         List out = List::create(Named("localComm") = locs,
                                 Named("metaComm") = meta,
                                 Named("phylo") = phylo);
-
+        
         return out;
+        
     }
 
     // process methods
@@ -375,15 +434,15 @@ public:
             
             // run the method to update the phylo
             // Rcout << "index of new sp is " << iparent << std::endl;
-            Rcout << "sMax = " << sMax << std::endl;
-            Rcout << "number of edges is " << edgeLength.size() << std::endl;
+            // Rcout << "sMax = " << sMax << std::endl;
+            // Rcout << "number of edges is " << edgeLength.size() << std::endl;
             
             // updatePhylo assumes R-style indexing starting at 1, so need
             // to add 1 to `iparent` which has C-style indexing starting at 0
             List newPhyInfo = updatePhylo(iparent + 1, sMax, scale, edge, 
                                           edgeLength, alive, tipNames);
             
-            Rcout << "got through `updatePhylo`" << std::endl;
+            // Rcout << "got through `updatePhylo`" << std::endl;
             
             
             
@@ -394,7 +453,7 @@ public:
             tipNames = as<std::vector<string>>(newPhyInfo["tipNames"]);
             alive = as<std::vector<bool>>(newPhyInfo["alive"]);
 
-            Rcout << "got through casting" << std::endl;
+            // Rcout << "got through casting" << std::endl;
             
             // update total number of spp
             sMax = newPhyInfo["sMax"];
@@ -406,7 +465,7 @@ public:
             rowvec newTrt = localTrt.row(i) +
                 randn<rowvec>(localTrt.n_cols) * sig; 
             // could re-scale lineage duration
-            Rcout << "got through `newTrt`" << std::endl;
+            // Rcout << "got through `newTrt`" << std::endl;
         }
     }
 
@@ -456,6 +515,7 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     localSpp_ = localSpp_ - 1;
     // edge_ // need to for phylo stuff????
     // edgeLength_
+    // Rcout << "edge mat from roleCommFromS4 \n" << edge_ << std::endl;
 
     // params
     // S4 params_ = x.slot("params");
@@ -528,9 +588,14 @@ S4 s4FromRcpp(List x) {
     phy.slot("n") = phyList["n"]; // might be sMax, not n
     
     phy.slot("e") = phyList["e"];
+    
+    NumericMatrix boo = phyList["e"];
+    
+    Rcout << "edge mat from s4FromRcpp \n" << boo << std::endl;
+    
     phy.slot("l") = phyList["l"];
     phy.slot("alive") = phyList["alive"];
-    phy.slot("tipNames") = "A"; // what to do? remove? or *make intentional?*
+    phy.slot("tipNames") = phyList["tipNames"];
     
     out.slot("phylo") = phy;
     
@@ -576,7 +641,7 @@ S4 testUpdatePhylo(S4 tre, int i, double scale) {
 // [[Rcpp::export]]
 List simRole(S4 x, S4 p) {
     // consider alternatives to clone????
-    x = clone(x);
+    // x = clone(x); // maybe we don't need clone at all; S4 &x is passing by ref
     roleComm wow = roleCommFromS4(x, p);
 
     // get params
@@ -592,9 +657,10 @@ List simRole(S4 x, S4 p) {
     List l(n);
 
     // record initial state
-    // do we want to output a list or the s4 `roleData` object?
-    // probably should output `roleData`
-    l[0] = clone(s4FromRcpp(wow.getData()));
+    Rcout << "first copy of init data" << std::endl;
+    List foo = wow.getData();
+    S4 doo = s4FromRcpp(foo);
+    l[0] = clone(doo);
 
     // main loop of sim---starts at 1 because we already recorded the
     // initial state
@@ -613,9 +679,13 @@ List simRole(S4 x, S4 p) {
 
         // every `niterTimestep`, record state
         if (i % niterTimestep == 0) {
+            Rcout << "edge info from loop i = " << i << std::endl;
+            
             k = i / niterTimestep;
             
-            l[k] = clone(s4FromRcpp(wow.getData()));
+            foo = wow.getData();
+            doo = s4FromRcpp(foo);
+            l[k] = clone(doo);
         }
     }
 
