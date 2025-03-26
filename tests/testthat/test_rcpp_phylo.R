@@ -9,7 +9,7 @@ test_that("rcpp trimming gives you back the same thing you give it", {
     tre0 <- as(m@modelSteps[[1]]@phylo, "phylo") 
     
     # initialized phylo but having gone through rcpp stuff
-    tre1 <- as(r@modelSteps[[6]]@phylo, "phylo") 
+    tre1 <- as(r@modelSteps[[1]]@phylo, "phylo") 
     
     expect_equivalent(tre0, tre1)
 })
@@ -30,7 +30,7 @@ iparent <- 1 # parent tip for speciation
 s <- 0.1 # scale of converting iterations to edge length
 
 # run update phylo and convert back to ape::phylo
-yrole <- roleR:::testUpdatePhylo(foo, iparent, s)
+yrole <- roleR:::testUpdatePhylo(xrole, iparent, s)
 y <- as(yrole, "phylo")
 
 
@@ -42,7 +42,7 @@ test_that("`updatePhylo` adds a new tip at the correct location", {
     iSis <- y$edge[y$edge[, 1] == iAnc, 2]
     
     # new sister should be `Ntip(x) + 1`
-    expect_equal(sort(itita), c(iparent, Ntip(x) + 1))
+    expect_equal(sort(iSis), c(iparent, Ntip(x) + 1))
 })
 
 # values that will be used in multiple subsequent tests
