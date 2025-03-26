@@ -29,7 +29,3 @@ simRole <- function(x, p) {
     .Call(`_roleR_simRole`, x, p)
 }
 
-wtf <- function(x) {
-    .Call(`_roleR_wtf`, x)
-}
-

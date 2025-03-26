@@ -26,10 +26,6 @@ mat compMatCalc(mat x, double sigC) {
             D(j, i) = D(i, j);
         }
     }
-
-    // Rcout << "initial comp mat calculation complete" << std::endl;
-    // Rcout << "min value is " << D.min() << std::endl;
-    // Rcout << "max value is " << D.max() << std::endl;
     
     return D;
 }
@@ -104,8 +100,6 @@ NumericVector getParamFun(S4 p, String s) {
 // maybe we don't need to return anything, maybe pointers would work?
 List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
                  std::vector<bool> alive, std::vector<std::string> tipNames) {
-
-    // Rcout << "edge mat from updatePhylo (before anything) \n" << edge << std::endl;
     // index of where unrealized edges in edge matrix start
     int eNew = 2 * sMax - 2;
     
@@ -133,8 +127,6 @@ List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
     // add one to internal nodes
     uvec internalNode = find(edge > sMax); 
     edge.elem(internalNode) += 1;
-    
-    // Rcout << "edge mat from updatePhylo (after internal node increment) \n" << edge << std::endl;
     
     // add new internal node
     int newNode = 2 * sMax + 1; // index of new node
@@ -175,8 +167,6 @@ List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
     
     // update sMax
     sMax++;
-
-    // Rcout << "edge mat from updatePhylo (at end) \n" << edge << std::endl;
     
     List out = List::create(Named("edge") = edge,
                             Named("edgeLength") = edgeLength,
@@ -276,13 +266,6 @@ public:
         imat trimmedEdge = edge.rows(validEdgeRows);
         vec trimmedEdgeLength = edgeLength.elem(validEdgeRows);
         
-        Rcout << "edge mat from .getData() \n" << trimmedEdge << std::endl;
-        // Keep only non-zero edge lengths
-        // uvec nonZeroLengths = find(trimmedEdgeLength != 0);
-        // if (nonZeroLengths.n_elem > 0) {
-        //     trimmedEdgeLength = trimmedEdgeLength.elem(nonZeroLengths);
-        // }
-        
         // use sMax to trim vectors relating to tips 
         std::vector<bool> trimmedAlive;
         auto starta = alive.begin();
@@ -294,34 +277,7 @@ public:
         auto endt = tipNames.begin() + sMax;
         trimmedTipNames.assign(startt, endt);
         
-        
-
-        // Find the last TRUE value in alive
-        // int lastAliveIndex = 0;
-        // for (size_t j = 0; j < alive.size(); j++) {
-        //     if (alive[j]) {
-        //         lastAliveIndex = j;
-        //     }
-        // }
-        // 
-        // // Create trimmed alive vector
-        // std::vector<bool> trimmedAlive;
-        // for (size_t j = 0; j <= lastAliveIndex && j < alive.size(); j++) {
-        //     trimmedAlive.push_back(alive[j]);
-        // }
-        // 
-        // // Trim tipNames - remove empty strings
-        // std::vector<string> trimmedTipNames;
-        // for (const auto& name : tipNames) {
-        //     if (!name.empty()) {
-        //         trimmedTipNames.push_back(name);
-        //     }
-        // }
-        // 
-        // // Update sMax to match the actual number of species (if needed)
-        // int trimmedSMax = lastAliveIndex + 1;
-        
-        // Now create the output lists with trimmed data
+        // create the output lists with trimmed data
         List locs = List::create(Named("indSpecies") = localSpp,
                                  Named("indTrait") = wrap(localTrt));
         // should be more stuff in above ^
@@ -423,28 +379,14 @@ public:
         if (r < specProb[step]) {
             // determine parent ID from individual ID
             int iparent = localSpp[i];
-            // update phylo
-            // Rcout << "iteration is " << step << std::endl;
-            // Rcout << "yes speciation; r = " << r << std::endl;
-            // Rcout << "specProb = " << specProb[step] << std::endl;
-            // Rcout << "specProb size is " << specProb.size() << std::endl;
             
             // scale factor converting iterations to generations
             double scale = 2 / localSpp.length();
-            
-            // run the method to update the phylo
-            // Rcout << "index of new sp is " << iparent << std::endl;
-            // Rcout << "sMax = " << sMax << std::endl;
-            // Rcout << "number of edges is " << edgeLength.size() << std::endl;
             
             // updatePhylo assumes R-style indexing starting at 1, so need
             // to add 1 to `iparent` which has C-style indexing starting at 0
             List newPhyInfo = updatePhylo(iparent + 1, sMax, scale, edge, 
                                           edgeLength, alive, tipNames);
-            
-            // Rcout << "got through `updatePhylo`" << std::endl;
-            
-            
             
             // not ideal that we have to cast these things with as<type>
             // *** consider updating
@@ -452,8 +394,6 @@ public:
             edgeLength = as<vec>(newPhyInfo["edgeLength"]);
             tipNames = as<std::vector<string>>(newPhyInfo["tipNames"]);
             alive = as<std::vector<bool>>(newPhyInfo["alive"]);
-
-            // Rcout << "got through casting" << std::endl;
             
             // update total number of spp
             sMax = newPhyInfo["sMax"];
@@ -465,7 +405,6 @@ public:
             rowvec newTrt = localTrt.row(i) +
                 randn<rowvec>(localTrt.n_cols) * sig; 
             // could re-scale lineage duration
-            // Rcout << "got through `newTrt`" << std::endl;
         }
     }
 
@@ -479,12 +418,9 @@ public:
             vec newComp = envDistCalc(localTrt, localTrt.row(i), sigC);
             compMat.col(i) = newComp;
             compMat.row(i) = newComp.t();
-
-            // Rcout << "dist calcs" << std::endl;
             
             // update env dist
             envDist.row(i) = envDistCalc(localTrt.row(i), envOptim, sigE);
-            // Rcout << "dist update" << std::endl;
         }
     }
 };
@@ -513,9 +449,6 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     
     // decrement species indeces (so they start at 0)
     localSpp_ = localSpp_ - 1;
-    // edge_ // need to for phylo stuff????
-    // edgeLength_
-    // Rcout << "edge mat from roleCommFromS4 \n" << edge_ << std::endl;
 
     // params
     // S4 params_ = x.slot("params");
@@ -558,7 +491,9 @@ S4 s4FromRcpp(List x) {
     S4 locs("localComm");
     List locList = x["localComm"];
     
-    locs.slot("indSpecies") = locList["indSpecies"];
+    // increment by 1 because we have been in cpp 0-based indexing up until now
+    IntegerVector rIndexIndSpp = locList["indSpecies"];
+    locs.slot("indSpecies") = rIndexIndSpp + 1;
     
     locs.slot("indTrait") = locList["indTrait"];
     locs.slot("indSeqs") = "A"; // what to do? make NULL?
@@ -585,14 +520,8 @@ S4 s4FromRcpp(List x) {
     S4 phy("rolePhylo");
     List phyList = x["phylo"];
     
-    phy.slot("n") = phyList["n"]; // might be sMax, not n
-    
+    phy.slot("n") = phyList["n"];
     phy.slot("e") = phyList["e"];
-    
-    NumericMatrix boo = phyList["e"];
-    
-    Rcout << "edge mat from s4FromRcpp \n" << boo << std::endl;
-    
     phy.slot("l") = phyList["l"];
     phy.slot("alive") = phyList["alive"];
     phy.slot("tipNames") = phyList["tipNames"];
@@ -606,15 +535,6 @@ S4 s4FromRcpp(List x) {
 // tester function wrapping the updatePhylo fun
 // [[Rcpp::export]]
 S4 testUpdatePhylo(S4 tre, int i, double scale) {
-    // *** don't need to make this list, could just pass right to `updatePhylo`
-    // List x = List::create(Named("edge") = tre["edge"], 
-    //                       Named("tipNames") = tre["tip.label"],
-    //                       Named("n") = tre["n"],
-    //                       Named("alive") = tre["alive"],
-    //                       Named("edgeLength") = tre["edge.length"],
-    //                       Named("tipNames") = tre["tip.label"]);
-    
-
     List newTre = updatePhylo(i, tre.slot("n"), scale, tre.slot("e"), 
                               tre.slot("l"), tre.slot("alive"), 
                               tre.slot("tipNames"));
@@ -657,10 +577,7 @@ List simRole(S4 x, S4 p) {
     List l(n);
 
     // record initial state
-    Rcout << "first copy of init data" << std::endl;
-    List foo = wow.getData();
-    S4 doo = s4FromRcpp(foo);
-    l[0] = clone(doo);
+    l[0] = clone(s4FromRcpp(wow.getData()));
 
     // main loop of sim---starts at 1 because we already recorded the
     // initial state
@@ -679,42 +596,11 @@ List simRole(S4 x, S4 p) {
 
         // every `niterTimestep`, record state
         if (i % niterTimestep == 0) {
-            Rcout << "edge info from loop i = " << i << std::endl;
-            
             k = i / niterTimestep;
             
-            foo = wow.getData();
-            doo = s4FromRcpp(foo);
-            l[k] = clone(doo);
+            l[k] = clone(s4FromRcpp(wow.getData()));
         }
     }
 
     return l;
-}
-
-
-
-void fun(double num) {
-    Rcpp::stop("Exception occured!");
-}
-
-
-double takeLog(double val) {
-    try {
-        fun(val);
-    } catch(std::exception &ex) {
-        // throw std::range_error("fuuuuuuuuck");
-        Rcout << "The value is \n" << val << std::endl;
-        return 10;
-        // forward_exception_to_r(ex);
-    } catch(...) { 
-        ::Rf_error("c++ exception (unknown reason)"); 
-    }
-    return NA_REAL;             // not reached
-}
-
-// [[Rcpp::export]]
-NumericVector wtf(NumericVector x) {
-    x = x - 1;
-    return x;
 }
