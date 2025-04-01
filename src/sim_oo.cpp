@@ -327,7 +327,11 @@ public:
             // non-neutral death probabilities
             // note: death due to env is captured by `1 - envDist` because
             //       the further you are from the optim, the worse your chances
-            probs = gamma * (1 - envDist) + (1 - gamma) * compD;
+            // note: delta controls how much neutral drift there is, even when
+            //       deterministic forces are in play
+            probs = delta + (1 - delta) * (
+                gamma * (1 - envDist) + (1 - gamma) * compD
+            );
 
             // sample index of dead individual
             idead = sample(localSpp.size(), 1, false, wrap(probs))[0] - 1;
