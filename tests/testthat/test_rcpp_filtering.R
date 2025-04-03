@@ -53,6 +53,12 @@ pFilter <- roleParams(niter = 1000,
                       neut_delta = 0.1, 
                       env_comp_delta = 1) # `env_comp_delta = 1` is full filt
 
+test_that("basic filtering model runs without error", {
+    expect_no_error(runRole(roleModel(pFilter)))
+})
+
+
+# save this for further tests
 m <- roleModel(pFilter) |> customizeMod()
 
 r <- runRole(m)
@@ -153,6 +159,14 @@ test_that("when there is trait evolution, populations move toward envOpt", {
     e <- 0 # hard coding the env optim, might cause breaking
     
     expect_gt(abs(ancTrt - e), abs(newTrt - e))
+})
+
+
+test_that("no error occurs when one sp have trait exactly = optim", {
+    # update basic filtering model so sp 2 is exactly at optim
+    m@modelSteps[[1]]@metaComm@spTrait[2, 1] <- 0
+    
+    expect_no_error(runRole(m))
 })
 
 ## behavior of wider sig is not what I thought, so leave this one alone for now
