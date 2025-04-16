@@ -44,15 +44,15 @@ setClass('localComm',
 
 localComm <- function(indSpecies, indTrait, indSeqs) { 
     
-    # create the species indexed vectors from individual index vectors and 
-    # initialize with NAs
-    nspp <- length(unique(indSpecies))
-    # spAbund <- as.vector(tabulate(indSpecies))
-    # spTrait <- as.vector(tapply(indTrait, indSpecies, mean))
+    # create the species indexed vectors from individual index vectors 
+    # and initialize with NA for missing data where appropriate
+    
     spAbundHarmMean <- as.vector(tabulate(indSpecies))
-    spLastOriginStep <- as.numeric(rep(NA, nspp))
-    # spExtinctionStep <- as.numeric(rep(NA, nspp))
-    spGenDiv <- as.numeric(rep(NA, nspp))
+    
+    spLastOriginStep <- numeric(length(spAbundHarmMean))
+    spLastOriginStep[spAbundHarmMean == 0] <- NA # if abund = 0 not there yet
+    
+    spGenDiv <- as.numeric(rep(NA, length(spAbundHarmMean)))
     
     return(new('localComm',
                indSpecies = indSpecies,
