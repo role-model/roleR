@@ -186,6 +186,9 @@ private:
     std::uniform_real_distribution<double> dist; // unif dist object
     IntegerVector localSpp; // passed
     mat localTrt; // passed
+    NumericVector harmMean; // passed
+    IntegerVector lastOriginStep; // passed
+    NumericVector invSum; // passed
     NumericVector metaAbund; // passed
     NumericMatrix metaTrt; // passed
     imat edge; // passed
@@ -197,8 +200,8 @@ private:
     double sigC; // from params.slot("sigC")
     double sigE; // from params.slot("sigE")
     double sig; // from params.slot("trait_sigma")
-    double delta; //
-    double gamma; //
+    double delta; // passed
+    double gamma; // passed
     NumericVector immProb; // from params.slot("imm")
     NumericVector specProb; // from params.slot("speciation_local")
     mat envOptim; // from params.slot("envOptim")
@@ -208,6 +211,9 @@ private:
 public:
     roleComm(IntegerVector localSpp_,
              mat localTrt_,
+             NumericVector harmMean_,
+             IntegerVector lastOriginStep_,
+             NumericVector invSum_,
              NumericVector metaAbund_,
              NumericMatrix metaTrt_,
              imat edge_,
@@ -220,10 +226,9 @@ public:
     dist(0, 1),
     localSpp(localSpp_),
     localTrt(localTrt_),
-    // locs.slot("spAbundHarmMean") = 1; // *** need to add to simulation
-    // locs.slot("spLastOriginStep") = 1; // *** need to add to simulation
-    // locs.slot("spExtinctionStep") = 1; // *** need to add to simulation
-    // locs.slot("equilibProp") = 1; // *** need to add to simulation
+    harmMean(harmMean_),
+    lastOriginStep(lastOriginStep_),
+    invSum(invSum_),
     metaAbund(metaAbund_),
     metaTrt(metaTrt_),
     edge(edge_),
@@ -374,6 +379,9 @@ public:
 
         // update traits
         localTrt.row(i) = newTrt;
+        
+        // update harmonic mean
+        // we need 
     }
 
     void speciation(int i, int step) {
@@ -437,6 +445,9 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     S4 locs = x.slot("localComm");
     IntegerVector localSpp_ = locs.slot("indSpecies");
     mat localTrt_ = as<mat>(locs.slot("indTrait"));
+    NumericVector harmMean_ = locs.slot("spAbundHarmMean");
+    IntegerVector lastOriginStep_ = locs.slot("spLastOriginStep");
+    NumericVector invSum_ = 1 / harmMean_; 
 
     // meta comm stuff
     S4 meta = x.slot("metaComm");
@@ -459,6 +470,9 @@ roleComm roleCommFromS4(S4 x, S4 p) {
 
     roleComm out = roleComm(localSpp_,
                             localTrt_,
+                            harmMean_, 
+                            lastOriginStep_, 
+                            invSum_,
                             metaAbund_,
                             metaTrt_,
                             edge_,
@@ -564,9 +578,10 @@ S4 testUpdatePhylo(S4 tre, int i, double scale) {
 // `p` is a `roleParams` object
 // [[Rcpp::export]]
 List simRole(S4 x, S4 p) {
+    NumericVector invSumsInit = 1.3; // initial sum of inverse abunds
     // consider alternatives to clone????
     // x = clone(x); // maybe we don't need clone at all; S4 &x is passing by ref
-    roleComm wow = roleCommFromS4(x, p);
+    roleComm wow = roleCommFromS4(x, p); // now need to pass `invSumsInit`
 
     // get params
     // S4 p = wow.getParams();
