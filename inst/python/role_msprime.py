@@ -1,7 +1,9 @@
 import msprime
+import tskit
 import newick
 import numpy as np
 import pandas as pd
+import pdb
 
 from collections import Counter, OrderedDict, defaultdict
 
@@ -24,7 +26,8 @@ def py_msprime_simulate(J_m,
     if verbose:
         print(INIT_MSG.format(J_m=J_m, J=J, curtime=curtime, metaTree=metaTree,
                             metaAbund=metaAbund, localAbundHmean=spAbundHarmMean, 
-                            localTDiv=localTDiv, alpha=alpha, sequence_length=sequence_length, mu=mu))
+                            localTDiv=localTDiv, alpha=alpha, 
+                            sequence_length=sequence_length, mu=mu))
 
     ## Sanity check
     if alpha <= 0:
@@ -53,9 +56,15 @@ def py_msprime_simulate(J_m,
         if verbose: print("local_sad Hmean - ", local_sad)
 
     ## Get tdiv in generations before present
-    ## Subtract localTDiv from curtime (current time in iterations) and divide by iterations per generation (J/2)
+    # Subtract localTDiv from curtime (current time in iterations) and divide 
+    # by iterations per generation (J/2)
     localTDiv = np.array(localTDiv)[lidx]
+    
+    print("localTDiv:", localTDiv)
+    
     tdiv = {x+1:(curtime-y)/(J/2) for x,y in zip(lidx, localTDiv)}
+    
+    print("Divergence times:", tdiv)
     
     ## Make dataframe from list of dictionaries where all keys are species IDs
     full_df = pd.DataFrame([local_sad, meta_sad, tdiv], index=["local_abund", "meta_abund", "tdiv"])
@@ -69,9 +78,13 @@ def py_msprime_simulate(J_m,
     if verbose: print(local_df)
     ## format the metacommunity abundances as a dictionary to pass in to msprime
     meta_Nes = (full_df.loc["meta_abund"]*alpha).to_dict()
-    ## Create a default dict so internal nodes have a default Ne. Arbitrarily set to 10,000.
-    ## TODO: What is a reasonable default Ne. This is necessary.
-    meta_Nes = defaultdict(lambda: 10000, meta_Nes)
+    ## Create a default dict so internal nodes have a default Ne. 
+    dNe = J / len(metaAbund) * alpha
+    meta_Nes = defaultdict(lambda: dNe, meta_Nes)
+    
+    
+    print("default Ne:", dNe)
+    
 
     ## Create msprime demography from newick tree
     ## TODO: generation_time is fixed to 1 here. This should be more flexible.    
@@ -88,8 +101,29 @@ def py_msprime_simulate(J_m,
         local_sp = f"{sp}_l"
         local_Ne = local_df[sp]["local_abund"]*alpha
         tdiv = local_df[sp]["tdiv"]
+        
+        ## debug:
+        # print(f"\nProcessing species {sp}")
+        # print(f"Split time: {tdiv}")
+        # print(f"Local Ne: {local_Ne}")
+        
         demography.add_population(name=meta_sp, initial_size=meta_Nes[sp])
         demography.add_population(name=local_sp, initial_size=local_Ne)
+        
+        
+        
+        ## debug:
+        # print("Current populations:")
+        # for pop in demography.populations:
+        #     print(f"Population {pop.name}: active={pop.initially_active}")
+        # 
+        # try:
+        #     demography.add_population_split(time=tdiv+0.1, derived=[meta_sp, local_sp], ancestral=sp)
+        # except Exception as e:
+        #     print(f"Error adding split for {sp}: {str(e)}")
+        #     raise
+        
+        
         demography.add_population_split(time=tdiv+0.1, derived=[meta_sp, local_sp], ancestral=sp)
         ## Strong colonization bottleneck after colonization
         ##demography.add_instantaneous_bottleneck(time=tdiv, strength=2*local_Ne, population=local_sp)
@@ -118,7 +152,10 @@ def py_msprime_simulate(J_m,
         if n.is_sample():
             nodeIDs[ts.population(n.population).metadata["name"]].append(n.id)
 
+    # print("new new new version")
+    
     ## Return all the simulated genotypes and some sumstats as a dataframe
+    refseq = tskit.random_nucleotides(ts.sequence_length, seed=seed)
     res = {}
     for popname, idxs in nodeIDs.items():
         ## Split off the _l so the pop name agrees with the names in roleModel localComm
@@ -126,6 +163,7 @@ def py_msprime_simulate(J_m,
         res[pname] = []
         res[pname].append(ts.diversity(sample_sets=idxs))
         res[pname].append(ts.Tajimas_D(sample_sets=idxs))
+        # res[pname].append(list(ts.alignments(samples=idxs, reference_sequence=refseq)))
         res[pname].append(list(ts.haplotypes(samples=idxs)))
     res_df = pd.DataFrame(res, index=["pi", "TajD", "gtypes"])
 
@@ -178,4 +216,3 @@ INIT_MSG = """
     sequence_length - {sequence_length}
     mu - {mu}
 """
-
