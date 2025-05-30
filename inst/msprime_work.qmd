@@ -1,0 +1,498 @@
+---
+title: "test"
+format: pdf
+---
+
+## RoLE model set-up
+
+```{r}
+#| cache: true
+
+
+library(roleR)
+library(ape)
+
+p <- roleParams(species_meta = 3, alpha = 10000, dispersal_prob = 0.1, 
+                niter = 1000000, niterTimestep = 500000)
+m <- roleModel(p)
+r <- runRole(m)
+
+finalPhylo <- r@modelSteps[[length(r@modelSteps)]]@phylo
+
+nspp <- finalPhylo@n
+
+tBySpp <- sapply(r@modelSteps, function(d) {
+    x <- tabulate(d@localComm@indSpecies)
+    n <- length(x)
+    x <- c(x, rep(0, nspp - n))
+}) |> t()
+
+
+# write stuff out ----
+f <- "inst/passingR2Py"
+
+# localAbund (but not spp indeces, actual abunds through time), 
+# for now let `spAbundHarmMean` by equal to abund
+# time info added
+cbind(r@info[, c("timestep", "generations")], tBySpp) |>
+    write.csv(file = paste(f, "time_sp-local.csv", sep = "/"), 
+              row.names = FALSE)
+
+
+# metaAbund
+round(r@modelSteps[[1]]@metaComm@spAbund * r@info$individuals_meta[1]) |>
+    matrix() |>
+    write.csv(file = paste(f, "metaAbund.csv", sep = "/"), 
+              row.names = FALSE)
+
+# localTDiv, need to make something arbitrary for now
+localTDiv <- matrix(c(0, NA, NA, 
+                      0, 8000, NA, 
+                      0, 8000, NA), 
+                    nrow = 3, byrow = TRUE)
+colnames(localTDiv) <- 1:nspp
+
+write.csv(localTDiv, file = paste(f, "tdiv.csv", sep = "/"), 
+          row.names = FALSE)
+
+# metaTree
+as(finalPhylo, "phylo") |>
+    write.tree(file = paste(f, "phy.nwk", sep = "/"))
+```
+
+
+## msprime 
+
+### set-up
+
+First import needed packages and define one neccesary custom function to force trees to be exactly ultrametric 
+
+```{python}
+#| label: py-setup
+
+import msprime
+import newick
+import numpy as np
+import pandas as pd
+from collections import Counter, defaultdict
+# from typing import List, Dict, Tuple, Optional, Union
+
+
+def _force_ultrametric(tree):
+    """
+    Force all leaf nodes to time 0
+    Input a newick tree in string format
+    Output is a modified newick tree with all leaves having equal total length
+    """
+    # Parse the newick tree string.
+    parsed = newick.loads(tree)
+    if len(parsed) == 0:
+        raise ValueError(f"Not a valid newick tree: '{tree}'")
+    root = parsed[0]
+
+    # Set node depths (distances from root).
+    stack = [(root, 0)]
+    max_depth = 0
+    while len(stack) > 0:
+        node, depth = stack.pop()
+        if depth > max_depth:
+            max_depth = depth
+        node.depth = depth
+        for child in node.descendants:
+            stack.append((child, depth + child.length))
+    for node in root.walk():
+        if node.is_leaf:
+            ## Add offset to node.length to foce all nodes to fall at time 0
+            ## The offset is the difference between the depth of this node
+            ## and the max_depth of the deepest leaf node.
+            node.length = node.length + (max_depth - node.depth)
+    return root.newick
+
+```
+
+
+Gather objects made in R:
+
+- a data.frame of time steps (including generations)
+- a data.frame with taxa as columns and rows as time steps showing abundance per time step
+- a data.frame of abundances in the metacommunity
+- a data.frame of divergence times
+- a phylogenetic tree
+- param `alpha`
+- param `m`
+- the current time (from forward perspective)
+- J, the local community size
+
+
+```{python}
+#| label: py-read
+
+fd = "inst/passingR2Py"
+
+# read in things from R
+time_sp = pd.read_csv(f"{fd}/time_sp-local.csv")
+meta_abund = pd.read_csv(f"{fd}/metaAbund.csv")
+tdiv = pd.read_csv(f"{fd}/tdiv.csv")
+
+# just a hack, the hand-made thing was wrong
+
+with open(f"{fd}/phy.nwk", "r") as file:
+    nwk = file.read()
+
+phylo_meta = _force_ultrametric(nwk)
+
+# set alpha and m here, but in final implementation, weʻll pass it in
+alpha = 10000
+m = 0.1 
+
+# calculating curtime, we could pass it in, or calculate
+curtime = time_sp["generations"].max()
+
+# could just pass J, also need to think about fluctuating J
+J = time_sp.drop(["timestep", "generations"], axis = 1).iloc[0].sum() 
+```
+
+Now reformat those objects into what we need for *msprime*
+
+```{python}
+#| label: py-convert
+
+# convert R inputs to python objects we need
+
+local_sad = time_sp.drop(["timestep", "generations"], axis = 1)
+
+meta_Nes = meta_abund["V1"].values.tolist()
+meta_Nes = {x+1:y*alpha for x,y in enumerate(meta_Nes)}
+
+# create a default dict so internal nodes have a default Ne
+Jm = meta_abund["V1"].sum() # size of metacomm, could pass in
+dNe = round(Jm / len(meta_Nes) * alpha)
+meta_Nes = defaultdict(lambda: dNe, meta_Nes)
+
+# proportional metacomm abundances
+meta_p = meta_abund["V1"].values / meta_abund["V1"].sum()
+meta_p = meta_p.tolist()
+meta_p = {f"{x+1}":y for x,y in enumerate(meta_p)}
+
+
+local_sad_ts = local_sad.to_dict("records")
+
+# objects relating to harmonic mean
+local_hm_ts = local_sad_ts # for now making harmonic mean = abundance
+local_p_ts = (local_sad / J).to_dict("records") # "p" is harm mean of rel abund
+
+
+gens = time_sp["generations"].to_list()
+
+
+# NOTE: tdiv and other time objects **must** be sorted from ancient to current
+local_tdiv_ts = tdiv.to_dict("records")
+```
+
+
+### Construct the demography model
+
+A special note on migration rate: the [msprime definitions section](https://tskit.dev/msprime/docs/stable/demography.html#definitions) gives the following definition for migration rate
+
+> Continuous migration between populations is modeled by a $d \times d$ matrix $M$ of per-generation migration rates. The $(j, k)^{th}$ entry of $M$ is the expected number of migrants moving [*in forward time*] from population $k$ to population $j$ per generation, divided by the size of population $j$. In terms of the coalescent process, $M_{j, k}$ gives the rate at which an ancestral lineage moves [*backward in time*] from population $k$ to population $j$, as one follows it back through time.
+
+
+Let's break this down for our model.  First, the metacommunity population is $k$, the local population is $j$, so we are after $M_{local, meta}$.
+
+Expected number of migrants per *time step* for species $i$ is $m p^{(i)}_{meta}$ where $m$ is overall migration probability and $p^{(i)}_{meta}$ is the *relative* abundance of species $k$ in the metacommunity. To get migrants per generation we multiple by number of time steps per generation ($J/2$): $m p^{(i)}_{meta} J/2$. The size of the local population fluctuates, so let's assume we'll use the harmonic mean abundance $h^{(i)}_{local}$. We also need to account for the scaling factor $\alpha$ which scales sampled abundance to population size, so population size is $\alpha h^{(i)}_{local}$. Putting it all together:
+
+$$
+M_{local, meta}^{(i)} = \frac{m p^{(i)}_{meta} J}{2 \alpha h^{(i)}_{local}}
+$$
+
+We might want to allow $J$ to vary. For that to happen, the easiest way would be to define $\eta^{(i)}_{local} = H(N^{(i)}_{local} / J)$ which is the harmonic mean of the local *proportional* abundance of species $i$ and is something we can keep track of forward in time.  Then we say
+
+\begin{align}
+M_{local, meta}^{(i)} &= \frac{m p^{(i)}_{meta} J}{2 \alpha \eta^{(i)}_{local} J} \\
+&= \frac{m p^{(i)}_{meta}}{2 \alpha \eta^{(i)}_{local}}
+\end{align}
+
+
+
+```{python}
+#| label: py-demography
+#| eval: true
+
+# create msprime demography from newick tree
+demography = msprime.Demography.from_species_tree(
+    phylo_meta,
+    initial_size = meta_Nes,
+    time_units = "myr",
+    generation_time = 1
+)
+
+
+print(demography.debug())
+
+# update msprime demography with local populations budding off from their
+# metacommunity parental populations and create a list of sample sets that 
+# determine when observations are made
+
+sampset = [] # empty list to hold sample sets
+
+for sp in meta_p.keys():
+    # we track the ancestral population with `this_anc` which will update
+    # after each addition of a local population
+    this_anc = f"t{sp}" # hard coding `t` will not work with specaition !!!!!!!!!!!!!!!!!!!!
+    
+    # object to track current local and meta pops (only initializing here)
+    this_loc = f"l_0_{sp}"
+    this_meta = f"m_0_{sp}"
+    
+    for t in range(len(local_sad_ts)):
+        # `t` is the *index* for snapshots
+        
+        # extract abundance for this sp in this t
+        this_abund = local_sad_ts[t][sp]
+        
+        # only bother with adding to demography if non-0 abundance
+        if this_abund > 0: 
+            
+            # tags to note _m_eta/_l_ocal and _t_ime
+            meta_sp = f"m_{t}_{sp}" 
+            local_sp = f"l_{t}_{sp}"
+                
+            # set value of `add_yn` (determine if adding populations) based on 
+            # whether t == 0 (always add in initial time step for non-0 abund)
+            add_yn = True if t == 0 else False
+            
+            # if t!= 0, determine if we still add a new pop for this lineage
+            if (not add_yn) and local_tdiv_ts[t][sp] != local_tdiv_ts[t-1][sp]:
+                add_yn = True
+            
+            if add_yn:
+                # track the pops with `this_loc` and `this_meta` which will 
+                # update at each addition of a local comm population; we have  
+                # to track separately because we might need to take a sample
+                # of this same pop across multiple snapshots
+                this_loc = local_sp
+                this_meta = meta_sp
+                
+                # needed info for adding pops
+                local_Ne = local_hm_ts[t][sp] * alpha # harmonic mean = Ne
+                split_time = curtime - local_tdiv_ts[t][sp] # backward time
+                
+                demography.add_population(
+                    name = this_meta, 
+                    initial_size = meta_Nes[sp]
+                )
+                
+                demography.add_population(
+                    name = this_loc, 
+                    initial_size = local_Ne
+                )
+                
+                # when adding a pop need to make sure the ancestral pop is the 
+                # previous metacomm pop, this may not be the same as `sp` so we
+                # use `this_anc` which initializes as `sp` but then updates
+                demography.add_population_split(
+                    time = split_time, 
+                    derived = [this_meta, this_loc], 
+                    ancestral = this_anc # note we use `this_anc`
+                )
+                
+                # strong colonization bottleneck cause only one individual at 
+                # time of colonization
+                demography.add_simple_bottleneck(
+                    time = split_time, 
+                    population = this_loc, 
+                    proportion = 1
+                )
+                
+                # add migration 
+                # source is local pop, dest is meta pop (cause backward time)
+                # rate = \frac{m p^{(i)}_{meta}}{2 \alpha \eta^{(i)}_{local}}
+                demography.set_migration_rate(
+                    source = this_loc, 
+                    dest = this_meta, 
+                    rate = m * meta_p[sp] / (2 * alpha * local_p_ts[t][sp])
+                )
+                 
+                # only now update `this_anc`
+                this_anc = this_meta
+            
+            else: 
+                # if weʻre not adding a lineage, but abund is non-zero, we still 
+                # need to update population size and migration rate
+                
+                demography.add_population_parameters_change(
+                    time = curtime - gens[t],
+                    population = this_loc, 
+                    initial_size = local_hm_ts[t][sp] * alpha
+                )
+                
+                demography.add_migration_rate_change(
+                    time = curtime - gens[t],
+                    source = this_loc, 
+                    dest = this_meta, 
+                    rate = m * meta_p[sp] / (2 * alpha * local_p_ts[t][sp])
+                )
+            
+            
+            # create sample set for this sp in this time step whether or not
+            # we are adding a new lineage 
+            # if we add a new lineage, `this_loc` will reflect current timestep
+            # if we donʻt add new, `this_loc` will reflect last timestep where
+            # we did add a lineage
+            
+            if gens[t] == 0:
+                samp_time = curtime - 1
+            else:
+                samp_time = curtime - gens[t] # because backward time
+            
+            this_samp = msprime.SampleSet(
+                this_abund, 
+                population = this_loc, 
+                time = samp_time
+            )
+                
+            sampset.append(this_samp)
+        
+
+
+
+
+# make sure demographic events are in proper ascending order 
+# (backward in time)
+demography.sort_events()
+
+```
+
+### Simulating ancestry and mutations
+
+Now we can simulate ancestry
+
+```{python}
+# simulate ancestry with specific sampling times
+ts = msprime.sim_ancestry(
+    samples = sampset, 
+    demography = demography, 
+    ploidy = 1, 
+    sequence_length = 200 # seq len will be passed
+)
+
+foo = ts.draw_svg()
+
+with open("tree.svg", "w") as f:
+    f.write(foo)
+
+```
+
+Example of how to sample different points in history of ts object
+
+```{python}
+#| label: py-samp-eg
+#| eval: false
+
+# setup demography
+demography = msprime.Demography()
+demography.add_population(name = "A", initial_size = 10_000)
+demography.add_population(name = "B", initial_size = 5_000)
+demography.add_population(name = "C", initial_size = 1_000)
+demography.add_population_split(
+    time = 1000, 
+    derived = ["A", "B"], 
+    ancestral = "C"
+)
+
+# simulate ancestry with specific sampling times
+# the idea is we could make the `SampleSet`s programmatically 
+foo = msprime.sim_ancestry(
+    samples = [
+        msprime.SampleSet(5, population = "A", time = 500), 
+        msprime.SampleSet(5, population = "A", time = 0), 
+        msprime.SampleSet(5, population = "B", time = 500), 
+        msprime.SampleSet(5, population = "B", time = 0), 
+    ], 
+    demography = demography, 
+    ploidy = 1, 
+    sequence_length = 200
+)
+
+
+# simulate mutations
+mts = msprime.sim_mutations(foo, rate = 0.0001)
+
+
+# node table with all info
+boo = mts.tables.nodes
+
+# pandas dataframe of needed info for sample nodes only
+df = pd.DataFrame({
+    "ids": boo.individual, 
+    "pops": boo.population, 
+    "time": boo.time})
+df = df[df["ids"] > -1] # NOTE!!! this only works if `ploidy = 1`
+
+# summarize dataframe so column of ids is actual a column of lists
+df = df.groupby(['time', 'pops'])['ids'].apply(list).reset_index()
+
+# get diversities for each pop in each time
+mts.diversity(df["ids"].tolist())
+```
+
+
+Figuring out how to add multiple local pops budding off one meta pop. Key insight is that need to add oldest pops first and have ancestor of more recent splits be metacomm population of previous split
+
+```{python}
+#| label: py-local-pops
+#| eval: false
+
+# setup demography
+demography = msprime.Demography()
+demography.add_population(name = "local_ancient", initial_size = 5000)
+demography.add_population(name = "meta_ancient", initial_size = 50000)
+demography.add_population(name = "anc", initial_size = 50000)
+
+demography.add_population_split(
+    time = 80000, 
+    derived = ["local_ancient", "meta_ancient"], 
+    ancestral = "anc"
+)
+
+demography.add_simple_bottleneck(
+    time = 80000, 
+    population = "local_ancient", 
+    proportion = 1
+)
+
+demography.add_population(name = "local_recent", initial_size = 5000)
+demography.add_population(name = "meta_recent", initial_size = 50000)
+
+demography.add_population_split(
+    time = 5000, 
+    derived = ["local_recent", "meta_recent"], 
+    ancestral = "meta_ancient"
+)
+
+demography.add_simple_bottleneck(
+    time = 5000, 
+    population = "local_recent", 
+    proportion = 1
+)
+
+demography.sort_events()
+
+foo = msprime.sim_ancestry(
+    samples = [
+        msprime.SampleSet(1, population = "local_recent", time = 0), 
+        msprime.SampleSet(2, population = "meta_recent", time = 0), 
+        msprime.SampleSet(1, population = "local_ancient", time = 5000), 
+        msprime.SampleSet(2, population = "meta_ancient", time = 5000), 
+    ], 
+    demography = demography, 
+    ploidy = 1, 
+    sequence_length = 200
+)
+
+print(foo.draw_text())
+```
+
+
+
+
