@@ -144,6 +144,8 @@ with open("tree.svg", "w") as f:
 ```{r}
 rsvg::rsvg_png("tree.svg", "tree.png", width = 800, height = 1200)
 knitr::include_graphics("tree.png")
+
+file.remove(c("tree.svg", "tree.png"))
 ```
 
 Here is the mapping of IDs to population names
@@ -178,7 +180,8 @@ First we make a simple RoLE model simulation
 library(roleR)
 library(ape)
 
-p <- roleParams(species_meta = 3, alpha = 10000, dispersal_prob = 0.1, 
+p <- roleParams(species_meta = 3, dispersal_prob = 0.1,
+                alpha = 10000,  mutation_rate = 0.00001, 
                 niter = 1000000, niterTimestep = 500000)
 m <- roleModel(p)
 r <- runRole(m)
@@ -294,8 +297,8 @@ phylo_meta = _force_ultrametric(nwk)
 
 
 # set alpha and m here, but in final implementation, weʻll pass it in
-alpha = 10000
-m = 0.1 
+alpha = r.slot(r.p, "alpha")(1)
+m = r.slot(r.p, "dispersal_prob")(1)
 
 # calculating curtime, we could pass it in, or calculate
 curtime = time_sp["generations"].max()
@@ -529,7 +532,8 @@ ts = msprime.sim_ancestry(
 )
 
 # simulate mutations
-mts = msprime.sim_mutations(ts, rate = 0.0001) # rate will be passed from R
+mu = r.slot(r.p, "mutation_rate")
+mts = msprime.sim_mutations(ts, rate = mu) # rate will be passed from R
 ```
 
 ## Compile the data we need
@@ -581,6 +585,18 @@ df_spp["tajimas_D"] = mts.Tajimas_D(df_spp["ids"].tolist())
 df_ind
 df_spp
 ```
+
+```{python}
+#| eval: false
+
+#       time sp_id  ...        pi  tajimas_D
+# 0      0.0     1  ...  0.741601   0.950599
+# 1  10000.0     1  ...  0.738855   0.911413
+# 2  10000.0     2  ...  0.756667       -inf
+# 3  20000.0     1  ...  0.732454   0.881755
+# 4  20000.0     2  ...  0.060000        NaN
+```
+
 
 ## Handing off to R
 
@@ -725,7 +741,19 @@ s <- .runmsprime(Jm = sum(meta_abund),
                  mu = r@params@mutation_rate, 
                  seed = NA)
 
+s[[2]]
+
 ```
 
+```{r}
+#| eval: false
+
+#    time sp_id        pi tajimas_D
+# 1     0     1 0.7417786 0.9553685
+# 2 10000     1 0.7408935 0.9269136
+# 3 10000     2 0.7360000      -Inf
+# 4 20000     1 0.7310911 0.8771868
+# 5 20000     2 0.7500000       NaN
+```
 
 
