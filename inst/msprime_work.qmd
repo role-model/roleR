@@ -1,5 +1,5 @@
 ---
-title: "test"
+title: "Figuring out msprime"
 format: pdf
 ---
 
@@ -225,7 +225,7 @@ nwk <- as(finalPhylo, "phylo") |> write.tree(digits = 18)
 
 ## msprime set-up
 
-First import needed packages and define one neccesary custom function to force trees to be exactly ultrametric 
+First import needed packages and define one necessary custom function to force trees to be exactly ultrametric 
 
 ```{python}
 #| label: py-setup
@@ -236,7 +236,6 @@ import numpy as np
 import pandas as pd
 from collections import Counter, defaultdict
 import tskit
-
 
 def _force_ultrametric(tree):
     """
