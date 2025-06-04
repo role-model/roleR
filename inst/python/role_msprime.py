@@ -3,7 +3,7 @@ import tskit
 import newick
 import numpy as np
 import pandas as pd
-from collections import Counter, defaultdict
+from collections import defaultdict
 
 
 def _force_ultrametric(tree):
