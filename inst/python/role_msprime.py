@@ -1,4 +1,5 @@
 import msprime
+import tskit
 import newick
 import numpy as np
 import pandas as pd
@@ -37,7 +38,7 @@ def _force_ultrametric(tree):
 
 
 
-def sim_role(J_m, 
+def sim_role(Jm, 
              curtime, 
              nwk, 
              meta_abund, 
@@ -47,6 +48,7 @@ def sim_role(J_m,
              gens, 
              tdiv, 
              alpha, 
+             m, 
              sequence_length, 
              mu, 
              seed = None):
@@ -54,7 +56,7 @@ def sim_role(J_m,
     Simulate population genetics based on the ROLE model framework.
     
     Args:
-        J_m: Meta community size (int)
+        Jm: Meta community size (int)
         curtime: Current time in iterations (double)
         nwk: Newick tree string 
         meta_abund: Meta community abundances (list)
@@ -63,6 +65,7 @@ def sim_role(J_m,
         local_p: Local community harmonic mean prop abund (numpy array)
         tdiv: Colonization times for local populations (numpy array)
         alpha: Scaling factor for converting abundance to Ne (>= 1)
+        m: migration rate
         sequence_length: Length of the genomic region to simulate
         mu: Mutation rate per base
         seed: Random seed for reproducibility
