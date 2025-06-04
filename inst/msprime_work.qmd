@@ -200,7 +200,6 @@ tBySpp <- sapply(r@modelSteps, function(d) {
 # time info added
 time_sp <- cbind(r@info[, c("timestep", "generations")], tBySpp) 
 
-
 # metaAbund
 meta_abund <- round(r@modelSteps[[1]]@metaComm@spAbund * 
                         r@info$individuals_meta[1])
@@ -648,3 +647,85 @@ for(i in 1:length(r@modelSteps)) {
 }
 
 ```
+
+## Calling a python module
+
+I put all this work into a python function `sim_role`, now letʻs figure out how to call it from R
+
+
+```{r}
+# r function to source and run python moduel
+
+.runmsprime <- function(Jm, 
+                        curtime, 
+                        nwk, 
+                        meta_abund, 
+                        local_sad, 
+                        local_hm,  
+                        local_p, 
+                        gens, 
+                        tdiv, 
+                        alpha, 
+                        m, 
+                        sequence_length, 
+                        mu, 
+                        seed = NA) {
+    # path to the Python file
+    pyfi <- system.file("Python", "role_msprime.py", 
+                        package = "roleR")
+    
+    reticulate::source_python(pyfi)
+    
+    res <- sim_role(Jm = Jm, 
+                    curtime = curtime, 
+                    nwk = nwk, 
+                    meta_abund = meta_abund, 
+                    local_sad = local_sad, 
+                    local_hm = local_hm,  
+                    local_p = local_p, 
+                    gens = gens, 
+                    tdiv = tdiv, 
+                    alpha = alpha, 
+                    m = m, 
+                    sequence_length = sequence_length, 
+                    mu = mu, 
+                    seed = seed)
+    
+    return(reticulate::py_to_r(res))
+    
+}
+
+```
+
+
+Now we can prep the R objects needed for `.runmsprime` and try out the function
+
+```{r}
+# things we already made long ago
+# local_sad = tBySpp
+# nwk = nwk
+# tdiv = tdiv
+# meta_abund = meta_abund
+
+# need to modify `tBySpp` to be a data.frame and have column names
+tBySpp <- as.data.frame(tBySpp)
+names(tBySpp) <- as.character(1:ncol(tBySpp))
+
+s <- .runmsprime(Jm = sum(meta_abund), 
+                 curtime = max(r@info$generations), 
+                 nwk = nwk, 
+                 meta_abund = meta_abund, 
+                 local_sad = tBySpp, 
+                 local_hm = tBySpp, 
+                 local_p = tBySpp / sum(tBySpp[1, ]), 
+                 gens = r@info$generations, tdiv = tdiv, 
+                 alpha = r@params@alpha(1), 
+                 m = r@params@dispersal_prob(1), 
+                 sequence_length = r@params@num_basepairs, 
+                 mu = r@params@mutation_rate, 
+                 seed = NA)
+
+```
+
+
+
