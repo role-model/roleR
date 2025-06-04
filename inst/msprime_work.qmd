@@ -390,7 +390,8 @@ sampset = [] # empty list to hold sample sets
 for sp in meta_p.keys():
     # we track the ancestral population with `this_anc` which will update
     # after each addition of a local population
-    this_anc = f"t{sp}" # hard coding `t` will not work with specaition !!!!!!!!!!!!!!!!!!!!
+    this_anc = f"t{sp}" # hard coding `t` will not work with specaition
+    # but we could pass a phylo that has all "t" prefixes
     
     # object to track current local and meta pops (only initializing here)
     this_loc = f"l_0_{sp}"
@@ -586,17 +587,6 @@ df_ind
 df_spp
 ```
 
-```{python}
-#| eval: false
-
-#       time sp_id  ...        pi  tajimas_D
-# 0      0.0     1  ...  0.741601   0.950599
-# 1  10000.0     1  ...  0.738855   0.911413
-# 2  10000.0     2  ...  0.756667       -inf
-# 3  20000.0     1  ...  0.732454   0.881755
-# 4  20000.0     2  ...  0.060000        NaN
-```
-
 
 ## Handing off to R
 
@@ -719,13 +709,20 @@ Now we can prep the R objects needed for `.runmsprime` and try out the function
 ```{r}
 # things we already made long ago
 # local_sad = tBySpp
-# nwk = nwk
 # tdiv = tdiv
 # meta_abund = meta_abund
 
 # need to modify `tBySpp` to be a data.frame and have column names
 tBySpp <- as.data.frame(tBySpp)
 names(tBySpp) <- as.character(1:ncol(tBySpp))
+
+# need to modify tree to have tip labels corresponding to spp numeric IDs
+# but preceded by a character cause msprime canʻt make populations with number
+# names
+tre <- as(finalPhylo, "phylo")
+tre$tip.label <- paste0("t", 1:Ntip(tre))
+nwk <- write.tree(tre, digits = 18)
+
 
 s <- .runmsprime(Jm = sum(meta_abund), 
                  curtime = max(r@info$generations), 
@@ -744,16 +741,4 @@ s <- .runmsprime(Jm = sum(meta_abund),
 s[[2]]
 
 ```
-
-```{r}
-#| eval: false
-
-#    time sp_id        pi tajimas_D
-# 1     0     1 0.7417786 0.9553685
-# 2 10000     1 0.7408935 0.9269136
-# 3 10000     2 0.7360000      -Inf
-# 4 20000     1 0.7310911 0.8771868
-# 5 20000     2 0.7500000       NaN
-```
-
 
