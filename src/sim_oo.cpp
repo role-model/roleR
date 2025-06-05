@@ -481,7 +481,7 @@ public:
         // }
         
         // record number of generations
-        gens += 2 / target_size;
+        gens += 2.0 / target_size;
     }
 };
 
