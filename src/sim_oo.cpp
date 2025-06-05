@@ -461,24 +461,24 @@ public:
     
     
     void updateJ(int step) {
-        // change size of local comm if neccesary 
+        // change size of local comm if necessary 
         int target_size = J[step];
-        int current_size = localSpp.size();
-
-        if (target_size > current_size) { // increasing local comm
-            for (int fill = current_size; fill < target_size; fill++) {
-                localSpp.push_back(0); // add empty element
-                birthImm(fill, step); // fill with birthImm
-                
-                // always run `speciation` after `birthImm`
-                speciation(fill, step); 
-            }
-        } else if (target_size < current_size) { // decreasing local comm
-            for (int rm = 0; rm < (current_size - target_size); rm++) {
-                int death_idx = death(step);
-                localSpp.erase(localSpp.begin() + death_idx);
-            }
-        }
+        // int current_size = localSpp.size();
+        // 
+        // if (target_size > current_size) { // increasing local comm
+        //     for (int fill = current_size; fill < target_size; fill++) {
+        //         localSpp.push_back(0); // add empty element
+        //         birthImm(fill, step); // fill with birthImm
+        //         
+        //         // always run `speciation` after `birthImm`
+        //         speciation(fill, step); 
+        //     }
+        // } else if (target_size < current_size) { // decreasing local comm
+        //     for (int rm = 0; rm < (current_size - target_size); rm++) {
+        //         int death_idx = death(step);
+        //         localSpp.erase(localSpp.begin() + death_idx);
+        //     }
+        // }
         
         // record number of generations
         gens += 2 / target_size;
