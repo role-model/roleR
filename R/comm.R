@@ -4,6 +4,7 @@
 #' @slot indSpecies a numeric vector of the species IDs for each individual
 #' @slot indTrait a numeric vector of the trait values for each individual
 #' @slot indSeqs a character vector of the gene sequences for each individual
+#' @slot spAbund a numeric vector of abundances for each species 
 #' @slot spGenDiv a numeric vector of the genetic diversities for each species
 #' @slot spTajD a numeric vector of the Tajima D stat for each species
 #' @slot spAbundHarmMean numeric vector of the harmonic mean of species 
@@ -25,6 +26,7 @@ setClass('localComm',
          slots = c(indSpecies = 'numeric',
                    indTrait = 'matrix', 
                    indSeqs = 'character',
+                   spAbund = 'numeric',
                    spGenDiv = 'numeric',
                    spTajD = 'numeric',
                    spAbundHarmMean = 'numeric',
@@ -47,7 +49,7 @@ localComm <- function(indSpecies, indTrait, indSeqs) {
     # create the species indexed vectors from individual index vectors 
     # and initialize with NA for missing data where appropriate
     
-    spAbundHarmMean <- as.vector(tabulate(indSpecies))
+    spAbundHarmMean <- spAbund <- as.vector(tabulate(indSpecies))
     spPropHarmMean <- spAbundHarmMean / length(indSpecies)
     
     spLastOriginStep <- numeric(length(spAbundHarmMean))
@@ -59,6 +61,7 @@ localComm <- function(indSpecies, indTrait, indSeqs) {
                indSpecies = indSpecies,
                indTrait = indTrait,
                indSeqs = indSeqs,
+               spAbund = spAbund,
                spGenDiv = spGenDiv,
                spTajD = spTajD,
                spAbundHarmMean = spAbundHarmMean,
