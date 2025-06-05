@@ -96,6 +96,7 @@ NumericVector getParamFun(S4 p, String s) {
     return x;
 }
 
+
 // function to update phylo objects
 // maybe we don't need to return anything, maybe pointers would work?
 List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
@@ -187,6 +188,7 @@ private:
     IntegerVector localSpp; // passed
     mat localTrt; // passed
     NumericVector harmMean; // passed
+    NumericVector pHarmMean; // passed
     IntegerVector lastOriginStep; // passed
     NumericVector invSum; // passed
     NumericVector metaAbund; // passed
@@ -204,14 +206,17 @@ private:
     double gamma; // passed
     NumericVector immProb; // from params.slot("imm")
     NumericVector specProb; // from params.slot("speciation_local")
+    NumericVector J; // from params.slot("individuals_local")
     mat envOptim; // from params.slot("envOptim")
     mat compMat; // from localTrt_ and sigC
     vec envDist; // from localTrt_ and sigE
+    double gens; // passed
 
 public:
     roleComm(IntegerVector localSpp_,
              mat localTrt_,
              NumericVector harmMean_,
+             NumericVector pHarmMean_,
              IntegerVector lastOriginStep_,
              NumericVector invSum_,
              NumericVector metaAbund_,
@@ -221,12 +226,14 @@ public:
              std::vector<string> tipNames_,
              std::vector<bool> alive_,
              int sMax_,
+             double gens_,
              S4 params_) :
     rng(std::mt19937(std::random_device{}())),
     dist(0, 1),
     localSpp(localSpp_),
     localTrt(localTrt_),
     harmMean(harmMean_),
+    pHarmMean(pHarmMean_),
     lastOriginStep(lastOriginStep_),
     invSum(invSum_),
     metaAbund(metaAbund_),
@@ -244,9 +251,11 @@ public:
     gamma(getParamDouble(params_, "env_comp_delta")),
     immProb(getParamFun(params_, "dispersal_prob")),
     specProb(getParamFun(params_, "speciation_local")),
+    J(getParamFun(params_, "individuals_local")),
     envOptim(getEnvOptim(params_)),
     compMat(compMatCalc(localTrt_, sigC)),
-    envDist(envDistCalc(localTrt_, envOptim, sigE)) {}
+    envDist(envDistCalc(localTrt_, envOptim, sigE)), 
+    gens(gens_) {}
 
     // `get` methods
     List getLocal() {
@@ -284,7 +293,11 @@ public:
         
         // create the output lists with trimmed data
         List locs = List::create(Named("indSpecies") = localSpp,
-                                 Named("indTrait") = wrap(localTrt));
+                                 Named("indTrait") = wrap(localTrt), 
+                                 Named("harmMean") = harmMean, 
+                                 Named("pHarmMean") = pHarmMean, 
+                                 Named("lastOriginStep") = lastOriginStep, 
+                                 Named("gens") = gens);
         // should be more stuff in above ^
         
         List meta = List::create(Named("spAbund") = metaAbund,
@@ -305,13 +318,13 @@ public:
     }
 
     // process methods
-    int death() {
+    int death(int step) {
         // index of the dead individual
         int idead;
 
         if (delta == 1) {
             // fully neutral
-            idead = sample(localSpp.size(), 1)[0] - 1;
+            idead = sample(J[step], 1)[0] - 1;
         } else {
             // set up vectors to hold death probs
             vec compD;
@@ -339,7 +352,7 @@ public:
             );
 
             // sample index of dead individual
-            idead = sample(localSpp.size(), 1, false, wrap(probs))[0] - 1;
+            idead = sample(J[step], 1, false, wrap(probs))[0] - 1;
         }
 
         return idead;
@@ -355,7 +368,7 @@ public:
 
         // row vec to hold new trait, initialized with random noise
         rowvec newTrt = randn<rowvec>(localTrt.n_cols) * sig *
-            2 / localSpp.size(); // re-scale by generation time
+            2 / J[step]; // re-scale by generation time
 
         if (r < immProb[step]) { // immigration
             // sample the spp ID of the immigrating individual
@@ -363,9 +376,18 @@ public:
 
             // update traits from meta comm
             newTrt += metaTrt.row(inew);
+            
+            // update last origin
+            // check if already present
+            bool newImm = std::find(localSpp.begin(), 
+                                    localSpp.end(), 
+                                    inew) == localSpp.end();
+            if (newImm) { // if not present, update orig time
+                lastOriginStep[inew] = step;
+            }
         } else { // local birth
             // sample the individual that gives birth
-            iborn = sample(localSpp.size(), 1)[0] - 1;
+            iborn = sample(J[step], 1)[0] - 1;
             
             // update traits from local comm
             newTrt += localTrt.row(iborn);
@@ -381,7 +403,7 @@ public:
         localTrt.row(i) = newTrt;
         
         // update harmonic mean
-        // we need 
+        
     }
 
     void speciation(int i, int step) {
@@ -420,6 +442,7 @@ public:
         }
     }
 
+    // book-keeping methods
     void updateDist(int i) {
         // only need to update distances if we're in a non-neutral sim
         if (delta < 1) {
@@ -435,6 +458,31 @@ public:
             envDist.row(i) = envDistCalc(localTrt.row(i), envOptim, sigE);
         }
     }
+    
+    
+    void updateJ(int step) {
+        // change size of local comm if neccesary 
+        int target_size = J[step];
+        int current_size = localSpp.size();
+
+        if (target_size > current_size) { // increasing local comm
+            for (int fill = current_size; fill < target_size; fill++) {
+                localSpp.push_back(0); // add empty element
+                birthImm(fill, step); // fill with birthImm
+                
+                // always run `speciation` after `birthImm`
+                speciation(fill, step); 
+            }
+        } else if (target_size < current_size) { // decreasing local comm
+            for (int rm = 0; rm < (current_size - target_size); rm++) {
+                int death_idx = death(step);
+                localSpp.erase(localSpp.begin() + death_idx);
+            }
+        }
+        
+        // record number of generations
+        gens += 2 / target_size;
+    }
 };
 
 
@@ -446,8 +494,10 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     IntegerVector localSpp_ = locs.slot("indSpecies");
     mat localTrt_ = as<mat>(locs.slot("indTrait"));
     NumericVector harmMean_ = locs.slot("spAbundHarmMean");
+    NumericVector pHarmMean_ = locs.slot("spPropHarmMean");
     IntegerVector lastOriginStep_ = locs.slot("spLastOriginStep");
     NumericVector invSum_ = 1 / harmMean_; 
+    double gens_ = locs.slot("gens");
 
     // meta comm stuff
     S4 meta = x.slot("metaComm");
@@ -471,6 +521,7 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     roleComm out = roleComm(localSpp_,
                             localTrt_,
                             harmMean_, 
+                            pHarmMean_, 
                             lastOriginStep_, 
                             invSum_,
                             metaAbund_,
@@ -480,10 +531,12 @@ roleComm roleCommFromS4(S4 x, S4 p) {
                             tipNames_,
                             alive_,
                             sMax_,
+                            gens_,
                             p); // recall: p is passed to `roleCommFromS4`
 
     return out;
 }
+
 
 // expose roleComm to R for testing
 // [[Rcpp::export]]
@@ -514,13 +567,13 @@ S4 s4FromRcpp(List x) {
     locs.slot("indSpecies") = rIndexIndSpp + 1;
     
     locs.slot("indTrait") = locList["indTrait"];
-    locs.slot("indSeqs") = "A"; // what to do? make NULL?
-    locs.slot("spGenDiv") = 1; // what to do? make NULL?
-    // locs.slot("spTrait") = 1; // remove?
-    // locs.slot("spAbund") = 1; // remove?
-    locs.slot("spAbundHarmMean") = 1; // *** need to add to simulation
-    locs.slot("spLastOriginStep") = 1; // *** need to add to simulation
-    // locs.slot("spExtinctionStep") = 1; // *** need to add to simulation
+    locs.slot("indSeqs") = "A"; // place-holder
+    locs.slot("spGenDiv") = 1; // place-holder
+    locs.slot("spTajD") = 1; // place-holder
+    locs.slot("spAbundHarmMean") = locList["harmMean"];
+    locs.slot("spAbundHarmMean") = locList["pHarmMean"];
+    locs.slot("spLastOriginStep") = locList["lastOriginStep"];
+    locs.slot("gens") = locList["gens"];
     locs.slot("equilibProp") = 1; // *** need to add to simulation
     
     out.slot("localComm") = locs;
@@ -579,12 +632,8 @@ S4 testUpdatePhylo(S4 tre, int i, double scale) {
 // [[Rcpp::export]]
 List simRole(S4 x, S4 p) {
     NumericVector invSumsInit = 1.3; // initial sum of inverse abunds
-    // consider alternatives to clone????
-    // x = clone(x); // maybe we don't need clone at all; S4 &x is passing by ref
+    
     roleComm wow = roleCommFromS4(x, p); // now need to pass `invSumsInit`
-
-    // get params
-    // S4 p = wow.getParams();
 
     // number of iterations and output timesteps
     int niter = as<int>(p.slot("niter"));
@@ -601,14 +650,18 @@ List simRole(S4 x, S4 p) {
     // main loop of sim---starts at 1 because we already recorded the
     // initial state
     for (int i = 1; i <= niter; i++) {
+        // check if local comm size has changed and update accordingly
+        // pass i - 1 because loop starts at 1
+        wow.updateJ(i - 1);
+        
         // death
-        int idead = wow.death();
+        int idead = wow.death(i - 1); 
 
         // immigration or local birth
-        wow.birthImm(idead, i - 1); // pass i - 1 because loop starts at 1
+        wow.birthImm(idead, i - 1); 
         
         // speciation or not
-        wow.speciation(idead, i - 1); // pass i - 1 because loop starts at 1
+        wow.speciation(idead, i - 1); 
 
         // update distances
         wow.updateDist(idead);
