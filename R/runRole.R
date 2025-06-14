@@ -41,11 +41,17 @@ setMethod('runRole',
               # augment the data in the model based on the params
               m <- .bufferModelData(x)
               
+              m@modelSteps[[1]]@localComm@spLastOriginGen
               # returns the new modelSteps (a list of roleData)
               m@modelSteps <- simRole(m@modelSteps[[1]], m@params)
               
               # add popgen
-              # m <- sim_seqs(m)
+              # prep output of model to input needed for
+              info4msprime <- prep4msprim(m)
+              
+              # pop gen sim
+              # pgensim <- sim_seqs(info4msprime)
+              # loop over model steps and add popgen data
               
               return(m)
           }
@@ -92,8 +98,8 @@ setMethod('runRole',
 # @param model model
 
 .bufferModelData <- function(model) {
-    p <- model@params 
-    
+    p <- model@params
+
     # calculate expected number of new species using binom
     expec_n_spec <- stats::qbinom(0.9, p@niter,
                                   prob = mean(p@speciation_local(1:p@niter)))
@@ -101,41 +107,47 @@ setMethod('runRole',
     at_add <- expec_n_spec + 1
     
     # buffer phylo ----
-    
+
     # edges get -1s
-    model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e, 
-                                           matrix(-1, nrow = el_add, ncol = 2)) 
-    
+    model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e,
+                                           matrix(-1, nrow = el_add, ncol = 2))
+
     # lengths get 0s
-    model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l, 
-                                       rep(0, el_add)) 
-    
+    model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l,
+                                       rep(0, el_add))
+
     # alives get FALSE
-    model@modelSteps[[1]]@phylo@alive <- c(model@modelSteps[[1]]@phylo@alive, 
-                                           rep(FALSE, at_add)) 
-    
+    model@modelSteps[[1]]@phylo@alive <- c(model@modelSteps[[1]]@phylo@alive,
+                                           rep(FALSE, at_add))
+
     # tipNames get 'local_speciation_j'
-    model@modelSteps[[1]]@phylo@tipNames <- 
-        c(model@modelSteps[[1]]@phylo@tipNames, 
+    model@modelSteps[[1]]@phylo@tipNames <-
+        c(model@modelSteps[[1]]@phylo@tipNames,
           paste0('local_speciation_', 1:at_add))
-    
-    # calc buffer size for local species vects 
+
+    # calc buffer size for local species vects
     local_add <- p@species_meta + expec_n_spec
+    local_add <- local_add - length(model@modelSteps[[1]]@localComm@spAbund)
+
+
+    # buffer local species vectors with 0s
+    zeroAdd <- rep(0, local_add)
     
+    model@modelSteps[[1]]@localComm@spLastOriginStep <-
+        c(model@modelSteps[[1]]@localComm@spLastOriginStep, zeroAdd)
     
-    # buffer local species vectors with NAs ----
-    model@modelSteps[[1]]@localComm@spLastOriginStep <-  
-        c(model@modelSteps[[1]]@localComm@spLastOriginStep, 
-          rep(NA, local_add))
+    model@modelSteps[[1]]@localComm@spLastOriginGen <-
+        c(model@modelSteps[[1]]@localComm@spLastOriginGen, zeroAdd)
     
-    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  
-        c(model@modelSteps[[1]]@localComm@spAbundHarmMean, 
-          rep(NA, local_add))
-    
-    # model@modelSteps[[1]]@localComm@spExtinctionStep <-  
-    #     c(model@modelSteps[[1]]@localComm@spExtinctionStep, 
-    #       rep(NA, local_add))
-    
+    model@modelSteps[[1]]@localComm@spAbund <-
+        c(model@modelSteps[[1]]@localComm@spAbund, zeroAdd)
+
+    model@modelSteps[[1]]@localComm@spAbundHarmMean <-
+        c(model@modelSteps[[1]]@localComm@spAbundHarmMean, zeroAdd)
+
+    model@modelSteps[[1]]@localComm@spPropHarmMean <-
+        c(model@modelSteps[[1]]@localComm@spPropHarmMean, zeroAdd)
+
     return(model)
 }
 
@@ -167,3 +179,7 @@ getValuesFromParams <- function(p, i) {
     return(pvals)
 }
 
+
+prep4msprim <- function(m) {
+    
+}

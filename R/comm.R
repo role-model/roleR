@@ -32,6 +32,7 @@ setClass('localComm',
                    spAbundHarmMean = 'numeric',
                    spPropHarmMean = 'numeric',
                    spLastOriginStep = 'numeric',
+                   spLastOriginGen = 'numeric',
                    gens = 'numeric',
                    equilibProp = 'numeric'))
 
@@ -53,7 +54,7 @@ localComm <- function(indSpecies, indTrait, indSeqs) {
     spPropHarmMean <- spAbundHarmMean / length(indSpecies)
     
     spLastOriginStep <- numeric(length(spAbundHarmMean))
-    spLastOriginStep[spAbundHarmMean == 0] <- NA # if abund = 0 not there yet
+    spLastOriginGen <- numeric(length(spAbundHarmMean))
     
     spGenDiv <- spTajD <- as.numeric(rep(NA, length(spAbundHarmMean)))
     
@@ -66,7 +67,8 @@ localComm <- function(indSpecies, indTrait, indSeqs) {
                spTajD = spTajD,
                spAbundHarmMean = spAbundHarmMean,
                spPropHarmMean = spPropHarmMean,
-               spLastOriginStep = spLastOriginStep, 
+               spLastOriginStep = spLastOriginStep,
+               spLastOriginGen = spLastOriginGen,
                gens = 0, 
                equilibProp = 0))
 }

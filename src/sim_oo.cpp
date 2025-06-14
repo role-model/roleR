@@ -1,7 +1,7 @@
 #include <RcppArmadillo.h>
 #include <Rcpp.h>
 #include <random>
-#include <fstream>
+// #include <fstream>
 
 using namespace Rcpp;
 using namespace arma;
@@ -89,6 +89,7 @@ double getParamDouble(S4 p, String s) {
 // [[Rcpp::export]]
 NumericVector getParamFun(S4 p, String s) {
     int n = p.slot("niter");
+    n ++; // want to run loop (i=1; i<=`niter`; i++) but for original `niter`
     IntegerVector ii = seq(1, n);
     Function f = p.slot(s);
     NumericVector x = f(ii);
@@ -187,10 +188,14 @@ private:
     std::uniform_real_distribution<double> dist; // unif dist object
     IntegerVector localSpp; // passed
     mat localTrt; // passed
+    NumericVector spAbund; // passed
     NumericVector harmMean; // passed
     NumericVector pHarmMean; // passed
     IntegerVector lastOriginStep; // passed
+    NumericVector lastOriginGen; // passed
+    IntegerVector lastUpdate; // passed
     NumericVector invSum; // passed
+    NumericVector invSumP; // passed
     NumericVector metaAbund; // passed
     NumericMatrix metaTrt; // passed
     imat edge; // passed
@@ -215,10 +220,14 @@ private:
 public:
     roleComm(IntegerVector localSpp_,
              mat localTrt_,
+             NumericVector spAbund_,
              NumericVector harmMean_,
              NumericVector pHarmMean_,
              IntegerVector lastOriginStep_,
+             NumericVector lastOriginGen_,
+             IntegerVector lastUpdate_,
              NumericVector invSum_,
+             NumericVector invSumP_,
              NumericVector metaAbund_,
              NumericMatrix metaTrt_,
              imat edge_,
@@ -232,10 +241,14 @@ public:
     dist(0, 1),
     localSpp(localSpp_),
     localTrt(localTrt_),
+    spAbund(spAbund_),
     harmMean(harmMean_),
     pHarmMean(pHarmMean_),
     lastOriginStep(lastOriginStep_),
+    lastOriginGen(lastOriginGen_),
+    lastUpdate(lastUpdate_),
     invSum(invSum_),
+    invSumP(invSumP_),
     metaAbund(metaAbund_),
     metaTrt(metaTrt_),
     edge(edge_),
@@ -258,6 +271,14 @@ public:
     gens(gens_) {}
 
     // `get` methods
+    int getSMax() {
+        return sMax;
+    }
+    
+    NumericVector getSpAbund() {
+        return spAbund;
+    }
+    
     List getLocal() {
         IntegerVector spp = as<IntegerVector>(wrap(localSpp));
         NumericMatrix trt = as<NumericMatrix>(wrap(localTrt));
@@ -294,11 +315,13 @@ public:
         // create the output lists with trimmed data
         List locs = List::create(Named("indSpecies") = localSpp,
                                  Named("indTrait") = wrap(localTrt), 
+                                 Named("spAbund") = spAbund,
                                  Named("harmMean") = harmMean, 
                                  Named("pHarmMean") = pHarmMean, 
                                  Named("lastOriginStep") = lastOriginStep, 
+                                 Named("lastOriginGen") = lastOriginGen,
                                  Named("gens") = gens);
-        // should be more stuff in above ^
+        
         
         List meta = List::create(Named("spAbund") = metaAbund,
                                  Named("spTrait") = metaTrt);
@@ -354,14 +377,14 @@ public:
             // sample index of dead individual
             idead = sample(J[step], 1, false, wrap(probs))[0] - 1;
         }
-
+        
         return idead;
     }
 
-    void birthImm(int i, int step) {
+    int birthImm(int i, int step) {
         // set up indexes
-        int inew;
-        int iborn;
+        int inew; // species level index
+        int iborn; // individual level index
 
         // random number to determine which event occurs
         double r = dist(rng);
@@ -379,11 +402,17 @@ public:
             
             // update last origin
             // check if already present
-            bool newImm = std::find(localSpp.begin(), 
-                                    localSpp.end(), 
-                                    inew) == localSpp.end();
+            bool newImm = spAbund[inew] == 0;
+            // bool newImm = std::find(localSpp.begin(), 
+            //                         localSpp.end(), 
+            //                         inew) == localSpp.end();
             if (newImm) { // if not present, update orig time
                 lastOriginStep[inew] = step;
+                lastOriginGen[inew] = -1.0 * gens;
+                // Rcout << "inew is: " << inew << std::endl;
+                Rcout << "lastOriginGen is: " << lastOriginGen << std::endl;
+                Rcout << "lastOriginStep is: " << lastOriginStep << std::endl;
+                Rcout << "gens is: " << gens << std::endl;
             }
         } else { // local birth
             // sample the individual that gives birth
@@ -396,26 +425,32 @@ public:
             inew = localSpp[iborn];
         }
 
+        // record sp ID of dead individual
+        int idead = localSpp[i];
+        
         // update local comm spp ID
         localSpp[i] = inew;
 
         // update traits
         localTrt.row(i) = newTrt;
         
-        // update harmonic mean
-        
+        // return species-level index of sp ID of who died
+        return idead;
     }
 
-    void speciation(int i, int step) {
+    int speciation(int i, int step) {
         // random number to determine if speciation happens
         double r = dist(rng);
 
-        if (r < specProb[step]) {
+        // place holder for ID of new species
+        int inew;
+        
+        if (r < specProb[step]) { // speciation occurs
             // determine parent ID from individual ID
             int iparent = localSpp[i];
             
             // scale factor converting iterations to generations
-            double scale = 2 / localSpp.length();
+            double scale = 2.0 / J[step];
             
             // updatePhylo assumes R-style indexing starting at 1, so need
             // to add 1 to `iparent` which has C-style indexing starting at 0
@@ -438,10 +473,19 @@ public:
             // update traits
             rowvec newTrt = localTrt.row(i) +
                 randn<rowvec>(localTrt.n_cols) * sig; 
-            // could re-scale lineage duration
+            
+            // add record for last origin
+            lastOriginStep[sMax] = step + 1; // +1 cause will pass `step-1`
+            
+            inew = sMax;
+        } else {
+            inew = localSpp[i];
         }
+        
+        return inew;
     }
 
+    
     // book-keeping methods
     void updateDist(int i) {
         // only need to update distances if we're in a non-neutral sim
@@ -458,7 +502,6 @@ public:
             envDist.row(i) = envDistCalc(localTrt.row(i), envOptim, sigE);
         }
     }
-    
     
     void updateJ(int step) {
         // change size of local comm if necessary 
@@ -483,6 +526,82 @@ public:
         // record number of generations
         gens += 2.0 / target_size;
     }
+    
+    void updateSpInfo(int jdead, int jborn, int step) {
+        // update vectors pertaining to sp-level info
+        // jdead and jborn are species-level indeces
+        // Rcout << "step is: " << step
+        //       << "; (pre-update) invSum is: " << invSum
+        //       << std::endl;
+        
+        if (jdead == jborn) {
+            // death replaced by birth all in same sp, so no need update `a`
+            // this method is also used with `jdead == jborn` for *all* spp
+            // on iteration steps where we take a snapshot
+            
+            // make sure all abundances > 0 (only relevant when we are updating
+            // all spp on a snapshot step)
+            if (spAbund[jborn] > 0) {
+                // update from previous steps
+                // if step == (last update step - 1), don't do anything
+                // we achieve this by `* 0`
+                // *** think carefully about lastUpdate and step indeces
+                invSum[jborn] += (1 / spAbund[jborn]) * 
+                    (step - lastUpdate[jborn] - 1);
+                
+                // update inverse sum for the current step
+                invSum[jborn] += (1 / spAbund[jborn]);
+            }
+            
+            // update `lastUpdate` to current step
+            lastUpdate[jborn] = step;
+        } else {
+            // update dead one from previous steps
+            invSum[jdead] += (1 / spAbund[jdead]) * 
+                (step - lastUpdate[jdead] - 1);
+            
+            // if born one had positive abund prior, 
+            // update it from previous steps
+            if (spAbund[jborn] > 0) {
+                invSum[jborn] += (1 / spAbund[jborn]) * 
+                    (step - lastUpdate[jborn] - 1);
+            }
+            
+            // update abundances
+            spAbund[jborn] ++;
+            spAbund[jdead] --;
+            
+            // update inv sum for the current step
+            invSum[jborn] += 1 / spAbund[jborn];
+            
+            if (spAbund[jdead] > 0) { // only increment if not extirpated
+                invSum[jdead] += 1 / spAbund[jdead];
+            } else { // if extirpated, set inv sum to 0
+                invSum[jdead] = 0;
+            }
+            
+            // update `lastUpdate` to current step
+            lastUpdate[jborn] = step; 
+            lastUpdate[jdead] = step;
+        }
+        
+        // Rcout << "step is: " << step
+        //       << "; (post-update) invSum is: " << invSum
+        //       << std::endl;
+    }
+    
+    void updateHMean(int step) {
+        // this method only to be called when writing out state in a 
+        // snapshot step
+        
+        // make this a NumericVector so division works 
+        NumericVector dur;
+        dur = step -1.0 * lastOriginStep + 1.0;
+        
+        NumericVector h = dur / invSum;
+        h[invSum == 0] = 0;
+        harmMean = h;
+    }
 };
 
 
@@ -493,10 +612,14 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     S4 locs = x.slot("localComm");
     IntegerVector localSpp_ = locs.slot("indSpecies");
     mat localTrt_ = as<mat>(locs.slot("indTrait"));
+    NumericVector spAbund_ = locs.slot("spAbund");
     NumericVector harmMean_ = locs.slot("spAbundHarmMean");
     NumericVector pHarmMean_ = locs.slot("spPropHarmMean");
     IntegerVector lastOriginStep_ = locs.slot("spLastOriginStep");
+    NumericVector lastOriginGen_ = locs.slot("spLastOriginGen");
+    IntegerVector lastUpdate_ = locs.slot("spLastOriginStep");
     NumericVector invSum_ = 1 / harmMean_; 
+    NumericVector invSumP_ = 1 / pHarmMean_; 
     double gens_ = locs.slot("gens");
 
     // meta comm stuff
@@ -514,16 +637,20 @@ roleComm roleCommFromS4(S4 x, S4 p) {
     
     // decrement species indeces (so they start at 0)
     localSpp_ = localSpp_ - 1;
-
-    // params
-    // S4 params_ = x.slot("params");
+    
+    // make sure invSum has 0 instead of Inf
+    invSum_[harmMean_ == 0] = 0;
 
     roleComm out = roleComm(localSpp_,
                             localTrt_,
+                            spAbund_,
                             harmMean_, 
                             pHarmMean_, 
                             lastOriginStep_, 
+                            lastOriginGen_,
+                            lastUpdate_, 
                             invSum_,
+                            invSumP_,
                             metaAbund_,
                             metaTrt_,
                             edge_,
@@ -570,9 +697,11 @@ S4 s4FromRcpp(List x) {
     locs.slot("indSeqs") = "A"; // place-holder
     locs.slot("spGenDiv") = 1; // place-holder
     locs.slot("spTajD") = 1; // place-holder
+    locs.slot("spAbund") = locList["spAbund"];
     locs.slot("spAbundHarmMean") = locList["harmMean"];
-    locs.slot("spAbundHarmMean") = locList["pHarmMean"];
+    locs.slot("spPropHarmMean") = locList["pHarmMean"];
     locs.slot("spLastOriginStep") = locList["lastOriginStep"];
+    locs.slot("spLastOriginGen") = locList["lastOriginGen"];
     locs.slot("gens") = locList["gens"];
     locs.slot("equilibProp") = 1; // *** need to add to simulation
     
@@ -639,40 +768,71 @@ List simRole(S4 x, S4 p) {
     int niter = as<int>(p.slot("niter"));
     int niterTimestep = as<int>(p.slot("niterTimestep"));
     int n = niter / niterTimestep + 1; // number of output values
+    
+    // Rcout << "n for model steps is: " << n << std::endl;
+    
+    // niter++; // so we can loop until i < niter
+    
     int k; // index for filling in output list `l`
+    
+    // object to track max species index
+    int thisSMax = wow.getSMax();
 
     // list to hold output, each element will be of class `roleComm`
     List l(n);
 
     // record initial state
+    wow.updateHMean(0);
     l[0] = clone(s4FromRcpp(wow.getData()));
-
+    
     // main loop of sim---starts at 1 because we already recorded the
     // initial state
     for (int i = 1; i <= niter; i++) {
         // check if local comm size has changed and update accordingly
-        // pass i - 1 because loop starts at 1
-        wow.updateJ(i - 1);
+        wow.updateJ(i);
         
         // death
-        int idead = wow.death(i - 1); 
+        int idead = wow.death(i); 
 
         // immigration or local birth
-        wow.birthImm(idead, i - 1); 
+        // returns species-level index of ind that died
+        int oldSp = wow.birthImm(idead, i); 
         
-        // speciation or not
-        wow.speciation(idead, i - 1); 
+        // speciation or not (returns species index for spp-level update)
+        // returns species-level index of ind replacing death
+        int inew = wow.speciation(idead, i); 
 
         // update distances
         wow.updateDist(idead);
+        
+        // update species-level data of local comm
+        wow.updateSpInfo(oldSp, inew, i);
 
         // every `niterTimestep`, record state
-        if (i % niterTimestep == 0) {
-            k = i / niterTimestep;
+        if ((i) % niterTimestep == 0) {
+            // update all sp-level data at this time
+            // but only for spp with non-0 abund
             
-            l[k] = clone(s4FromRcpp(wow.getData()));
+            thisSMax = wow.getSMax();
+
+            // Rcout << "updateSpInfo called from snapshot write-out" << std::endl;
+            for (int j = 0; j < thisSMax; j++) {
+                wow.updateSpInfo(j, j, i);
+            }
+            
+            // Rcout << "END call from snapshot write-out" << std::endl;
+            
+            wow.updateHMean(i);
+            
+            k = (i) / niterTimestep;
+            l[k] = clone(s4FromRcpp(wow.getData())); 
         }
+        
+        // Rcout << "step is: " << i 
+        //       << "; spAbund is: " << wow.getSpAbund()
+        //       << std::endl;
     }
 
     return l;
 }
+
