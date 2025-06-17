@@ -77,14 +77,16 @@ def sim_role(Jm,
     # convert matrix-like objects with species abundances info to list of dicts
     # NOTE: might need to convert these to pd dataframe first 
     
-    print(type(local_sad))
+    
     
     local_sad_ts = local_sad.to_dict("records")
     local_hm_ts = local_hm.to_dict("records")
 
+    # print(local_sad_ts[1])
+    
     # enumerate +1 because species are 1-indexed from R
     meta_Nes = {x+1:y*alpha for x,y in enumerate(meta_abund)}
-
+    
     # create a default dict so internal nodes have a default Ne
     dNe = round(Jm / len(meta_Nes) * alpha)
     meta_Nes = defaultdict(lambda: dNe, meta_Nes)
@@ -131,6 +133,9 @@ def sim_role(Jm,
 
             # only bother with adding to demography if non-0 abundance
             if this_abund > 0:
+                
+                # print(f"t is {t}")
+                # print(f"this_abund is {this_abund}")
 
                 # tags to note _m_eta/_l_ocal and _t_ime
                 meta_sp = f"m_{t}_{sp}"

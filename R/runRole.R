@@ -46,12 +46,7 @@ setMethod('runRole',
               m@modelSteps <- simRole(m@modelSteps[[1]], m@params)
               
               # add popgen
-              # prep output of model to input needed for
-              info4msprime <- prep4msprim(m)
-              
-              # pop gen sim
-              # pgensim <- sim_seqs(info4msprime)
-              # loop over model steps and add popgen data
+              m <- runmsprim(m)
               
               return(m)
           }
@@ -99,7 +94,7 @@ setMethod('runRole',
 
 .bufferModelData <- function(model) {
     p <- model@params
-
+    
     # calculate expected number of new species using binom
     expec_n_spec <- stats::qbinom(0.9, p@niter,
                                   prob = mean(p@speciation_local(1:p@niter)))
@@ -107,29 +102,29 @@ setMethod('runRole',
     at_add <- expec_n_spec + 1
     
     # buffer phylo ----
-
+    
     # edges get -1s
     model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e,
                                            matrix(-1, nrow = el_add, ncol = 2))
-
+    
     # lengths get 0s
     model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l,
                                        rep(0, el_add))
-
+    
     # alives get FALSE
     model@modelSteps[[1]]@phylo@alive <- c(model@modelSteps[[1]]@phylo@alive,
                                            rep(FALSE, at_add))
-
+    
     # tipNames get 'local_speciation_j'
     model@modelSteps[[1]]@phylo@tipNames <-
         c(model@modelSteps[[1]]@phylo@tipNames,
           paste0('local_speciation_', 1:at_add))
-
+    
     # calc buffer size for local species vects
     local_add <- p@species_meta + expec_n_spec
     local_add <- local_add - length(model@modelSteps[[1]]@localComm@spAbund)
-
-
+    
+    
     # buffer local species vectors with 0s
     zeroAdd <- rep(0, local_add)
     
@@ -141,13 +136,13 @@ setMethod('runRole',
     
     model@modelSteps[[1]]@localComm@spAbund <-
         c(model@modelSteps[[1]]@localComm@spAbund, zeroAdd)
-
+    
     model@modelSteps[[1]]@localComm@spAbundHarmMean <-
         c(model@modelSteps[[1]]@localComm@spAbundHarmMean, zeroAdd)
-
+    
     model@modelSteps[[1]]@localComm@spPropHarmMean <-
         c(model@modelSteps[[1]]@localComm@spPropHarmMean, zeroAdd)
-
+    
     return(model)
 }
 
@@ -179,7 +174,138 @@ getValuesFromParams <- function(p, i) {
     return(pvals)
 }
 
+# helper function that takes a roleModel object and preps the data therein 
+# for input int msprime, then runs msprime on those inputs, finally returns
+# the model object with updated pop gen info
 
-prep4msprim <- function(m) {
+runmsprim <- function(m) {
+    # nmber of temporal snapshots
+    ntshot <- length(m@modelSteps)
     
+    finalPhylo <- m@modelSteps[[ntshot]]@phylo
+    
+    nspp <- finalPhylo@n
+    
+    # time by spp matrix with abundances in cells
+    tBySpp <- mkTBySpp(l = m@modelSteps, sname = "spAbund", 
+                       nspp = nspp)
+    
+    # matrix of same format but with harmonic mean abunds in cells
+    tByHmean <- mkTBySpp(l = m@modelSteps, sname = "spAbundHarmMean", 
+                         nspp = nspp)
+    
+    # matrix of same format but with divergence times in cells
+    tdiv <- mkTBySpp(l = m@modelSteps, sname = "spLastOriginGen", 
+                     nspp = nspp)
+    
+    # meta abunds
+    metaAbund <- round(m@modelSteps[[1]]@metaComm@spAbund * 
+                           m@info$individuals_meta[1])
+    
+    # meta tree needs to modified to have tip labels corresponding to spp IDs
+    # but preceded by a character cause msprime canʻt make populations with 
+    # number names
+    tre <- as(finalPhylo, "phylo")
+    tre$tip.label <- paste0("t", 1:nspp)
+    nwk <- ape::write.tree(tre, digits = 18)
+    
+    # time in generations of each snapshot
+    gens <- m@info$generations
+    
+    # harmonic mean of local community size
+    Jharm <- m@params@individuals_local(1:m@params@niter)
+    Jharm <- length(Jharm) / sum(1 / Jharm)
+    
+    # python ----
+    
+    # path to the Python file
+    pyfi <- system.file("Python", "role_msprime.py", 
+                        package = "roleR")
+    
+    reticulate::source_python(pyfi)
+    
+    # print("R side, local_sad is ")
+    # print(tBySpp)
+    
+    res <- sim_role(Jm = m@params@individuals_meta, 
+                    curtime = max(gens), 
+                    nwk = nwk, 
+                    meta_abund = metaAbund, 
+                    local_sad = tBySpp, 
+                    local_hm = tByHmean,  
+                    J_harm = Jharm,  
+                    gens = gens, 
+                    tdiv = tdiv, 
+                    alpha = m@params@alpha(1), 
+                    m = m@params@dispersal_prob(1), 
+                    sequence_length = m@params@num_basepairs, 
+                    mu = m@params@mutation_rate)
+    
+    # msprime output as list of R data.frames
+    # res[[1]] is data.frame of sequences per individual
+    # res[[2]] is data.frame of pop gen sum stats per spp
+    res <- reticulate::py_to_r(res)
+    
+    # split by time, because need to match time and modelSteps
+    indDat <- split(res[[1]], res[[1]]$time)
+    sppDat <- split(res[[2]], res[[2]]$time)
+    
+    for(i in 1:ntshot) {
+        thisGen <- m@info$generations[i]
+        
+        theseIndDat <- indDat[[as.character(thisGen)]]
+        theseSppDat <- sppDat[[as.character(thisGen)]]
+        
+        # species IDs from roleModel object
+        theseID <- m@modelSteps[[i]]@localComm@indSpecies
+        
+        # add sorted sequence data to model output
+        m@modelSteps[[i]]@localComm@indSeqs <- mergeSpp(theseIndDat, theseID)
+        
+        # sort spp level data
+        theseSppDat <- theseSppDat[order(theseSppDat$sp_id), ]
+        
+        # add sorted gen div data
+        r@modelSteps[[i]]@localComm@spGenDiv <- theseSppDat$pi
+        
+        # add sorted tajima d data (no slot so won't work right now)
+        # r@modelSteps[[i]]@localComm@spTajD <- theseSppDat$tajimas_D
+        
+    }
+    
+    return(m)
 }
+
+
+# function to make time by spp matrix from list of roleData snapshots by
+# specifying which slot we want to use to populate the cells
+# returns a data.frame with spp IDs as colnames
+mkTBySpp <- function(l, sname, nspp) {
+    tbs <- lapply(l, function(d) {
+        slot(d@localComm, sname)
+    })
+    tbs <- do.call(rbind, tbs)
+    
+    tbs <- as.data.frame(tbs)
+    names(tbs) <- as.character(1:nspp)
+    
+    return(tbs)
+}
+
+
+# function to match spp IDs and merge data when there are duplicate IDs
+mergeSpp <- function(pyDat, sppID) {
+    # vectors to count the occurrences of each ID
+    sppIDCounter <- ave(seq_along(sppID), sppID, FUN = seq_along)
+    pyCounter <- ave(seq_len(nrow(pyDat)), pyDat$sp_id, FUN = seq_along)
+    
+    # unique keys for matching purposes
+    sppIDKey <- paste(sppID, sppIDCounter, sep = "_")
+    pyKey <- paste(pyDat$sp_id, pyCounter, sep = "_")
+    
+    ii <- match(sppIDKey, pyKey)
+    
+    return(pyDat$seq_alignment[ii])
+}
+
+
