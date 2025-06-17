@@ -43,8 +43,8 @@ def sim_role(Jm,
              nwk, 
              meta_abund, 
              local_sad, 
-             local_hm,  
-             local_p, 
+             local_hm, 
+             J_harm,
              gens, 
              tdiv, 
              alpha, 
@@ -62,7 +62,7 @@ def sim_role(Jm,
         meta_abund: Meta community abundances (list)
         local_sad: Local community abundances (numpy array)
         local_hm: Local community harmonic mean abund (numpy array)
-        local_p: Local community harmonic mean prop abund (numpy array)
+        J_harm: Harmonic mean of total local community size (double)
         tdiv: Colonization times for local populations (numpy array)
         alpha: Scaling factor for converting abundance to Ne (>= 1)
         m: migration rate
@@ -81,7 +81,6 @@ def sim_role(Jm,
     
     local_sad_ts = local_sad.to_dict("records")
     local_hm_ts = local_hm.to_dict("records")
-    local_p_ts = local_p.to_dict("records")
 
     # enumerate +1 because species are 1-indexed from R
     meta_Nes = {x+1:y*alpha for x,y in enumerate(meta_abund)}
@@ -136,6 +135,11 @@ def sim_role(Jm,
                 # tags to note _m_eta/_l_ocal and _t_ime
                 meta_sp = f"m_{t}_{sp}"
                 local_sp = f"l_{t}_{sp}"
+                
+                # since abund is > 0 we will be updating migration rate, so
+                # calcualte it here for future use
+                m_rate = m * meta_p[sp] * J_harm / (2 * local_hm_ts[t][sp])
+
 
                 # set value of `add_yn` (determine if adding populations) based
                 # on whether t == 0 (always add in initial time step)
@@ -187,11 +191,10 @@ def sim_role(Jm,
 
                     # add migration
                     # source is local, dest is meta (cause backward time)
-                    # rate = \frac{m p^{(i)}_{meta}}{2 \alpha \eta^{(i)}_{local}}
                     demography.set_migration_rate(
                         source = this_loc,
                         dest = this_meta,
-                        rate = m * meta_p[sp] / (2 * alpha * local_p_ts[t][sp])
+                        rate = m_rate
                     )
 
                     # only now update `this_anc`
@@ -211,7 +214,7 @@ def sim_role(Jm,
                         time = curtime - gens[t],
                         source = this_loc,
                         dest = this_meta,
-                        rate = m * meta_p[sp] / (2 * alpha * local_p_ts[t][sp])
+                        rate = m_rate
                     )
 
                 # create sample set for this sp in this time step whether or not

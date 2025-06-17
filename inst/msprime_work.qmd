@@ -660,8 +660,8 @@ I put all this work into a python function `sim_role`, now letʻs figure out how
 
 
 ```{r}
-# r function to source and run python moduel
-
+# R function to source and run python moduel
+# note: this wonʻt work now because we changed migration rate calculation
 .runmsprime <- function(Jm, 
                         curtime, 
                         nwk, 
@@ -742,3 +742,16 @@ s[[2]]
 
 ```
 
+## Update on migration rate calculations
+
+Instead of original idea of using the harmonic mean of the proportion, letʻs use the harmonic mean of the local community size.  Here are the steps for the new migration rate calculation:
+
+$$
+M_{local, meta}^{(i)} = \frac{m \alpha p^{(i)}_{meta} J_{harm} / 2}{\alpha h^{(i)}_{local}}
+$$
+
+Note: we added an $\alpha$ term to the numerator as well, because expected number of immigrants per timestep is actually $m \alpha p^{(i)}_{meta}$. We also replaced $J$ with $J_harm$ to represent the harmonic mean of $J$. Now some things cancel and simplify:
+
+$$
+M_{local, meta}^{(i)} = \frac{m p^{(i)}_{meta} J_{harm}}{2 h^{(i)}_{local}}
+$$
