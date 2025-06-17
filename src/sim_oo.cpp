@@ -408,11 +408,11 @@ public:
             //                         inew) == localSpp.end();
             if (newImm) { // if not present, update orig time
                 lastOriginStep[inew] = step;
-                lastOriginGen[inew] = -1.0 * gens;
+                lastOriginGen[inew] = 1.0 * gens;
                 // Rcout << "inew is: " << inew << std::endl;
-                Rcout << "lastOriginGen is: " << lastOriginGen << std::endl;
-                Rcout << "lastOriginStep is: " << lastOriginStep << std::endl;
-                Rcout << "gens is: " << gens << std::endl;
+                // Rcout << "lastOriginGen is: " << lastOriginGen << std::endl;
+                // Rcout << "lastOriginStep is: " << lastOriginStep << std::endl;
+                // Rcout << "gens is: " << gens << std::endl;
             }
         } else { // local birth
             // sample the individual that gives birth
