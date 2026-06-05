@@ -39,12 +39,15 @@ setMethod('runRole',
           signature = 'roleModel', 
           definition = function(x) {
               # augment the data in the model based on the params
-              m <- .bufferModelData(x)
+              m <- bufferModelData(x)
               
               m@modelSteps[[1]]@localComm@spLastOriginGen
               # returns the new modelSteps (a list of roleData)
               m@modelSteps <- simRole(m@modelSteps[[1]], m@params)
-              
+
+              # trim buffer from species-level vectors down to actual sMax
+              m <- trimModelData(m)
+
               # add popgen
               m <- runmsprim(m)
               
@@ -87,17 +90,38 @@ setMethod('runRole',
           }
 )
 
+# trim model data
+# trim the buffer zeros from species-level vectors in each modelStep down to
+# the actual species count (sMax) recorded in the phylo@n of the final step
+# @param model roleModel object returned by simRole
+trimModelData <- function(model) {
+    nspp <- model@modelSteps[[length(model@modelSteps)]]@phylo@n
+
+    model@modelSteps <- lapply(model@modelSteps, function(step) {
+        step@localComm@spAbund          <- step@localComm@spAbund[1:nspp]
+        step@localComm@spAbundHarmMean  <- step@localComm@spAbundHarmMean[1:nspp]
+        step@localComm@spPropHarmMean   <- step@localComm@spPropHarmMean[1:nspp]
+        step@localComm@spLastOriginStep <- step@localComm@spLastOriginStep[1:nspp]
+        step@localComm@spLastOriginGen  <- step@localComm@spLastOriginGen[1:nspp]
+        step@localComm@spGenDiv         <- step@localComm@spGenDiv[1:nspp]
+        step@localComm@spTajD           <- step@localComm@spTajD[1:nspp]
+        step
+    })
+
+    return(model)
+}
+
+
 # buffer model data
-# augment the data of the not-yet-run model based on what is expected from the 
+# augment the data of the not-yet-run model based on what is expected from the
 # params called right before the model is run in Cpp
 # @param model model
 
-.bufferModelData <- function(model) {
+bufferModelData <- function(model) {
     p <- model@params
     
-    # calculate expected number of new species using binom
-    expec_n_spec <- stats::qbinom(0.9, p@niter,
-                                  prob = mean(p@speciation_local(1:p@niter)))
+    # calculate absolute max number of new species (each iter is speciation)
+    expec_n_spec <- p@niter
     el_add <- (expec_n_spec * 2 - 1) + 1
     at_add <- expec_n_spec + 1
     
@@ -179,6 +203,8 @@ getValuesFromParams <- function(p, i) {
 # the model object with updated pop gen info
 
 runmsprim <- function(m) {
+    print("entering `runmsprim`")
+    
     # nmber of temporal snapshots
     ntshot <- length(m@modelSteps)
     
@@ -218,8 +244,8 @@ runmsprim <- function(m) {
     
     # python ----
     
-    # path to the Python file
-    pyfi <- system.file("Python", "role_msprime.py", 
+    # path to the python file
+    pyfi <- system.file("python", "role_msprime.py", 
                         package = "roleR")
     
     reticulate::source_python(pyfi)
