@@ -269,9 +269,12 @@ def sim_role(Jm,
         samples = sampset,
         demography = demography,
         ploidy = 1,
-        sequence_length = sequence_length
+        sequence_length = sequence_length, 
+        recombination_rate = 0
     )
 
+    print("starting .sim_mutations", flush=True)
+    
     # simulate mutations
     mts = msprime.sim_mutations(ts, rate = mu)
 
@@ -283,7 +286,7 @@ def sim_role(Jm,
         "ids": ntab.individual,
         "pops": ntab.population,
         "time": ntab.time})
-    df_ind = df_ind[df_ind["ids"] > -1] # NOTE!!! this only works if `ploidy = 1`
+    df_ind = df_ind[df_ind["ids"] > -1] # NOTE!! this only works if `ploidy = 1`
 
     # we used a hack for time at the root (`curtime - gen[t] - 1`), now we need
     # to add back that 1
@@ -299,12 +302,14 @@ def sim_role(Jm,
     # get just species names from "name" column
     df_ind["sp_id"] = df_ind["name"].str.split('_').str[-1]
 
+    print("simulating seqs", flush=True)
     # get simulated sequences (this hangs a suprising while)
     df_ind["seq_alignment"] = list(mts.alignments(
         samples = df_ind["ids"].tolist(),
         reference_sequence = tskit.random_nucleotides(ts.sequence_length)
     ))
 
+    print("compiling output", flush = True)
     # aggregate df so rows are species and column of ids is a column of lists
     df_spp = df_ind.groupby(["time", "sp_id"])['ids'].apply(list).reset_index()
 
@@ -321,3 +326,36 @@ def sim_role(Jm,
 
     return df_ind, df_spp
 
+
+def test_force_ultrametric(tree):
+    """
+    Force all leaf nodes to time 0
+    Input a newick tree in string format
+    Output is a modified newick tree with all leaves having equal total length
+    """
+    
+    print("entering force ultrametric", flush=True)
+    
+    # Parse the newick tree string.
+    parsed = newick.loads(tree)
+    if len(parsed) == 0:
+        raise ValueError(f"Not a valid newick tree: '{tree}'")
+    root = parsed[0]
+
+    # Set node depths (distances from root).
+    stack = [(root, 0)]
+    max_depth = 0
+    while len(stack) > 0:
+        node, depth = stack.pop()
+        if depth > max_depth:
+            max_depth = depth
+        node.depth = depth
+        for child in node.descendants:
+            stack.append((child, depth + child.length))
+    for node in root.walk():
+        if node.is_leaf:
+            ## Add offset to node.length to force all nodes to fall at time 0
+            ## The offset is the difference between the depth of this node
+            ## and the max_depth of the deepest leaf node.
+            node.length = node.length + (max_depth - node.depth)
+    return root.newick

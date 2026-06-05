@@ -48,6 +48,7 @@ setMethod('runRole',
               # trim buffer from species-level vectors down to actual sMax
               m <- trimModelData(m)
 
+              # browser()
               # add popgen
               m <- runmsprim(m)
               
@@ -272,6 +273,7 @@ runmsprim <- function(m) {
     # res[[2]] is data.frame of pop gen sum stats per spp
     res <- reticulate::py_to_r(res)
     
+    browser()
     # split by time, because need to match time and modelSteps
     indDat <- split(res[[1]], res[[1]]$time)
     sppDat <- split(res[[2]], res[[2]]$time)
@@ -321,6 +323,7 @@ mkTBySpp <- function(l, sname, nspp) {
 
 # function to match spp IDs and merge data when there are duplicate IDs
 mergeSpp <- function(pyDat, sppID) {
+    # browser()
     # vectors to count the occurrences of each ID
     sppIDCounter <- ave(seq_along(sppID), sppID, FUN = seq_along)
     pyCounter <- ave(seq_len(nrow(pyDat)), pyDat$sp_id, FUN = seq_along)
