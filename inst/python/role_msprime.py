@@ -13,8 +13,6 @@ def _force_ultrametric(tree):
     Output is a modified newick tree with all leaves having equal total length
     """
     
-    print("entering force ultrametric", flush=True)
-    
     # Parse the newick tree string.
     parsed = newick.loads(tree)
     if len(parsed) == 0:
@@ -78,14 +76,8 @@ def sim_role(Jm,
     """
     
     # convert matrix-like objects with species abundances info to list of dicts
-    # NOTE: might need to convert these to pd dataframe first 
-    
-    print("entering sim_role", flush=True)
-    
     local_sad_ts = local_sad.to_dict("records")
     local_hm_ts = local_hm.to_dict("records")
-
-    # print(local_sad_ts[1])
     
     # enumerate +1 because species are 1-indexed from R
     meta_Nes = {x+1:y*alpha for x,y in enumerate(meta_abund)}
@@ -112,16 +104,11 @@ def sim_role(Jm,
         generation_time = 1
     )
     
-    print("demography from newick pau", flush=True)
-
-
     # update msprime demography with local populations budding off from their
     # metacommunity parental populations and create a list of sample sets that
     # determine when observations are made
 
     sampset = [] # empty list to hold sample sets
-
-    print("starting loop", flush=True)
     
     for sp in meta_p.keys():
         # we track the ancestral population with `this_anc` which will update
@@ -141,9 +128,6 @@ def sim_role(Jm,
 
             # only bother with adding to demography if non-0 abundance
             if this_abund > 0:
-                
-                print(f"sp={sp} t={t} this_abund={this_abund}", flush=True)
-
                 # tags to note _m_eta/_l_ocal and _t_ime
                 meta_sp = f"m_{t}_{sp}"
                 local_sp = f"l_{t}_{sp}"
@@ -235,19 +219,14 @@ def sim_role(Jm,
                 # if we donʻt add new, `this_loc` will reflect last timestep
                 # where we did add a lineage
 
-                if gens[t] == 0:
-                    samp_time = curtime - 1
-                else:
-                    samp_time = curtime - gens[t] # because backward time
+                samp_time = curtime - gens[t] # because backward time
 
                 # samp_time must be strictly less than the population's split
-                # time
-                # when a species first appears, gens[t] == origin gen so
-                # samp_time would equal split_time
-                # therefore clip to avoid error
+                # time; when a species first appears gens[t] == origin gen so
+                # samp_time == split_time -- clip by a tiny epsilon
                 split_time_this_loc = curtime - local_tdiv_ts[t][sp]
                 if samp_time >= split_time_this_loc:
-                    samp_time = split_time_this_loc - 1e-09
+                    samp_time = split_time_this_loc - 1e-9
 
                 this_samp = msprime.SampleSet(
                     this_abund,
@@ -262,8 +241,6 @@ def sim_role(Jm,
     # (backward in time)
     demography.sort_events()
 
-    print("starting .sim_ancestry", flush=True)
-
     # simulate ancestry with specific sampling times
     ts = msprime.sim_ancestry(
         samples = sampset,
@@ -272,8 +249,6 @@ def sim_role(Jm,
         sequence_length = sequence_length, 
         recombination_rate = 0
     )
-
-    print("starting .sim_mutations", flush=True)
     
     # simulate mutations
     mts = msprime.sim_mutations(ts, rate = mu)
@@ -288,12 +263,15 @@ def sim_role(Jm,
         "time": ntab.time})
     df_ind = df_ind[df_ind["ids"] > -1] # NOTE!! this only works if `ploidy = 1`
 
-    # we used a hack for time at the root (`curtime - gen[t] - 1`), now we need
-    # to add back that 1
-    df_ind.loc[df_ind["time"] == curtime - 1, "time"] = curtime
-
-    # now flip time from backward direction to forward
+    # flip time from backward direction to forward
     df_ind["time"] = curtime - df_ind["time"]
+
+    # snap forward times to nearest gens value; the epsilon clipping above
+    # produces times like gens[t] + 1e-9 which must map back to gens[t]
+    gens_arr = np.array(gens)
+    df_ind["time"] = df_ind["time"].apply(
+        lambda t: float(gens_arr[np.argmin(np.abs(gens_arr - t))])
+    )
 
     # get actual names of the populations
     pop_names = pd.Series([pop.metadata["name"] for pop in mts.tables.populations])
@@ -302,14 +280,12 @@ def sim_role(Jm,
     # get just species names from "name" column
     df_ind["sp_id"] = df_ind["name"].str.split('_').str[-1]
 
-    print("simulating seqs", flush=True)
     # get simulated sequences (this hangs a suprising while)
     df_ind["seq_alignment"] = list(mts.alignments(
         samples = df_ind["ids"].tolist(),
         reference_sequence = tskit.random_nucleotides(ts.sequence_length)
     ))
 
-    print("compiling output", flush = True)
     # aggregate df so rows are species and column of ids is a column of lists
     df_spp = df_ind.groupby(["time", "sp_id"])['ids'].apply(list).reset_index()
 
@@ -333,8 +309,6 @@ def test_force_ultrametric(tree):
     Input a newick tree in string format
     Output is a modified newick tree with all leaves having equal total length
     """
-    
-    print("entering force ultrametric", flush=True)
     
     # Parse the newick tree string.
     parsed = newick.loads(tree)

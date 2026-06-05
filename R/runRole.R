@@ -273,7 +273,7 @@ runmsprim <- function(m) {
     # res[[2]] is data.frame of pop gen sum stats per spp
     res <- reticulate::py_to_r(res)
     
-    browser()
+    # browser()
     # split by time, because need to match time and modelSteps
     indDat <- split(res[[1]], res[[1]]$time)
     sppDat <- split(res[[2]], res[[2]]$time)
