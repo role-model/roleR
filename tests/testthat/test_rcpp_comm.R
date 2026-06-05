@@ -107,9 +107,6 @@ test_that("species with distinct trait is more abundant than others", {
 
 
 
-test_that("intraspecific trait variation increases abundance of that species", {
-    expect_true(TRUE)
-})
 
 test_that("decreased width of comp kernal lessens impact of trait diffs", {
     # modify initial state so we have:
@@ -155,17 +152,7 @@ test_that("decreased width of comp kernal lessens impact of trait diffs", {
 
 
 
-
-
-
-
-test_that("more neutrality increases variation in abundance through time", {
-    expect_true(TRUE)
-})
-
-
-
-# could make tests with just one time step to see exactly who dies
+# tests with just one time step to see exactly who dies ----
 
 
 
