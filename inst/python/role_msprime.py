@@ -12,6 +12,9 @@ def _force_ultrametric(tree):
     Input a newick tree in string format
     Output is a modified newick tree with all leaves having equal total length
     """
+    
+    print("entering force ultrametric", flush=True)
+    
     # Parse the newick tree string.
     parsed = newick.loads(tree)
     if len(parsed) == 0:
@@ -77,7 +80,7 @@ def sim_role(Jm,
     # convert matrix-like objects with species abundances info to list of dicts
     # NOTE: might need to convert these to pd dataframe first 
     
-    
+    print("entering sim_role", flush=True)
     
     local_sad_ts = local_sad.to_dict("records")
     local_hm_ts = local_hm.to_dict("records")
@@ -108,6 +111,9 @@ def sim_role(Jm,
         time_units = "myr",
         generation_time = 1
     )
+    
+    print("demography from newick pau", flush=True)
+
 
     # update msprime demography with local populations budding off from their
     # metacommunity parental populations and create a list of sample sets that
@@ -115,6 +121,8 @@ def sim_role(Jm,
 
     sampset = [] # empty list to hold sample sets
 
+    print("starting loop", flush=True)
+    
     for sp in meta_p.keys():
         # we track the ancestral population with `this_anc` which will update
         # after each addition of a local population
@@ -134,8 +142,7 @@ def sim_role(Jm,
             # only bother with adding to demography if non-0 abundance
             if this_abund > 0:
                 
-                # print(f"t is {t}")
-                # print(f"this_abund is {this_abund}")
+                print(f"sp={sp} t={t} this_abund={this_abund}", flush=True)
 
                 # tags to note _m_eta/_l_ocal and _t_ime
                 meta_sp = f"m_{t}_{sp}"
@@ -233,6 +240,15 @@ def sim_role(Jm,
                 else:
                     samp_time = curtime - gens[t] # because backward time
 
+                # samp_time must be strictly less than the population's split
+                # time
+                # when a species first appears, gens[t] == origin gen so
+                # samp_time would equal split_time
+                # therefore clip to avoid error
+                split_time_this_loc = curtime - local_tdiv_ts[t][sp]
+                if samp_time >= split_time_this_loc:
+                    samp_time = split_time_this_loc - 1e-09
+
                 this_samp = msprime.SampleSet(
                     this_abund,
                     population = this_loc,
@@ -246,6 +262,7 @@ def sim_role(Jm,
     # (backward in time)
     demography.sort_events()
 
+    print("starting .sim_ancestry", flush=True)
 
     # simulate ancestry with specific sampling times
     ts = msprime.sim_ancestry(
