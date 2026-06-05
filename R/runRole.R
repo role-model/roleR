@@ -266,10 +266,10 @@ runmsprim <- function(m) {
         theseSppDat <- theseSppDat[order(theseSppDat$sp_id), ]
         
         # add sorted gen div data
-        r@modelSteps[[i]]@localComm@spGenDiv <- theseSppDat$pi
+        m@modelSteps[[i]]@localComm@spGenDiv <- theseSppDat$pi
         
         # add sorted tajima d data (no slot so won't work right now)
-        # r@modelSteps[[i]]@localComm@spTajD <- theseSppDat$tajimas_D
+        # m@modelSteps[[i]]@localComm@spTajD <- theseSppDat$tajimas_D
         
     }
     
