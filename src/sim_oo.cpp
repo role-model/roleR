@@ -596,8 +596,9 @@ public:
         
         // make this a NumericVector so division works 
         NumericVector dur;
-        dur = step -1.0 * lastOriginStep + 1.0;
-        
+        dur = step - 1.0 * lastOriginStep + 1.0;
+        dur[dur < 1] = 1;  // species born at this exact snapshot step: dur=0, use 1
+
         NumericVector h = dur / invSum;
         h[invSum == 0] = 0;
         harmMean = h;
