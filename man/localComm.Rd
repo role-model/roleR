@@ -4,9 +4,9 @@
 \name{localComm-class}
 \alias{localComm-class}
 \alias{localComm}
-\title{The local community of a `roleData`}
+\title{The local community of a `roleData` object}
 \usage{
-localComm(indSpecies, indTrait, indSeqs, spGenDiv)
+localComm(indSpecies, indTrait, indSeqs)
 }
 \arguments{
 \item{indSpecies}{indSpecies}
@@ -14,8 +14,6 @@ localComm(indSpecies, indTrait, indSeqs, spGenDiv)
 \item{indTrait}{indTrait}
 
 \item{indSeqs}{indSeqs}
-
-\item{spGenDiv}{spGenDiv}
 }
 \description{
 An S4 class to specify the state of a local community
@@ -29,12 +27,14 @@ An S4 class to specify the state of a local community
 
 \item{\code{indSeqs}}{a character vector of the gene sequences for each individual}
 
+\item{\code{spAbund}}{a numeric vector of abundances for each species}
+
 \item{\code{spGenDiv}}{a numeric vector of the genetic diversities for each species}
 
-\item{\code{spTrait}}{a numeric vector of the mean trait value of each species}
+\item{\code{spTajD}}{a numeric vector of the Tajima D stat for each species}
 
-\item{\code{spAbund}}{a numeric vector of the abundance (number of individuals) of 
-each species}
+\item{\code{spAbundHarmMean}}{numeric vector of the harmonic mean of species 
+abundances}
 
 \item{\code{spAbundHarmMean}}{numeric vector of the harmonic mean of species 
 abundances}
@@ -42,8 +42,7 @@ abundances}
 \item{\code{spLastOriginStep}}{numeric vector holding time of most recent origin of 
 each species in the local community}
 
-\item{\code{spExtinctionStep}}{numeric vector of most recent extirpation step of each 
-species in the local community}
+\item{\code{gens}}{numeric scalar of (fractional) number of generations transpired}
 
 \item{\code{equilibProp}}{numeric proportion of equilibrium achieved}
 }}

@@ -4,7 +4,7 @@
 \name{metaComm-class}
 \alias{metaComm-class}
 \alias{metaComm}
-\title{The metacommunity of a `roleData`}
+\title{The metacommunity of a `roleData` object}
 \usage{
 metaComm(spAbund, spTrait)
 }
