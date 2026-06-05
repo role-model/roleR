@@ -48,7 +48,5 @@ Collate:
     'roleModel-methods.R'
     'roleR-package.R'
     'runRole.R'
-    'setContext.R'
-    'sim_seqs.R'
     'writeRoLE.R'
     'zzz.R'
