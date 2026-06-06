@@ -151,11 +151,6 @@ test_that("decreased width of comp kernal lessens impact of trait diffs", {
 })
 
 
-
-# tests with just one time step to see exactly who dies ----
-
-
-
 # test pure neutrality ----
 
 pNeut <- roleParams(niter = 10000,
