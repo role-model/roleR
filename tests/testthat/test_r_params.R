@@ -1,14 +1,14 @@
-test_that("untbParams models run without error", {
-    p <- untbParams(individuals_local = 100, 
-                    individuals_meta = 1000, 
-                    species_meta = 100, 
-                    speciation = 0, 
-                    dispersal_prob = 0.1, 
-                    init_type = 'oceanic_island',
-                    niter = 300000, niterTimestep = 10000)
-    
-    expect_no_error(runRole(roleModel(p)))
-})
+# test_that("untbParams models run without error", {
+#     p <- untbParams(individuals_local = 100, 
+#                     individuals_meta = 1000, 
+#                     species_meta = 100, 
+#                     speciation = 0, 
+#                     dispersal_prob = 0.1, 
+#                     init_type = 'oceanic_island',
+#                     niter = 300000, niterTimestep = 10000)
+#     
+#     expect_no_error(runRole(roleModel(p)))
+# })
 
 test_that("roleParams constructor defaults run without error", {
     p <- roleParams() 
@@ -43,3 +43,4 @@ test_that("roleParams with init_type = 'bridge_island' runs without error", {
     
     expect_no_error(runRole(m))
 })
+

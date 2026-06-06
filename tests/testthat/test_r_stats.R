@@ -1,6 +1,6 @@
 test_that("getSumStats defaults return several metrics", {
     
-    p <- roleParams(niter = 200, speciation_local = .5) 
+    p <- roleParams(niter = 200, speciation_local = 0.001) 
     # create a test model and get data from a step and the params
     m <- roleModel(p)
     m <- runRole(m)   

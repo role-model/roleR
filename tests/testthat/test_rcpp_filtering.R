@@ -1,28 +1,5 @@
 # test pure filtering ----
 
-
-# function to customize model before running
-# modify initial state so we have:
-#    - one sp close to the optim
-#    - equal abundances in metacomm
-#    - initial sp is one not close to optim
-
-customizeMod <- function(mod) {
-    J <- mod@params@individuals_local(1)
-    trts <- c(-3, 1e-06, 10)
-    metaA <- rep(1/3, 3)
-    initSp <- 1
-    
-    mod@modelSteps[[1]]@metaComm@spAbund <- metaA
-    mod@modelSteps[[1]]@metaComm@spTrait <- matrix(trts)
-    mod@modelSteps[[1]]@localComm@indSpecies <- rep(initSp, J) 
-    mod@modelSteps[[1]]@localComm@indTrait <- matrix(trts[initSp], 
-                                                     nrow = J, 
-                                                     ncol = 1)
-    
-    return(mod)
-}
-
 # basic filtering parameterization 
 
 pFilter <- roleParams(niter = 1000,
