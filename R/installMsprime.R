@@ -3,7 +3,8 @@
 #' @description Installs the Python packages required by roleR (\code{msprime},
 #'   \code{tskit}, \code{newick}, \code{numpy}, \code{pandas}) into a conda or
 #'   virtual environment managed by reticulate.  Run this once after installing
-#'   the package; then restart R before calling \code{runRole()}.
+#'   the package, then restart R. No need to run this again unless updating
+#'   or re-installing roleR
 #'
 #' @param envname Name of the conda or virtual environment to install into.
 #'   Defaults to \code{"r-roleR"}.
@@ -15,15 +16,11 @@
 #'
 #' @return Invisible \code{NULL}.
 #'
-#' @examples
-#' \dontrun{
-#' installMsprime()
-#' }
-#'
 #' @export
+
 installMsprime <- function(envname = "r-roleR", method = "conda", ...) {
-    reqs_file <- system.file("python", "requirements.txt", package = "roleR")
-    pkgs <- readLines(reqs_file)
+    reqs <- system.file("python", "requirements.txt", package = "roleR")
+    pkgs <- readLines(reqs)
 
     message("Installing Python dependencies into environment '", envname, "'...")
     reticulate::py_install(pkgs, envname = envname, method = method, ...)
@@ -33,5 +30,6 @@ installMsprime <- function(envname = "r-roleR", method = "conda", ...) {
         "  reticulate::use_condaenv(\"", envname, "\")\n",
         "before calling runRole()."
     )
+    
     invisible(NULL)
 }

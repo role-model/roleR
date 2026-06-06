@@ -1,14 +1,14 @@
 # Package-level environment that caches the sourced Python module so that
 # role_msprime.py is parsed only once per R session rather than on every
 # runRole() call.
-.role_py_env <- new.env(parent = emptyenv())
+role_py_env <- new.env(parent = emptyenv())
 
 
 # Return the sim_role Python function, initialising the Python environment on
 # the first call.  Emits a clear error pointing to installMsprime() if any
 # required package is missing.
-.get_sim_role <- function() {
-    if (!exists("sim_role", envir = .role_py_env, inherits = FALSE)) {
+get_sim_role <- function() {
+    if (!exists("sim_role", envir = role_py_env, inherits = FALSE)) {
         required <- c("msprime", "tskit", "newick", "numpy", "pandas")
         missing  <- required[!vapply(required, reticulate::py_module_available,
                                      logical(1))]
@@ -22,9 +22,9 @@
             )
         }
         pyfi <- system.file("python", "role_msprime.py", package = "roleR")
-        reticulate::source_python(pyfi, envir = .role_py_env)
+        reticulate::source_python(pyfi, envir = role_py_env)
     }
-    .role_py_env$sim_role
+    role_py_env$sim_role
 }
 
 

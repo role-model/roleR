@@ -37,7 +37,6 @@ VignetteBuilder: knitr
 Collate:
     'RcppExports.R'
     'comm.R'
-    'installMsprime.R'
     'roleParams.R'
     'roleModel.R'
     'roleExperiment.R'
@@ -45,6 +44,7 @@ Collate:
     'rolePhylo.R'
     'roleData.R'
     'getSumStats.R'
+    'installMsprime.R'
     'roleData-divStats.R'
     'roleData-rawStats.R'
     'roleExperiment-methods.R'

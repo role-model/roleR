@@ -242,7 +242,7 @@ runmsprim <- function(m) {
     
     # python ----
     
-    sim_role <- .get_sim_role()
+    sim_role <- get_sim_role()
 
     res <- sim_role(Jm = m@params@individuals_meta, 
                     curtime = max(gens), 
