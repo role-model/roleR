@@ -1,20 +1,5 @@
 # test pure filtering ----
 
-# function to take a run role model object and return a time-series-like
-# matrix where rows are time steps and there is a column for each spp
-# cells are proportional abundances
-
-ats <- function(r) {
-    nspp <- r@modelSteps[[length(r@modelSteps)]]@phylo@n
-    
-    res <- lapply(r@modelSteps, function(x) {
-        sapply(1:nspp, function(i) {
-            mean(x@localComm@indSpecies == i)
-        })
-    })
-    
-    return(do.call(rbind, res))
-}
 
 # function to customize model before running
 # modify initial state so we have:
