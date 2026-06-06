@@ -155,7 +155,10 @@ def sim_role(Jm,
 
                     # needed info for adding pops
                     local_Ne = local_hm_ts[t][sp] * alpha # harmonic mean = Ne
-                    split_time = curtime - local_tdiv_ts[t][sp] # backward time
+                    
+                    # gens accumulates C++ floating-point error and can
+                    # slightly exceed curtime, making the difference negative
+                    split_time = max(1e-09, curtime - local_tdiv_ts[t][sp])
 
                     demography.add_population(
                         name = this_meta,
@@ -224,9 +227,9 @@ def sim_role(Jm,
                 # samp_time must be strictly less than the population's split
                 # time; when a species first appears gens[t] == origin gen so
                 # samp_time == split_time -- clip by a tiny epsilon
-                split_time_this_loc = curtime - local_tdiv_ts[t][sp]
+                split_time_this_loc = max(1e-09, curtime - local_tdiv_ts[t][sp])
                 if samp_time >= split_time_this_loc:
-                    samp_time = split_time_this_loc - 1e-9
+                    samp_time = split_time_this_loc - 1e-09
 
                 this_samp = msprime.SampleSet(
                     this_abund,
