@@ -468,16 +468,18 @@ public:
             sMax = newPhyInfo["sMax"];
 
             // update ID of local individual
-            localSpp[i] = sMax; // *** make sure this is right
+            // sMax is now new_sMax = old_sMax + 1; the new species has
+            // C++ 0-indexed ID = sMax - 1 (its R 1-indexed tip index = sMax)
+            localSpp[i] = sMax - 1;
 
             // update traits
             rowvec newTrt = localTrt.row(i) +
-                randn<rowvec>(localTrt.n_cols) * sig; 
-            
+                randn<rowvec>(localTrt.n_cols) * sig;
+
             // add record for last origin
-            lastOriginStep[sMax] = step + 1; // +1 cause will pass `step-1`
-            
-            inew = sMax;
+            lastOriginStep[sMax - 1] = step + 1; // +1 cause will pass `step-1`
+
+            inew = sMax - 1;
         } else {
             inew = localSpp[i];
         }
