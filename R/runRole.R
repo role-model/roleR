@@ -99,13 +99,13 @@ trimModelData <- function(model) {
     nspp <- model@modelSteps[[length(model@modelSteps)]]@phylo@n
 
     model@modelSteps <- lapply(model@modelSteps, function(step) {
-        step@localComm@spAbund          <- step@localComm@spAbund[1:nspp]
-        step@localComm@spAbundHarmMean  <- step@localComm@spAbundHarmMean[1:nspp]
-        step@localComm@spPropHarmMean   <- step@localComm@spPropHarmMean[1:nspp]
+        step@localComm@spAbund <- step@localComm@spAbund[1:nspp]
+        step@localComm@spAbundHarmMean <- step@localComm@spAbundHarmMean[1:nspp]
+        step@localComm@spPropHarmMean <- step@localComm@spPropHarmMean[1:nspp]
         step@localComm@spLastOriginStep <- step@localComm@spLastOriginStep[1:nspp]
-        step@localComm@spLastOriginGen  <- step@localComm@spLastOriginGen[1:nspp]
-        step@localComm@spGenDiv         <- step@localComm@spGenDiv[1:nspp]
-        step@localComm@spTajD           <- step@localComm@spTajD[1:nspp]
+        step@localComm@spLastOriginGen <- step@localComm@spLastOriginGen[1:nspp]
+        step@localComm@spGenDiv <- step@localComm@spGenDiv[1:nspp]
+        step@localComm@spTajD <- step@localComm@spTajD[1:nspp]
         step
     })
 
@@ -204,9 +204,7 @@ getValuesFromParams <- function(p, i) {
 # the model object with updated pop gen info
 
 runmsprim <- function(m) {
-    print("entering `runmsprim`")
-    
-    # nmber of temporal snapshots
+    # number of temporal snapshots
     ntshot <- length(m@modelSteps)
     
     finalPhylo <- m@modelSteps[[ntshot]]@phylo
@@ -251,9 +249,6 @@ runmsprim <- function(m) {
     
     reticulate::source_python(pyfi)
     
-    # print("R side, local_sad is ")
-    # print(tBySpp)
-    
     res <- sim_role(Jm = m@params@individuals_meta, 
                     curtime = max(gens), 
                     nwk = nwk, 
@@ -273,7 +268,6 @@ runmsprim <- function(m) {
     # res[[2]] is data.frame of pop gen sum stats per spp
     res <- reticulate::py_to_r(res)
     
-    # browser()
     # split by time, because need to match time and modelSteps
     indDat <- split(res[[1]], res[[1]]$time)
     sppDat <- split(res[[2]], res[[2]]$time)
@@ -336,5 +330,3 @@ mergeSpp <- function(pyDat, sppID) {
     
     return(pyDat$seq_alignment[ii])
 }
-
-
