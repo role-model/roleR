@@ -242,12 +242,8 @@ runmsprim <- function(m) {
     
     # python ----
     
-    # path to the python file
-    pyfi <- system.file("python", "role_msprime.py", 
-                        package = "roleR")
-    
-    reticulate::source_python(pyfi)
-    
+    sim_role <- .get_sim_role()
+
     res <- sim_role(Jm = m@params@individuals_meta, 
                     curtime = max(gens), 
                     nwk = nwk, 

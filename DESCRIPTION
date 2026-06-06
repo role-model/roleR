@@ -8,6 +8,8 @@ Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
 Website: https://role-model.github.io/role-user-guide
 Description: A simulation-based model the captures many processes across ecology 
     and evolution and jointly predicts multi-dimensional biodiversity data.
+SystemRequirements: Python (>= 3.9), msprime (>= 1.3), tskit (>= 0.6),
+    newick (>= 1.9), numpy (>= 1.23), pandas (>= 2.2)
 License: GPL (>= 3) + file LICENSE
 LazyData: true
 Encoding: UTF-8
@@ -32,9 +34,10 @@ Suggests:
     testthat, 
     meteR
 VignetteBuilder: knitr
-Collate: 
+Collate:
     'RcppExports.R'
     'comm.R'
+    'installMsprime.R'
     'roleParams.R'
     'roleModel.R'
     'roleExperiment.R'
