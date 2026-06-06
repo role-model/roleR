@@ -48,5 +48,6 @@ Collate:
     'roleModel-methods.R'
     'roleR-package.R'
     'runRole.R'
+    'updateModel.R'
     'writeRoLE.R'
     'zzz.R'
