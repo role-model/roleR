@@ -41,7 +41,6 @@ setMethod('runRole',
               # augment the data in the model based on the params
               m <- bufferModelData(x)
               
-              m@modelSteps[[1]]@localComm@spLastOriginGen
               # returns the new modelSteps (a list of roleData)
               m@modelSteps <- simRole(m@modelSteps[[1]], m@params)
 
