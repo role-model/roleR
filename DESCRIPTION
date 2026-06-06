@@ -33,7 +33,7 @@ Suggests:
     rmarkdown,
     testthat, 
     meteR
-VignetteBuilder: knitr
+VignetteBuilder: quarto
 Collate:
     'RcppExports.R'
     'comm.R'

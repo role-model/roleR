@@ -1,0 +1,7 @@
+---
+title: "Introducing roleR"
+vignette: >
+  %\VignetteIndexEntry{My Vignette}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
