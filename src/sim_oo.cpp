@@ -155,9 +155,6 @@ List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
     LogicalVector alive_rcpp = Rcpp::wrap(alive);
     IntegerVector z = y[alive_rcpp];
     
-    // IntegerVector foo = IntegerVector::create();
-    // foo = y[alive_rcpp];
-    
     LogicalVector ind = in(x, z);
     
     uvec tipi = find((edge.col(1) <= eNew) && as<uvec>(ind));
