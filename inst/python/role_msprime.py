@@ -250,11 +250,12 @@ def sim_role(Jm,
         demography = demography,
         ploidy = 1,
         sequence_length = sequence_length, 
-        recombination_rate = 0
+        recombination_rate = 0,
+        record_provenance = False
     )
     
     # simulate mutations
-    mts = msprime.sim_mutations(ts, rate = mu)
+    mts = msprime.sim_mutations(ts, rate = mu, record_provenance = False)
 
     # node table with all info
     ntab = mts.tables.nodes
