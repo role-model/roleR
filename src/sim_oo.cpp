@@ -98,82 +98,75 @@ NumericVector getParamFun(S4 p, String s) {
 }
 
 
-// function to update phylo objects
-// maybe we don't need to return anything, maybe pointers would work?
-List updatePhylo(int i, int sMax, double scale, imat edge, vec edgeLength,
-                 std::vector<bool> alive, std::vector<std::string> tipNames) {
+// function to update phylo objects in place via pointers
+void updatePhylo(int i, int* sMax, double scale, 
+                 imat* edge, vec* edgeLength,
+                 std::vector<bool>* alive, 
+                 std::vector<std::string>* tipNames) {
     // index of where unrealized edges in edge matrix start
-    int eNew = 2 * sMax - 2;
-    
+    int eNew = 2 * (*sMax) - 2;
+
     // check if there is room in the objects for new edges/nodes/tips,
     // if not, then make room
-    if (eNew >= edgeLength.size()) {
+    if (eNew >= (int)edgeLength->n_elem) {
         // add edges to all relevant objects
         int edgeAdd = 100;
-        int startRow = edge.n_rows;
-        
-        edge.insert_rows(startRow, edgeAdd);
-        edge.rows(startRow, startRow + edgeAdd - 1).fill(-1);
-        
-        edgeLength.resize(startRow + edgeAdd);
-        edgeLength.subvec(startRow, edgeLength.n_elem - 1).fill(-1.0);
-        
-        alive.resize(alive.size() + edgeAdd, false);
-        tipNames.resize(tipNames.size() + edgeAdd, "");
+        int startRow = edge->n_rows;
+
+        edge->insert_rows(startRow, edgeAdd);
+        edge->rows(startRow, startRow + edgeAdd - 1).fill(-1);
+
+        edgeLength->resize(startRow + edgeAdd);
+        edgeLength->subvec(startRow, edgeLength->n_elem - 1).fill(-1.0);
+
+        alive->resize(alive->size() + edgeAdd, false);
+        tipNames->resize(tipNames->size() + edgeAdd, "");
     }
 
     // index of the edge matrix of where to add new edge
-    uvec inds = find(edge.col(1) == i);
+    uvec inds = find(edge->col(1) == i);
     int j = inds(0);
-    
-    // add one to internal nodes
-    uvec internalNode = find(edge > sMax); 
-    edge.elem(internalNode) += 1;
-    
+
+    // add one to internal node IDs
+    uvec internalNode = find(*edge > *sMax);
+    edge->elem(internalNode) += 1;
+
     // add new internal node
-    int newNode = 2 * sMax + 1; // index of new node
-    edge(eNew, 0) = newNode;
-    edge(1 + eNew, 0) = newNode;
-    
+    int newNode = 2 * (*sMax) + 1; // index of new node
+    (*edge)(eNew, 0) = newNode;
+    (*edge)(1 + eNew, 0) = newNode;
+
     // add tips
-    edge(eNew, 1) = edge(j, 1); // add old tip
-    edge(eNew + 1, 1) = sMax + 1; // add new tip
-    
+    (*edge)(eNew, 1) = (*edge)(j, 1); // add old tip
+    (*edge)(eNew + 1, 1) = (*sMax) + 1; // add new tip
+
     // update ancestry of internal nodes
-    edge(j, 1) = newNode;
+    (*edge)(j, 1) = newNode;
 
     // augment edge lengths
-    edgeLength[eNew] = 0;
-    edgeLength[1 + eNew] = 0;
-    
+    (*edgeLength)[eNew] = 0;
+    (*edgeLength)[1 + eNew] = 0;
+
     // update alive vector
-    alive[sMax] = true;
-    
+    (*alive)[*sMax] = true;
+
     // increase all tip edge lengths by 1 time step
-    IntegerVector x = as<IntegerVector>(wrap(edge.col(1)));
-    IntegerVector y = seq_len(alive.size());
-    LogicalVector alive_rcpp = Rcpp::wrap(alive);
+    IntegerVector x = as<IntegerVector>(wrap(edge->col(1)));
+    IntegerVector y = seq_len(alive->size());
+    LogicalVector alive_rcpp = Rcpp::wrap(*alive);
     IntegerVector z = y[alive_rcpp];
-    
+
     LogicalVector ind = in(x, z);
-    
-    uvec tipi = find((edge.col(1) <= eNew) && as<uvec>(ind));
-    
-    edgeLength(tipi) += 1 * scale;
-    
+
+    uvec tipi = find((edge->col(1) <= eNew) && as<uvec>(ind));
+
+    (*edgeLength)(tipi) += 1 * scale;
+
     // update names
-    tipNames[sMax] = "s" + std::to_string(sMax + 1);
-    
+    (*tipNames)[*sMax] = "s" + std::to_string(*sMax + 1);
+
     // update sMax
-    sMax++;
-    
-    List out = List::create(Named("edge") = edge,
-                            Named("edgeLength") = edgeLength,
-                            Named("alive") = alive,
-                            Named("sMax") = sMax, 
-                            Named("tipNames") = tipNames);
-    
-    return out;
+    (*sMax)++;
 }
 
 
@@ -446,23 +439,14 @@ public:
             // determine parent ID from individual ID
             int iparent = localSpp[i];
             
-            // scale factor converting iterations to generations
-            double scale = 2.0 / J[step];
+            // scale factor converting iterations to generations (2/J)
+            // to phylo branch length units (1/1000000)
+            double scale = 2.0 / J[step] / 1000000;
             
             // updatePhylo assumes R-style indexing starting at 1, so need
             // to add 1 to `iparent` which has C-style indexing starting at 0
-            List newPhyInfo = updatePhylo(iparent + 1, sMax, scale, edge, 
-                                          edgeLength, alive, tipNames);
-            
-            // not ideal that we have to cast these things with as<type>
-            // *** consider updating
-            edge = as<imat>(newPhyInfo["edge"]); 
-            edgeLength = as<vec>(newPhyInfo["edgeLength"]);
-            tipNames = as<std::vector<string>>(newPhyInfo["tipNames"]);
-            alive = as<std::vector<bool>>(newPhyInfo["alive"]);
-            
-            // update total number of spp
-            sMax = newPhyInfo["sMax"];
+            updatePhylo(iparent + 1, &sMax, scale, &edge,
+                        &edgeLength, &alive, &tipNames);
 
             // update ID of local individual
             // sMax is now new_sMax = old_sMax + 1; the new species has
@@ -735,21 +719,23 @@ S4 s4FromRcpp(List x) {
 // tester function wrapping the updatePhylo fun
 // [[Rcpp::export]]
 S4 testUpdatePhylo(S4 tre, int i, double scale) {
-    List newTre = updatePhylo(i, tre.slot("n"), scale, tre.slot("e"), 
-                              tre.slot("l"), tre.slot("alive"), 
-                              tre.slot("tipNames"));
-    
-    
-    // create S4 output
-    S4 phy("rolePhylo");
-    
-    phy.slot("n") = newTre["sMax"];
-    phy.slot("e") = newTre["edge"];
-    phy.slot("l") = newTre["edgeLength"];
-    phy.slot("alive") = newTre["alive"];
-    phy.slot("tipNames") = newTre["tipNames"]; 
-    
-    return phy;
+    // extract slots into local variables so we can pass their addresses
+    int n = as<int>(tre.slot("n"));
+    imat e = as<imat>(tre.slot("e"));
+    vec l = as<vec>(tre.slot("l"));
+    std::vector<bool> alive = as<std::vector<bool>>(tre.slot("alive"));
+    std::vector<std::string> tipNames = as<std::vector<std::string>>(tre.slot("tipNames"));
+
+    updatePhylo(i, &n, scale, &e, &l, &alive, &tipNames);
+
+    // write updated values back into tre in place and return it
+    tre.slot("n") = n;
+    tre.slot("e") = wrap(e);
+    tre.slot("l") = wrap(l);
+    tre.slot("alive") = alive;
+    tre.slot("tipNames") = tipNames;
+
+    return tre;
 }
 
 
