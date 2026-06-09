@@ -72,15 +72,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // testUpdatePhylo
-S4 testUpdatePhylo(S4 tre, int i, double scale);
-RcppExport SEXP _roleR_testUpdatePhylo(SEXP treSEXP, SEXP iSEXP, SEXP scaleSEXP) {
+S4 testUpdatePhylo(S4 tre, int i);
+RcppExport SEXP _roleR_testUpdatePhylo(SEXP treSEXP, SEXP iSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< S4 >::type tre(treSEXP);
     Rcpp::traits::input_parameter< int >::type i(iSEXP);
-    Rcpp::traits::input_parameter< double >::type scale(scaleSEXP);
-    rcpp_result_gen = Rcpp::wrap(testUpdatePhylo(tre, i, scale));
+    rcpp_result_gen = Rcpp::wrap(testUpdatePhylo(tre, i));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -103,7 +102,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_roleR_getParamFun", (DL_FUNC) &_roleR_getParamFun, 2},
     {"_roleR_roleCommTester", (DL_FUNC) &_roleR_roleCommTester, 2},
     {"_roleR_s4FromRcpp", (DL_FUNC) &_roleR_s4FromRcpp, 1},
-    {"_roleR_testUpdatePhylo", (DL_FUNC) &_roleR_testUpdatePhylo, 3},
+    {"_roleR_testUpdatePhylo", (DL_FUNC) &_roleR_testUpdatePhylo, 2},
     {"_roleR_simRole", (DL_FUNC) &_roleR_simRole, 2},
     {NULL, NULL, 0}
 };
