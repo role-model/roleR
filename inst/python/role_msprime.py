@@ -89,6 +89,11 @@ def sim_role(Jm,
     # proportional metacomm abundances (needed for calc imm rate)
     meta_p = {f"{x+1}":(y / Jm) for x,y in enumerate(meta_abund)}
 
+    # convert generation-based times to myr to match tree branch length units
+    curtime = curtime * 1e-06
+    gens    = np.array(gens) * 1e-06
+    tdiv    = tdiv * 1e-06
+
     # NOTE: all time objects **must** be sorted from ancient to current
     tdiv = pd.DataFrame(tdiv, columns = local_sad.columns)
     local_tdiv_ts = tdiv.to_dict("records")
@@ -267,7 +272,7 @@ def sim_role(Jm,
         "time": ntab.time})
     df_ind = df_ind[df_ind["ids"] > -1] # NOTE!! this only works if `ploidy = 1`
 
-    # flip time from backward direction to forward
+    # flip time from backward direction to forward 
     df_ind["time"] = curtime - df_ind["time"]
 
     # snap forward times to nearest gens value; the epsilon clipping above
@@ -276,6 +281,9 @@ def sim_role(Jm,
     df_ind["time"] = df_ind["time"].apply(
         lambda t: float(gens_arr[np.argmin(np.abs(gens_arr - t))])
     )
+
+    # convert times back to generations for matching with R
+    df_ind["time"] = df_ind["time"] * 1e+06
 
     # get actual names of the populations
     pop_names = pd.Series([pop.metadata["name"] for pop in mts.tables.populations])
