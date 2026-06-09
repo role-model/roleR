@@ -307,33 +307,3 @@ def sim_role(Jm,
     return df_ind, df_spp
 
 
-def test_force_ultrametric(tree):
-    """
-    Force all leaf nodes to time 0
-    Input a newick tree in string format
-    Output is a modified newick tree with all leaves having equal total length
-    """
-    
-    # Parse the newick tree string.
-    parsed = newick.loads(tree)
-    if len(parsed) == 0:
-        raise ValueError(f"Not a valid newick tree: '{tree}'")
-    root = parsed[0]
-
-    # Set node depths (distances from root).
-    stack = [(root, 0)]
-    max_depth = 0
-    while len(stack) > 0:
-        node, depth = stack.pop()
-        if depth > max_depth:
-            max_depth = depth
-        node.depth = depth
-        for child in node.descendants:
-            stack.append((child, depth + child.length))
-    for node in root.walk():
-        if node.is_leaf:
-            ## Add offset to node.length to force all nodes to fall at time 0
-            ## The offset is the difference between the depth of this node
-            ## and the max_depth of the deepest leaf node.
-            node.length = node.length + (max_depth - node.depth)
-    return root.newick
