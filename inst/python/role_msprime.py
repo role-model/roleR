@@ -58,7 +58,7 @@ def sim_role(Jm,
     
     Args:
         Jm: Meta community size (int)
-        curtime: Current time in iterations (double)
+        curtime: Current time in generations (double)
         nwk: Newick tree string 
         meta_abund: Meta community abundances (list)
         local_sad: Local community abundances (numpy array)
@@ -170,6 +170,14 @@ def sim_role(Jm,
                         initial_size = local_Ne
                     )
 
+                    # strong colonization bottleneck cause only one individual
+                    # at time of colonization
+                    demography.add_simple_bottleneck(
+                        time = split_time,
+                        population = this_loc,
+                        proportion = 1
+                    )
+                    
                     # when adding a pop need to make sure the ancestral pop is
                     # the previous metacomm pop, this may not be the same as
                     # `sp` so we use `this_anc` which initializes as `sp` but
@@ -180,13 +188,7 @@ def sim_role(Jm,
                         ancestral = this_anc # note we use `this_anc`
                     )
 
-                    # strong colonization bottleneck cause only one individual
-                    # at time of colonization
-                    demography.add_simple_bottleneck(
-                        time = split_time,
-                        population = this_loc,
-                        proportion = 1
-                    )
+                    
 
                     # add migration
                     # source is local, dest is meta (cause backward time)
