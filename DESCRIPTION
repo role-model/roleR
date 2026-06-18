@@ -44,6 +44,7 @@ Collate:
     'rolePhylo.R'
     'roleData.R'
     'getSumStats.R'
+    'getters.R'
     'installMsprime.R'
     'roleData-divStats.R'
     'roleData-rawStats.R'
