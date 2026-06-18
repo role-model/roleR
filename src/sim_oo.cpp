@@ -99,9 +99,9 @@ NumericVector getParamFun(S4 p, String s) {
 
 
 // function to update phylo objects in place via pointers
-void updatePhylo(int i, int* sMax, double scale, 
+void updatePhylo(int i, int* sMax,
                  imat* edge, vec* edgeLength,
-                 std::vector<bool>* alive, 
+                 std::vector<bool>* alive,
                  std::vector<std::string>* tipNames) {
     // index of where unrealized edges in edge matrix start
     int eNew = 2 * (*sMax) - 2;
@@ -150,18 +150,6 @@ void updatePhylo(int i, int* sMax, double scale,
     // update alive vector
     (*alive)[*sMax] = true;
 
-    // increase all tip edge lengths by 1 time step
-    IntegerVector x = as<IntegerVector>(wrap(edge->col(1)));
-    IntegerVector y = seq_len(alive->size());
-    LogicalVector alive_rcpp = Rcpp::wrap(*alive);
-    IntegerVector z = y[alive_rcpp];
-
-    LogicalVector ind = in(x, z);
-
-    uvec tipi = find((edge->col(1) <= eNew) && as<uvec>(ind));
-
-    (*edgeLength)(tipi) += 1 * scale;
-
     // update names
     (*tipNames)[*sMax] = "s" + std::to_string(*sMax + 1);
 
@@ -206,6 +194,7 @@ private:
     mat compMat; // from localTrt_ and sigC
     vec envDist; // from localTrt_ and sigE
     double gens; // passed
+    double runningBranchScale; // accumulated 2/J per step, applied in batch
 
 public:
     roleComm(IntegerVector localSpp_,
@@ -257,8 +246,9 @@ public:
     J(getParamFun(params_, "individuals_local")),
     envOptim(getEnvOptim(params_)),
     compMat(compMatCalc(localTrt_, sigC)),
-    envDist(envDistCalc(localTrt_, envOptim, sigE)), 
-    gens(gens_) {}
+    envDist(envDistCalc(localTrt_, envOptim, sigE)),
+    gens(gens_),
+    runningBranchScale(0.0) {}
 
     // `get` methods
     int getSMax() {
@@ -392,17 +382,13 @@ public:
             
             // update last origin
             // check if already present
-            bool newImm = spAbund[inew] == 0;
-            // bool newImm = std::find(localSpp.begin(), 
-            //                         localSpp.end(), 
-            //                         inew) == localSpp.end();
+            // bool newImm = spAbund[inew] == 0;
+            bool newImm = std::find(localSpp.begin(),
+                                    localSpp.end(),
+                                    inew) == localSpp.end();
             if (newImm) { // if not present, update orig time
                 lastOriginStep[inew] = step;
                 lastOriginGen[inew] = 1.0 * gens;
-                // Rcout << "inew is: " << inew << std::endl;
-                // Rcout << "lastOriginGen is: " << lastOriginGen << std::endl;
-                // Rcout << "lastOriginStep is: " << lastOriginStep << std::endl;
-                // Rcout << "gens is: " << gens << std::endl;
             }
         } else { // local birth
             // sample the individual that gives birth
@@ -439,14 +425,19 @@ public:
             // determine parent ID from individual ID
             int iparent = localSpp[i];
             
-            // scale factor converting iterations to generations (2/J)
-            // to phylo branch length units (1/1000000)
-            double scale = 2.0 / J[step] / 1000000;
-            
-            // updatePhylo assumes R-style indexing starting at 1, so need
+            // update branch lengths to step before the current step
+            runningBranchScale -= 2.0 / J[step] / 1000000;
+            updateBranchLengths();
+
+            // now update phylo with new species
+            /// updatePhylo assumes R-style indexing starting at 1, so need
             // to add 1 to `iparent` which has C-style indexing starting at 0
-            updatePhylo(iparent + 1, &sMax, scale, &edge,
+            updatePhylo(iparent + 1, &sMax, &edge,
                         &edgeLength, &alive, &tipNames);
+            
+            // update branches again for current step
+            runningBranchScale = 2.0 / J[step] / 1000000;
+            updateBranchLengths();
 
             // update ID of local individual
             // sMax is now new_sMax = old_sMax + 1; the new species has
@@ -469,6 +460,32 @@ public:
     }
 
     
+    // accumulate 2/J[step] into running branch-length total; called every
+    // iteration from the outer loop in simRole
+    void accumulateBranchScale(int step) {
+        runningBranchScale += 2.0 / J[step] / 1000000;
+    }
+
+    // apply accumulated branch-length increment to all alive-tip edges,
+    // then reset the accumulator; called before snapshots and before
+    // topology-changing events (speciation)
+    void updateBranchLengths() {
+        if (runningBranchScale == 0.0) return;
+
+        // build a uvec of 1-indexed alive tip IDs
+        uvec aliveIds = find(conv_to<uvec>::from(
+            std::vector<unsigned int>(alive.begin(), alive.end())
+        )) + 1; // +1 converts to 1-based tip IDs used in edge matrix
+
+        // find edge rows whose destination is an alive tip
+        uvec col1 = conv_to<uvec>::from(edge.col(1));
+        uvec tipi  = find(any(repmat(col1, 1, aliveIds.n_elem) ==
+                              repmat(aliveIds.t(), col1.n_elem, 1), 1));
+
+        edgeLength(tipi) += runningBranchScale;
+        runningBranchScale = 0.0;
+    }
+
     // book-keeping methods
     void updateDist(int i) {
         // only need to update distances if we're in a non-neutral sim
@@ -513,9 +530,6 @@ public:
     void updateSpInfo(int jdead, int jborn, int step) {
         // update vectors pertaining to sp-level info
         // jdead and jborn are species-level indeces
-        // Rcout << "step is: " << step
-        //       << "; (pre-update) invSum is: " << invSum
-        //       << std::endl;
         
         if (jdead == jborn) {
             // death replaced by birth all in same sp, so no need update `a`
@@ -567,10 +581,6 @@ public:
             lastUpdate[jborn] = step; 
             lastUpdate[jdead] = step;
         }
-        
-        // Rcout << "step is: " << step
-        //       << "; (post-update) invSum is: " << invSum
-        //       << std::endl;
     }
     
     void updateHMean(int step) {
@@ -718,7 +728,7 @@ S4 s4FromRcpp(List x) {
 
 // tester function wrapping the updatePhylo fun
 // [[Rcpp::export]]
-S4 testUpdatePhylo(S4 tre, int i, double scale) {
+S4 testUpdatePhylo(S4 tre, int i) {
     // extract slots into local variables so we can pass their addresses
     int n = as<int>(tre.slot("n"));
     imat e = as<imat>(tre.slot("e"));
@@ -726,7 +736,7 @@ S4 testUpdatePhylo(S4 tre, int i, double scale) {
     std::vector<bool> alive = as<std::vector<bool>>(tre.slot("alive"));
     std::vector<std::string> tipNames = as<std::vector<std::string>>(tre.slot("tipNames"));
 
-    updatePhylo(i, &n, scale, &e, &l, &alive, &tipNames);
+    updatePhylo(i, &n, &e, &l, &alive, &tipNames);
 
     // write updated values back into tre in place and return it
     tre.slot("n") = n;
@@ -755,10 +765,6 @@ List simRole(S4 x, S4 p) {
     int niterTimestep = as<int>(p.slot("niterTimestep"));
     int n = niter / niterTimestep + 1; // number of output values
     
-    // Rcout << "n for model steps is: " << n << std::endl;
-    
-    // niter++; // so we can loop until i < niter
-    
     int k; // index for filling in output list `l`
     
     // object to track max species index
@@ -776,6 +782,9 @@ List simRole(S4 x, S4 p) {
     for (int i = 1; i <= niter; i++) {
         // check if local comm size has changed and update accordingly
         wow.updateJ(i);
+
+        // accumulate 2/J[i] into running branch-length total
+        wow.accumulateBranchScale(i);
         
         // death
         int idead = wow.death(i); 
@@ -800,23 +809,18 @@ List simRole(S4 x, S4 p) {
             // but only for spp with non-0 abund
             
             thisSMax = wow.getSMax();
-
-            // Rcout << "updateSpInfo called from snapshot write-out" << std::endl;
+            
             for (int j = 0; j < thisSMax; j++) {
                 wow.updateSpInfo(j, j, i);
             }
             
-            // Rcout << "END call from snapshot write-out" << std::endl;
-            
+            wow.updateBranchLengths();
             wow.updateHMean(i);
             
             k = (i) / niterTimestep;
             l[k] = clone(s4FromRcpp(wow.getData())); 
         }
         
-        // Rcout << "step is: " << i 
-        //       << "; spAbund is: " << wow.getSpAbund()
-        //       << std::endl;
     }
 
     return l;
