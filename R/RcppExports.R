@@ -21,8 +21,8 @@ s4FromRcpp <- function(x) {
     .Call(`_roleR_s4FromRcpp`, x)
 }
 
-testUpdatePhylo <- function(tre, i, scale) {
-    .Call(`_roleR_testUpdatePhylo`, tre, i, scale)
+testUpdatePhylo <- function(tre, i) {
+    .Call(`_roleR_testUpdatePhylo`, tre, i)
 }
 
 simRole <- function(x, p) {

@@ -4,7 +4,7 @@
 \alias{installMsprime}
 \title{Install Python dependencies for roleR}
 \usage{
-installMsprime(envname = "r-roleR", method = "conda", ...)
+installMsprime(envname = "r-roleR", method = "conda", overwrite = FALSE, ...)
 }
 \arguments{
 \item{envname}{Name of the conda or virtual environment to install into.
@@ -13,6 +13,11 @@ Defaults to \code{"r-roleR"}.}
 \item{method}{Installation method passed to
 \code{\link[reticulate]{py_install}}: \code{"conda"} (default) or
 \code{"virtualenv"}.}
+
+\item{overwrite}{If \code{FALSE} (default), the function checks
+whether \code{envname} already exists and, if so, prints a message and
+returns without reinstalling. Set to \code{TRUE} to overwrite an existing
+environment.}
 
 \item{...}{Additional arguments forwarded to
 \code{\link[reticulate]{py_install}}.}
