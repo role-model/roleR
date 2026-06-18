@@ -450,6 +450,8 @@ public:
 
             // add record for last origin
             lastOriginStep[sMax - 1] = step + 1; // +1 cause will pass `step-1`
+            // generation at speciation: step * 2/J, matching R's gens formula
+            lastOriginGen[sMax - 1] = 1.0 * step * 2.0 / J[step];
 
             inew = sMax - 1;
         } else {

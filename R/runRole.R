@@ -203,6 +203,7 @@ getValuesFromParams <- function(p, i) {
 # the model object with updated pop gen info
 
 runmsprim <- function(m) {
+    
     # number of temporal snapshots
     ntshot <- length(m@modelSteps)
     
@@ -226,68 +227,94 @@ runmsprim <- function(m) {
     metaAbund <- round(m@modelSteps[[1]]@metaComm@spAbund * 
                            m@info$individuals_meta[1])
     
-    # meta tree needs to modified to have tip labels corresponding to spp IDs
-    # but preceded by a character cause msprime canʻt make populations with 
-    # number names
+    # number of original metacommunity species (may be < nspp after speciation)
+    nspp_meta <- m@params@species_meta
+
+    # build the ape phylo with numbered tip labels t1..tnspp
     tre <- as(finalPhylo, "phylo")
     tre$tip.label <- paste0("t", 1:nspp)
-    nwk <- ape::write.tree(tre, digits = 18)
-    
+
+    # for each locally speciated species (index > nspp_meta), find its sibling
+    # tip in the phylo — that sibling is the species it budded from (its parent)
+    parent_of <- integer(nspp)
+    if (nspp > nspp_meta) {
+        e <- tre$edge
+        for (k in (nspp_meta + 1):nspp) {
+            pnode <- e[e[, 2] == k, 1]
+            sib   <- e[e[, 1] == pnode & e[, 2] <= nspp & e[, 2] != k, 2]
+            parent_of[k] <- sib[1]
+        }
+    }
+
+    # prune the newick to only the original metacommunity species so that
+    # from_species_tree does not create splits that deactivate meta populations
+    # before their local-colonisation split time
+    if (nspp > nspp_meta) {
+        tre_meta <- ape::keep.tip(tre, paste0("t", 1:nspp_meta))
+    } else {
+        tre_meta <- tre
+    }
+    nwk <- ape::write.tree(tre_meta, digits = 18)
+
     # time in generations of each snapshot
     gens <- m@info$generations
-    
+
     # harmonic mean of local community size
     Jharm <- m@params@individuals_local(1:m@params@niter)
     Jharm <- length(Jharm) / sum(1 / Jharm)
-    
+
     # python ----
-    
+
     sim_role <- get_sim_role()
 
-    res <- sim_role(Jm = m@params@individuals_meta, 
-                    curtime = max(gens), 
-                    nwk = nwk, 
-                    meta_abund = metaAbund, 
-                    local_sad = tBySpp, 
-                    local_hm = tByHmean,  
-                    J_harm = Jharm,  
-                    gens = gens, 
-                    tdiv = tdiv, 
-                    alpha = m@params@alpha(1), 
-                    m = m@params@dispersal_prob(1), 
-                    sequence_length = m@params@num_basepairs, 
-                    mu = m@params@mutation_rate)
-    
+    res <- sim_role(Jm = m@params@individuals_meta,
+                    curtime = max(gens),
+                    nwk = nwk,
+                    meta_abund = metaAbund,
+                    local_sad = tBySpp,
+                    local_hm = tByHmean,
+                    J_harm = Jharm,
+                    gens = gens,
+                    tdiv = tdiv,
+                    alpha = m@params@alpha(1),
+                    m = m@params@dispersal_prob(1),
+                    sequence_length = m@params@num_basepairs,
+                    mu = m@params@mutation_rate,
+                    parent_of = parent_of)
+
     # msprime output as list of R data.frames
     # res[[1]] is data.frame of sequences per individual
     # res[[2]] is data.frame of pop gen sum stats per spp
     res <- reticulate::py_to_r(res)
-    
+
     # split by time, because need to match time and modelSteps
     indDat <- split(res[[1]], res[[1]]$time)
     sppDat <- split(res[[2]], res[[2]]$time)
-    
+
     for(i in 1:ntshot) {
         thisGen <- m@info$generations[i]
-        
+
         theseIndDat <- indDat[[as.character(thisGen)]]
         theseSppDat <- sppDat[[as.character(thisGen)]]
-        
+
         # species IDs from roleModel object
         theseID <- m@modelSteps[[i]]@localComm@indSpecies
-        
+
         # add sorted sequence data to model output
         m@modelSteps[[i]]@localComm@indSeqs <- mergeSpp(theseIndDat, theseID)
-        
-        # sort spp level data
-        theseSppDat <- theseSppDat[order(theseSppDat$sp_id), ]
-        
-        # add sorted gen div data
-        m@modelSteps[[i]]@localComm@spGenDiv <- theseSppDat$pi
-        
-        # add sorted tajima d data (no slot so won't work right now)
-        # m@modelSteps[[i]]@localComm@spTajD <- theseSppDat$tajimas_D
-        
+
+        # assign pi and Tajima's D by numeric species ID into pre-allocated
+        # NA vectors; this correctly handles species absent at a snapshot and
+        # avoids lexicographic sort issues for species IDs >= 10
+        spIds <- as.integer(theseSppDat$sp_id)
+
+        spGenDiv <- rep(NA_real_, nspp)
+        spGenDiv[spIds] <- theseSppDat$pi
+        m@modelSteps[[i]]@localComm@spGenDiv <- spGenDiv
+
+        spTajD <- rep(NA_real_, nspp)
+        spTajD[spIds] <- theseSppDat$tajimas_D
+        m@modelSteps[[i]]@localComm@spTajD <- spTajD
     }
     
     return(m)

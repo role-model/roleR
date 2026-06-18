@@ -39,19 +39,20 @@ def _force_ultrametric(tree):
 
 
 
-def sim_role(Jm, 
-             curtime, 
-             nwk, 
-             meta_abund, 
-             local_sad, 
-             local_hm, 
+def sim_role(Jm,
+             curtime,
+             nwk,
+             meta_abund,
+             local_sad,
+             local_hm,
              J_harm,
-             gens, 
-             tdiv, 
-             alpha, 
-             m, 
-             sequence_length, 
-             mu, 
+             gens,
+             tdiv,
+             alpha,
+             m,
+             sequence_length,
+             mu,
+             parent_of = None,
              seed = None):
     """
     Simulate population genetics based on the ROLE model framework.
@@ -109,7 +110,11 @@ def sim_role(Jm,
     # determine when observations are made
 
     sampset = [] # empty list to hold sample sets
-    
+
+    # tracks the most-recently-added local population for each species; used
+    # so that locally speciated species can split from their parent's local pop
+    sp_to_loc = {}
+
     for sp in meta_p.keys():
         # we track the ancestral population with `this_anc` which will update
         # after each addition of a local population
@@ -131,11 +136,10 @@ def sim_role(Jm,
                 # tags to note _m_eta/_l_ocal and _t_ime
                 meta_sp = f"m_{t}_{sp}"
                 local_sp = f"l_{t}_{sp}"
-                
+
                 # since abund is > 0 we will be updating migration rate, so
                 # calcualte it here for future use
                 m_rate = m * meta_p[sp] * J_harm / (2 * local_hm_ts[t][sp])
-
 
                 # set value of `add_yn` (determine if adding populations) based
                 # on whether t == 0 (always add in initial time step)
@@ -155,7 +159,7 @@ def sim_role(Jm,
 
                     # needed info for adding pops
                     local_Ne = local_hm_ts[t][sp] * alpha # harmonic mean = Ne
-                    
+
                     # gens accumulates C++ floating-point error and can
                     # slightly exceed curtime, making the difference negative
                     split_time = max(1e-09, curtime - local_tdiv_ts[t][sp])
@@ -177,7 +181,7 @@ def sim_role(Jm,
                         population = this_loc,
                         proportion = 1
                     )
-                    
+
                     # when adding a pop need to make sure the ancestral pop is
                     # the previous metacomm pop, this may not be the same as
                     # `sp` so we use `this_anc` which initializes as `sp` but
@@ -187,8 +191,6 @@ def sim_role(Jm,
                         derived = [this_meta, this_loc],
                         ancestral = this_anc # note we use `this_anc`
                     )
-
-                    
 
                     # add migration
                     # source is local, dest is meta (cause backward time)
@@ -241,6 +243,76 @@ def sim_role(Jm,
 
                 sampset.append(this_samp)
 
+        # record the final active local population for this meta species so
+        # that locally speciated descendants can split from it
+        sp_to_loc[sp] = this_loc
+
+    # ---- locally speciated species ----
+    # these are species not in meta_p (index > species_meta); they have no
+    # metacommunity counterpart and must be added as local pops splitting from
+    # their parent species' local population at the time of speciation.
+    if parent_of is not None:
+        all_sp_ids = list(local_sad.columns)
+
+        # collect locally speciated species with their speciation generation
+        spec_info = []
+        for sp in all_sp_ids:
+            if sp not in meta_p:
+                # find first snapshot where this species exists
+                for t in range(len(local_sad_ts)):
+                    if local_sad_ts[t][sp] > 0:
+                        spec_gen = local_tdiv_ts[t][sp]
+                        spec_info.append((sp, spec_gen))
+                        break
+
+        # process in ascending spec_gen order so parent pops exist first
+        spec_info.sort(key=lambda x: x[1])
+
+        for sp, spec_gen in spec_info:
+            # parent species (1-indexed from R)
+            parent_sp = str(int(parent_of[int(sp) - 1]))
+
+            # the parent's currently active local pop
+            ancestral_loc = sp_to_loc.get(parent_sp, f"l_0_{parent_sp}")
+
+            # local Ne from first non-zero harmonic mean
+            local_Ne = 1.0
+            for t in range(len(local_hm_ts)):
+                if local_sad_ts[t][sp] > 0:
+                    local_Ne = max(1.0, local_hm_ts[t][sp] * alpha)
+                    break
+
+            local_sp = f"l_spec_{sp}"
+            split_time = max(1e-09, curtime - spec_gen)
+
+            demography.add_population(name=local_sp, initial_size=local_Ne)
+
+            # bottleneck at founding (single-individual founder effect)
+            demography.add_simple_bottleneck(
+                time=split_time, population=local_sp, proportion=1
+            )
+
+            # split from parent's local population at speciation backward time
+            demography.add_population_split(
+                time=split_time,
+                derived=[local_sp],
+                ancestral=ancestral_loc
+            )
+
+            # record this species' local pop for any future descendants
+            sp_to_loc[sp] = local_sp
+
+            # add samples for each snapshot where this species exists
+            for t in range(len(local_sad_ts)):
+                this_abund = local_sad_ts[t][sp]
+                if this_abund > 0:
+                    samp_time = curtime - gens[t]
+                    split_time_this_loc = max(1e-09, curtime - local_tdiv_ts[t][sp])
+                    if samp_time >= split_time_this_loc:
+                        samp_time = split_time_this_loc - 1e-09
+                    sampset.append(msprime.SampleSet(
+                        this_abund, population=local_sp, time=samp_time
+                    ))
 
     # make sure demographic events are in proper ascending order
     # (backward in time)
