@@ -5,3 +5,94 @@ vignette: >
   %\VignetteEngine{quarto::html}
   %\VignetteEncoding{UTF-8}
 ---
+
+
+## Installation and setup
+
+```{r}
+#| label: install
+
+devtools::install_github("role-model/roleR")
+```
+
+```{r}
+#| label: setup
+
+# load package as normal
+library(roleR)
+
+# only once after initial installation, we need to install python
+# package `msprime` and its dependencies
+installMsprime()
+```
+
+
+
+## Quick start
+
+```{r}
+
+# set-up parameters
+p <- roleParams(
+    individuals_local = 1000,
+    individuals_meta = 1000000,
+    species_meta = 50,
+    speciation_local = 0, #1e-05,
+    speciation_meta = 4,
+    extinction_meta = 3.8,
+    trait_sigma = 2,
+    env_sigma = 1,
+    comp_sigma = 1,
+    dispersal_prob = 0.5,
+    mutation_rate = 1e-07,
+    equilib_escape = 1,
+    alpha = 1e+05,
+    num_basepairs = 500,
+    init_type = "oceanic_island",
+    niter = 10000,
+    niterTimestep = 5000
+)
+
+# initialize the model
+m <- roleModel(p)
+
+# run the model
+r <- runRole(m)
+
+r@info
+
+boo <- getLocalComm(r)
+cbind(boo@spGenDiv, 
+      boo@spTajD, 
+      boo@spAbund, 
+      boo@spAbundHarmMean)
+
+plot(boo@spAbundHarmMean, boo@spAbund)
+
+
+
+t0 <- getPhylo(r, 1) |> as("phylo")
+tt <- getPhylo(r) |> as("phylo")
+
+plot(t0); axis(1)
+plot(tt); axis(1)
+
+(ape::node.depth.edgelength(t0) |> max()) - 
+    (ape::node.depth.edgelength(tt) |> max())
+
+
+
+
+# get results
+getSumStats(m, list(rich = richness, hill = hillAbund))
+```
+
+## Setting parameters
+
+## Initializing a roleModel
+
+## Running a roleModel
+
+## RoLE Experiments
+
+## Calculating summary statistics
