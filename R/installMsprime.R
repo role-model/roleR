@@ -11,6 +11,10 @@
 #' @param method Installation method passed to
 #'   \code{\link[reticulate]{py_install}}: \code{"conda"} (default) or
 #'   \code{"virtualenv"}.
+#' @param overwrite If \code{FALSE} (default), the function checks
+#'   whether \code{envname} already exists and, if so, prints a message and
+#'   returns without reinstalling. Set to \code{TRUE} to overwrite an existing
+#'   environment.
 #' @param ... Additional arguments forwarded to
 #'   \code{\link[reticulate]{py_install}}.
 #'
@@ -18,7 +22,26 @@
 #'
 #' @export
 
-installMsprime <- function(envname = "r-roleR", method = "conda", ...) {
+installMsprime <- function(envname = "r-roleR", method = "conda",
+                           overwrite = FALSE, ...) {
+    # check for an existing environment unless the user opts out
+    if (!overwrite) {
+        if (method == "conda") {
+            existing <- envname %in% reticulate::conda_list()$name
+        } else {
+            existing <- envname %in% reticulate::virtualenv_list()
+        }
+
+        if (existing) {
+            message(
+                "Environment '", envname, "' already exists. ",
+                "Skipping installation.\n",
+                "To overwrite it, re-run with overwrite = TRUE."
+            )
+            return(invisible(NULL))
+        }
+    }
+
     reqs <- system.file("python", "requirements.txt", package = "roleR")
     pkgs <- readLines(reqs)
 
