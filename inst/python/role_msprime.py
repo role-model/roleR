@@ -125,6 +125,11 @@ def sim_role(Jm,
         this_loc = f"l_0_{sp}"
         this_meta = f"m_0_{sp}"
 
+        # track whether any local population has been added for this species;
+        # used instead of `t == 0` so the first nonzero-abundance snapshot
+        # always triggers an add even if spAbund was 0 at t=0
+        pop_added = False
+
         for t in range(len(local_sad_ts)):
             # `t` is the *index* for snapshots
 
@@ -141,15 +146,17 @@ def sim_role(Jm,
                 # calcualte it here for future use
                 m_rate = m * meta_p[sp] * J_harm / (2 * local_hm_ts[t][sp])
 
-                # set value of `add_yn` (determine if adding populations) based
-                # on whether t == 0 (always add in initial time step)
-                add_yn = True if t == 0 else False
+                # add a new local population if this is the first nonzero
+                # snapshot for this species (pop_added=False), or if the
+                # divergence time changed (new colonisation / speciation event)
+                add_yn = not pop_added
 
-                # if t!= 0, determine if we still add a new pop for this lineage
+                # if already added, check if divergence time changed
                 if (not add_yn) and local_tdiv_ts[t][sp] != local_tdiv_ts[t - 1][sp]:
                     add_yn = True
 
                 if add_yn:
+                    pop_added = True
                     # track the pops with `this_loc` and `this_meta` which will
                     # update at each addition of a local comm population; we
                     # have to track separately because we might need to take a

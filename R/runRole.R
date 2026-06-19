@@ -234,15 +234,25 @@ runmsprim <- function(m) {
     tre <- as(finalPhylo, "phylo")
     tre$tip.label <- paste0("t", 1:nspp)
 
-    # for each locally speciated species (index > nspp_meta), find its sibling
-    # tip in the phylo — that sibling is the species it budded from (its parent)
+    # for each locally speciated species (index > nspp_meta), find its parent —
+    # the species it budded from. In a budding model the parent always keeps a
+    # lower index than the bud, so the parent is the tip with the smallest index
+    # in the sibling subtree. We need recursive descent because the sibling can
+    # itself be an internal node when the parent has speciated again since k arose.
+    tips_in_subtree <- function(e, node, ntips) {
+        if (node <= ntips) return(node)
+        children <- e[e[, 1] == node, 2]
+        unlist(lapply(children, tips_in_subtree, e = e, ntips = ntips))
+    }
+
     parent_of <- integer(nspp)
     if (nspp > nspp_meta) {
         e <- tre$edge
         for (k in (nspp_meta + 1):nspp) {
-            pnode <- e[e[, 2] == k, 1]
-            sib   <- e[e[, 1] == pnode & e[, 2] <= nspp & e[, 2] != k, 2]
-            parent_of[k] <- sib[1]
+            pnode    <- e[e[, 2] == k, 1]
+            sib_node <- e[e[, 1] == pnode & e[, 2] != k, 2]
+            sib_tips <- tips_in_subtree(e, sib_node, nspp)
+            parent_of[k] <- min(sib_tips)
         }
     }
 
