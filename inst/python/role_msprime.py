@@ -115,6 +115,12 @@ def sim_role(Jm,
     # so that locally speciated species can split from their parent's local pop
     sp_to_loc = {}
 
+    # tracks ALL local populations per species as (pop_name, colonisation_gen)
+    # pairs; needed to find the correct ancestral pop for locally speciated
+    # species when the parent may have gone extinct and recolonised after the
+    # speciation event (sp_to_loc would give the wrong, more recent pop)
+    sp_loc_history = defaultdict(list)
+
     for sp in meta_p.keys():
         # we track the ancestral population with `this_anc` which will update
         # after each addition of a local population
@@ -164,6 +170,9 @@ def sim_role(Jm,
                     this_loc = local_sp
                     this_meta = meta_sp
 
+                    # record in history for use by locally speciated descendants
+                    sp_loc_history[sp].append((this_loc, local_tdiv_ts[t][sp]))
+
                     # needed info for adding pops
                     local_Ne = local_hm_ts[t][sp] * alpha # harmonic mean = Ne
 
@@ -176,9 +185,14 @@ def sim_role(Jm,
                         initial_size = meta_Nes[sp]
                     )
 
+                    # initially_active = True is required: a local pop can be
+                    # the *ancestral* pop of a local speciation split, and
+                    # msprime makes ancestral pops INACTIVE until their split
+                    # time, so sampling them at more recent times would error
                     demography.add_population(
                         name = this_loc,
-                        initial_size = local_Ne
+                        initial_size = local_Ne,
+                        initially_active = True
                     )
 
                     # strong colonization bottleneck cause only one individual
@@ -275,12 +289,42 @@ def sim_role(Jm,
         # process in ascending spec_gen order so parent pops exist first
         spec_info.sort(key=lambda x: x[1])
 
+        def _find_ancestral_pop(start_sp, s_gen):
+            """
+            Return (pop_name, col_gen) for the nearest ancestor of start_sp
+            that has a recorded local population (in sp_loc_history).
+            Walks up the parent_of chain when intermediate species were never
+            recorded (e.g. appeared and went extinct between snapshots).
+            Returns col_gen=None when falling back to a phylogenetic meta pop
+            (t{sp}), which is always active so no split-time adjustment needed.
+            """
+            cur_sp = start_sp
+            for _ in range(10000):  # safety limit against cycles
+                if sp_loc_history[cur_sp]:
+                    cands = [(n, cg) for n, cg in sp_loc_history[cur_sp]
+                             if cg <= s_gen]
+                    if cands:
+                        return max(cands, key=lambda x: x[1])
+                    return min(sp_loc_history[cur_sp], key=lambda x: x[1])
+                # walk to this species' own parent
+                idx = int(cur_sp) - 1
+                if idx < 0 or idx >= len(parent_of):
+                    break
+                p = int(parent_of[idx])
+                if p <= 0:
+                    break  # reached a meta species with no local pop
+                cur_sp = str(p)
+            # fell back to meta phylo pop for cur_sp (active for millions of gens)
+            return f"t{cur_sp}", None
+
         for sp, spec_gen in spec_info:
             # parent species (1-indexed from R)
             parent_sp = str(int(parent_of[int(sp) - 1]))
 
-            # the parent's currently active local pop
-            ancestral_loc = sp_to_loc.get(parent_sp, f"l_0_{parent_sp}")
+            # find the parent's local pop that was active at spec_gen, walking
+            # up the parent_of chain if the immediate parent was never recorded
+            # (appeared and went extinct between snapshots)
+            ancestral_loc, parent_col_gen = _find_ancestral_pop(parent_sp, spec_gen)
 
             # local Ne from first non-zero harmonic mean
             local_Ne = 1.0
@@ -290,9 +334,21 @@ def sim_role(Jm,
                     break
 
             local_sp = f"l_spec_{sp}"
+            # parent_col_gen is None when we fell back to a phylo meta pop
+            # (active for millions of gens, so no adjustment ever needed)
+            parent_split_time = (float('inf') if parent_col_gen is None
+                                 else max(1e-09, curtime - parent_col_gen))
             split_time = max(1e-09, curtime - spec_gen)
 
-            demography.add_population(name=local_sp, initial_size=local_Ne)
+            # child must split strictly before parent deactivates; equal times
+            # cause msprime to deactivate the parent first (stable sort on
+            # insertion order, meta-loop events come first)
+            if split_time >= parent_split_time:
+                split_time = max(1e-09, parent_split_time - 1e-09)
+
+            # initially_active = True: see note above (may itself be a parent)
+            demography.add_population(name=local_sp, initial_size=local_Ne,
+                                      initially_active=True)
 
             # bottleneck at founding (single-individual founder effect)
             demography.add_simple_bottleneck(
@@ -306,17 +362,19 @@ def sim_role(Jm,
                 ancestral=ancestral_loc
             )
 
-            # record this species' local pop for any future descendants
+            # record this species' local pop for any future descendants;
+            # sp_loc_history enables the history-based ancestral lookup above
             sp_to_loc[sp] = local_sp
+            sp_loc_history[sp].append((local_sp, spec_gen))
 
             # add samples for each snapshot where this species exists
             for t in range(len(local_sad_ts)):
                 this_abund = local_sad_ts[t][sp]
                 if this_abund > 0:
                     samp_time = curtime - gens[t]
-                    split_time_this_loc = max(1e-09, curtime - local_tdiv_ts[t][sp])
-                    if samp_time >= split_time_this_loc:
-                        samp_time = split_time_this_loc - 1e-09
+                    # clip samp_time to be strictly before this pop's split_time
+                    if samp_time >= split_time:
+                        samp_time = split_time - 1e-09
                     sampset.append(msprime.SampleSet(
                         this_abund, population=local_sp, time=samp_time
                     ))
@@ -326,14 +384,46 @@ def sim_role(Jm,
     demography.sort_events()
 
     # simulate ancestry with specific sampling times
-    ts = msprime.sim_ancestry(
-        samples = sampset,
-        demography = demography,
-        ploidy = 1,
-        sequence_length = sequence_length, 
-        recombination_rate = 0,
-        record_provenance = False
-    )
+    try:
+        ts = msprime.sim_ancestry(
+            samples = sampset,
+            demography = demography,
+            ploidy = 1,
+            sequence_length = sequence_length,
+            recombination_rate = 0,
+            record_provenance = False
+        )
+    except Exception as e:
+        import sys
+        print("=== DEMOGRAPHY DEBUG ===", file=sys.stderr)
+        print(f"curtime={curtime}", file=sys.stderr)
+        # build deactivation time map: pop_name -> time it becomes inactive
+        _deact = {}
+        for ev in demography.events:
+            if hasattr(ev, 'derived'):
+                for p in ev.derived:
+                    _deact[p] = ev.time
+        # activation time map: ancestral pops that are not initially_active
+        # are INACTIVE (so unsampleable) until their earliest split event
+        _act = {}
+        for ev in demography.events:
+            if hasattr(ev, 'ancestral'):
+                anc = ev.ancestral
+                _act[anc] = min(_act.get(anc, float('inf')), ev.time)
+        print("Sample violations (samp_time >= deact_time or "
+              "samp_time < act_time):", file=sys.stderr)
+        for ss in sampset:
+            pop = ss.population if not isinstance(ss.population, int) \
+                  else demography[ss.population].name
+            deact = _deact.get(pop, float('inf'))
+            pop_obj = demography[pop]
+            act = (0.0 if getattr(pop_obj, 'initially_active', None)
+                   else _act.get(pop, 0.0))
+            flag = ("*** VIOLATION ***"
+                    if (ss.time >= deact or ss.time < act) else "")
+            print(f"  {flag} pop={pop}  n={ss.num_samples}  "
+                  f"samp={ss.time:.15f}  deact={deact:.15f}  act={act:.15f}", file=sys.stderr)
+        raise
     
     # simulate mutations
     mts = msprime.sim_mutations(ts, rate = mu, record_provenance = False)

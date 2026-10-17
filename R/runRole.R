@@ -48,6 +48,7 @@ setMethod('runRole',
               m <- trimModelData(m)
 
               # browser()
+              print("done with forward time")
               # add popgen
               m <- runmsprim(m)
               
@@ -249,10 +250,26 @@ runmsprim <- function(m) {
     if (nspp > nspp_meta) {
         e <- tre$edge
         for (k in (nspp_meta + 1):nspp) {
-            pnode    <- e[e[, 2] == k, 1]
-            sib_node <- e[e[, 1] == pnode & e[, 2] != k, 2]
-            sib_tips <- tips_in_subtree(e, sib_node, nspp)
-            parent_of[k] <- min(sib_tips)
+            # Climb the tree from k upward until the other-side subtree contains
+            # a tip with index < k.  The minimum such tip is k's biological parent.
+            # Simple `min(sib_tips)` at the direct parent fails when k has itself
+            # speciated: k's sibling in the final tree becomes k's child (higher
+            # index), not k's actual parent.
+            cur <- k
+            found <- FALSE
+            for (depth in seq_len(nspp * 2L)) {
+                pnode <- e[e[, 2] == cur, 1]
+                if (length(pnode) == 0L) break   # reached root (shouldn't happen)
+                other_children <- e[e[, 1] == pnode & e[, 2] != cur, 2]
+                other_tips <- unlist(lapply(other_children, tips_in_subtree,
+                                           e = e, ntips = nspp))
+                if (length(other_tips) > 0L && min(other_tips) < k) {
+                    parent_of[k] <- min(other_tips)
+                    found <- TRUE
+                    break
+                }
+                cur <- pnode
+            }
         }
     }
 

@@ -37,9 +37,30 @@ updateLocalComm <- function(model, value, slot = NULL) {
     } else {
         validateLocalCommSlot(slot, value, sm, J)
         methods::slot(model@modelSteps[[1]]@localComm, slot) <- value
+        # when indSpecies changes, recompute all derived species-level slots so
+        # they are consistent in length (= species_meta) and value
+        if (slot == "indSpecies") {
+            model@modelSteps[[1]]@localComm <-
+                .syncLocalCommSppSlots(model@modelSteps[[1]]@localComm, sm, J)
+        }
     }
 
     model
+}
+
+
+# recompute species-level slots from indSpecies; pads to sm bins so all
+# species-level vectors have the same length expected by bufferModelData
+.syncLocalCommSppSlots <- function(lc, sm, J) {
+    spAbund <- tabulate(lc@indSpecies, nbins = sm)
+    lc@spAbund           <- spAbund
+    lc@spAbundHarmMean   <- spAbund
+    lc@spPropHarmMean    <- spAbund / J
+    lc@spLastOriginStep  <- numeric(sm)
+    lc@spLastOriginGen   <- numeric(sm)
+    lc@spGenDiv          <- rep(NA_real_, sm)
+    lc@spTajD            <- rep(NA_real_, sm)
+    lc
 }
 
 

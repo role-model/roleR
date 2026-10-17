@@ -36,17 +36,19 @@ installMsprime()
 p <- roleParams(
     individuals_local = 1000,
     individuals_meta = 1000000,
-    species_meta = 50,
-    speciation_local = 0, #1e-05,
+    species_meta = 20,
+    speciation_local = 1e-05,
     speciation_meta = 4,
     extinction_meta = 3.8,
     trait_sigma = 2,
     env_sigma = 1,
     comp_sigma = 1,
-    dispersal_prob = 0.5,
+    dispersal_prob = 0.05,
     mutation_rate = 1e-07,
+    neut_delta = 0.1,
+    env_comp_delta = 0,
     equilib_escape = 1,
-    alpha = 1e+05,
+    alpha = 2e+05,
     num_basepairs = 500,
     init_type = "oceanic_island",
     niter = 10000,
@@ -67,7 +69,8 @@ cbind(boo@spGenDiv,
       boo@spAbund, 
       boo@spAbundHarmMean)
 
-plot(boo@spAbundHarmMean, boo@spAbund)
+plot(boo@spAbund, boo@spTajD)
+plot(boo@spAbund, boo@spGenDiv)
 
 
 
