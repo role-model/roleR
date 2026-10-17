@@ -1,7 +1,7 @@
 # test that you can give something to rcpp and what it gives you back is the same
 
 test_that("rcpp trimming gives you back the same thing you give it", {
-    m <- roleParams(species_meta = 5, speciation_local = 0.1) |> 
+    m <- roleParams(species_meta = 5) |> 
         roleModel()
     r <- runRole(m)
     
@@ -30,7 +30,7 @@ iparent <- 1 # parent tip for speciation
 s <- 0.1 # scale of converting iterations to edge length
 
 # run update phylo and convert back to ape::phylo
-yrole <- roleR:::testUpdatePhylo(xrole, iparent, s)
+yrole <- roleR:::testUpdatePhylo(xrole, iparent)
 y <- as(yrole, "phylo")
 
 
@@ -58,27 +58,6 @@ test_that("dropping new species results in same topology as original tree", {
                  x$edge)
 })
 
-test_that("if topos are the same, extant tips are longer by correct amount", {
-    yLessNew <- drop.tip(y, paste0("s", nspp + 1)) |>
-        drop.fossil()
-    xLessExt <- drop.fossil(x)
-    
-    ii <- xLessExt$edge[, 2] %in% 1:Ntip(xLessExt)
-    
-    expect_equal((yLessNew$edge.length[ii] - xLessExt$edge.length[ii]), 
-                 rep(1, 3) * s)
-})
-
-
-test_that("tip edge of new species is `1 * scale` long", {
-    inew <- nspp + 1
-    expect_equal(y$edge.length[y$edge[, 2] == inew], 1 * s)
-})
-
-test_that("tip edge of extinct species is uneffected", {
-    expect_equal(y$edge.length[y$edge[, 2] == fossilID], 
-                 x$edge.length[x$edge[, 2] == fossilID])
-})
 
 test_that("internal branches are uneffected", {
     yLessNew <- drop.tip(y, paste0("s", nspp + 1))

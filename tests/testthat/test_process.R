@@ -111,7 +111,8 @@ test_that("filtering: two spp with same trait have ~equal abundance", {
 
     # test uses binomial assumption for distribution of sp1 count
     expect_lte(nsp1, qbinom(1 - .Machine$double.eps^0.5, 100, 0.5))
-    expect_gte(nsp1, qbinom(1 - .Machine$double.eps^0.5, 100, 0.5, lower.tail = FALSE))
+    expect_gte(nsp1, qbinom(1 - .Machine$double.eps^0.5, 100, 0.5, 
+                            lower.tail = FALSE))
 })
 
 
@@ -120,7 +121,7 @@ test_that("filtering: two spp with same trait have ~equal abundance", {
 
 test_that("speciation increases species richness", {
     n <- 10000
-    nspp0 <- 2
+    nspp0 <- 20
     p <- roleParams(niter = n,
                     niterTimestep = n / 2,
                     species_meta = nspp0,
@@ -193,7 +194,7 @@ test_that("offspring trait is closer to parent species trait than to other speci
     n <- 1
     indsLocs <- 2
     p <- roleParams(niter = n,
-                    niterTimestep = 1,
+                    niterTimestep = n,
                     species_meta = 2,
                     individuals_meta = 100,
                     individuals_local = indsLocs,
@@ -212,6 +213,12 @@ test_that("offspring trait is closer to parent species trait than to other speci
     # init: one of each spp
     m@modelSteps[[1]]@localComm@indSpecies <- c(1, 2)
     m@modelSteps[[1]]@localComm@indTrait <- matrix(c(-100, 100), ncol = 1)
+    m@modelSteps[[1]]@localComm@spAbund <- c(1, 1)
+    m@modelSteps[[1]]@localComm@spAbundHarmMean <- c(1, 1)
+    m@modelSteps[[1]]@localComm@spPropHarmMean <- c(0.5, 0.5)
+    m@modelSteps[[1]]@localComm@spLastOriginStep <- c(0, 0)
+    m@modelSteps[[1]]@localComm@spLastOriginGen <- c(0, 0)
+    
 
     mr <- runRole(m)
 
@@ -221,7 +228,8 @@ test_that("offspring trait is closer to parent species trait than to other speci
     newID <- which(trtsInit[, 1] != trtsFinal[, 1])
     parentSp <- mr@modelSteps[[2]]@localComm@indSpecies[newID]
 
-    # offspring trait should be closer to its parent species trait than to the other species
+    # offspring trait should be closer to its parent species trait than to 
+    # the other species
     expect_lt(
         abs(metaTrt[parentSp, 1] - trtsFinal[newID, 1]),
         abs(diff(metaTrt[, 1]))

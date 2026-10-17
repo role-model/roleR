@@ -25,15 +25,16 @@ test_that("roleParams errors out if length `timestep` or `niter` are > 1", {
 })
 
 
-test_that("roleParams with a user-supplied iterfun works in runRole", {
-    f <- function(i) {
-        return(i / 1000)
-    }
-    
-    p <- roleParams(speciation_local = f, niter = 100)
-    
-    expect_no_error(runRole(roleModel(p)))
-})
+# currently speciation cannot be a function 
+# test_that("roleParams with a user-supplied iterfun works in runRole", {
+#     f <- function(i) {
+#         return(i / 1000)
+#     }
+#     
+#     p <- roleParams(speciation_local = f, niter = 100)
+#     
+#     expect_no_error(runRole(roleModel(p)))
+# })
 
 
 test_that("roleParams with init_type = 'bridge_island' runs without error", {

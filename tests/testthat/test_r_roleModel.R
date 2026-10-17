@@ -74,12 +74,12 @@ test_that("when a model is run the supplied model is NOT modified in place", {
 #     expect_true(length(m@modelSteps) == 901)
 # })
 
+# msprime bug
 test_that("model copying in C++ does not result in all timesteps being equal", {
-    p <- roleParams(niter = 200, speciation_local = .5) 
-    # create a test model and get data from a step and the params
+    p <- roleParams(niter = 10000, speciation_local = 0.0001, species_meta = 20)
     m <- roleModel(p)
-    m <- runRole(m)    
-    
+    m <- runRole(m)
+
     expect_false(setequal(m@modelSteps[[2]]@localComm@indSpecies,
                           m@modelSteps[[11]]@localComm@indSpecies))
 })
