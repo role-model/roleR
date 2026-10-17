@@ -8,6 +8,8 @@ Maintainer: Andrew Rominger <andrew.rominger@maine.edu>
 Website: https://role-model.github.io/role-user-guide
 Description: A simulation-based model the captures many processes across ecology 
     and evolution and jointly predicts multi-dimensional biodiversity data.
+SystemRequirements: Python (>= 3.9), msprime (>= 1.3), tskit (>= 0.6),
+    newick (>= 1.9), numpy (>= 1.23), pandas (>= 2.2)
 License: GPL (>= 3) + file LICENSE
 LazyData: true
 Encoding: UTF-8
@@ -15,15 +17,15 @@ Depends:
     R (>= 3.5.0)
 Imports: 
     Rcpp,
+    RcppArmadillo,
     ape,
     extraDistr,
     methods,
     reticulate,
-    snow,
+    parallel,
     stats
 LinkingTo: Rcpp, RcppArmadillo
-RoxygenNote: 7.2.3
-RcppModules: iterModelCpp
+RoxygenNote: 7.3.2
 Suggests: 
     ggplot2,
     knitr,
@@ -31,8 +33,8 @@ Suggests:
     rmarkdown,
     testthat, 
     meteR
-VignetteBuilder: knitr
-Collate: 
+VignetteBuilder: quarto
+Collate:
     'RcppExports.R'
     'comm.R'
     'roleParams.R'
@@ -42,13 +44,14 @@ Collate:
     'rolePhylo.R'
     'roleData.R'
     'getSumStats.R'
+    'getters.R'
+    'installMsprime.R'
     'roleData-divStats.R'
     'roleData-rawStats.R'
     'roleExperiment-methods.R'
     'roleModel-methods.R'
     'roleR-package.R'
     'runRole.R'
-    'setContext.R'
-    'sim_seqs.R'
+    'updateModel.R'
     'writeRoLE.R'
     'zzz.R'

@@ -11,36 +11,99 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// iterModelCpp
-List iterModelCpp(RObject local, RObject meta, RObject phylo, List params, bool print);
-RcppExport SEXP _roleR_iterModelCpp(SEXP localSEXP, SEXP metaSEXP, SEXP phyloSEXP, SEXP paramsSEXP, SEXP printSEXP) {
+// compMatCalcTest
+NumericMatrix compMatCalcTest(NumericMatrix x, double sigC);
+RcppExport SEXP _roleR_compMatCalcTest(SEXP xSEXP, SEXP sigCSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< RObject >::type local(localSEXP);
-    Rcpp::traits::input_parameter< RObject >::type meta(metaSEXP);
-    Rcpp::traits::input_parameter< RObject >::type phylo(phyloSEXP);
-    Rcpp::traits::input_parameter< List >::type params(paramsSEXP);
-    Rcpp::traits::input_parameter< bool >::type print(printSEXP);
-    rcpp_result_gen = Rcpp::wrap(iterModelCpp(local, meta, phylo, params, print));
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< double >::type sigC(sigCSEXP);
+    rcpp_result_gen = Rcpp::wrap(compMatCalcTest(x, sigC));
     return rcpp_result_gen;
 END_RCPP
 }
-// testRand
-NumericMatrix testRand(NumericMatrix m);
-RcppExport SEXP _roleR_testRand(SEXP mSEXP) {
+// envDistCalcTest
+NumericVector envDistCalcTest(NumericMatrix x, NumericMatrix envOptim, double sigE);
+RcppExport SEXP _roleR_envDistCalcTest(SEXP xSEXP, SEXP envOptimSEXP, SEXP sigESEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type m(mSEXP);
-    rcpp_result_gen = Rcpp::wrap(testRand(m));
+    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type envOptim(envOptimSEXP);
+    Rcpp::traits::input_parameter< double >::type sigE(sigESEXP);
+    rcpp_result_gen = Rcpp::wrap(envDistCalcTest(x, envOptim, sigE));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getParamFun
+NumericVector getParamFun(S4 p, String s);
+RcppExport SEXP _roleR_getParamFun(SEXP pSEXP, SEXP sSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< S4 >::type p(pSEXP);
+    Rcpp::traits::input_parameter< String >::type s(sSEXP);
+    rcpp_result_gen = Rcpp::wrap(getParamFun(p, s));
+    return rcpp_result_gen;
+END_RCPP
+}
+// roleCommTester
+List roleCommTester(S4 x, S4 p);
+RcppExport SEXP _roleR_roleCommTester(SEXP xSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< S4 >::type x(xSEXP);
+    Rcpp::traits::input_parameter< S4 >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(roleCommTester(x, p));
+    return rcpp_result_gen;
+END_RCPP
+}
+// s4FromRcpp
+S4 s4FromRcpp(List x);
+RcppExport SEXP _roleR_s4FromRcpp(SEXP xSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(s4FromRcpp(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// testUpdatePhylo
+S4 testUpdatePhylo(S4 tre, int i);
+RcppExport SEXP _roleR_testUpdatePhylo(SEXP treSEXP, SEXP iSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< S4 >::type tre(treSEXP);
+    Rcpp::traits::input_parameter< int >::type i(iSEXP);
+    rcpp_result_gen = Rcpp::wrap(testUpdatePhylo(tre, i));
+    return rcpp_result_gen;
+END_RCPP
+}
+// simRole
+List simRole(S4 x, S4 p);
+RcppExport SEXP _roleR_simRole(SEXP xSEXP, SEXP pSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< S4 >::type x(xSEXP);
+    Rcpp::traits::input_parameter< S4 >::type p(pSEXP);
+    rcpp_result_gen = Rcpp::wrap(simRole(x, p));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_roleR_iterModelCpp", (DL_FUNC) &_roleR_iterModelCpp, 5},
-    {"_roleR_testRand", (DL_FUNC) &_roleR_testRand, 1},
+    {"_roleR_compMatCalcTest", (DL_FUNC) &_roleR_compMatCalcTest, 2},
+    {"_roleR_envDistCalcTest", (DL_FUNC) &_roleR_envDistCalcTest, 3},
+    {"_roleR_getParamFun", (DL_FUNC) &_roleR_getParamFun, 2},
+    {"_roleR_roleCommTester", (DL_FUNC) &_roleR_roleCommTester, 2},
+    {"_roleR_s4FromRcpp", (DL_FUNC) &_roleR_s4FromRcpp, 1},
+    {"_roleR_testUpdatePhylo", (DL_FUNC) &_roleR_testUpdatePhylo, 2},
+    {"_roleR_simRole", (DL_FUNC) &_roleR_simRole, 2},
     {NULL, NULL, 0}
 };
 

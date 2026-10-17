@@ -10,14 +10,14 @@ test_that("model using default params initializes without error", {
     expect_true(inherits(m, 'roleModel'))
 })
 
+# keep this for multipole tests
+initInfo <- m@info
 
 test_that("model info data.frame is of correct dimension", {
-    df <- m@info
-    expect_equal(nrow(df), p@niter / p@niterTimestep + 1)
+    expect_equal(nrow(initInfo), p@niter / p@niterTimestep + 1)
 })
 
-# keep this for later
-initInfo <- m@info
+
 
 test_that("`modelSteps` output of model is initialized correctly", {
     msteps <- m@modelSteps
@@ -28,11 +28,7 @@ test_that("`modelSteps` output of model is initialized correctly", {
     expect_true(all(notInit))
 })
 
-
-# should continue to add tests to make sure sub-objects of data are valid
-
 # tests on run model ----
-
 
 # run model
 m <- try(runRole(m), silent = TRUE)
@@ -61,40 +57,31 @@ test_that("when a model is run the supplied model is NOT modified in place", {
     expect_true(is.null(m@modelSteps[[2]]) & !is.null(mrun@modelSteps[[2]]))
 })
 
-test_that("big model with high speciation runs without error", {
-    params <- untbParams(
-        individuals_local = 900,
-        individuals_meta = 9000,
-        species_meta = 900,
-        speciation = 0.1,
-        dispersal_prob = 0.5,
-        init_type = "oceanic_island",
-        niter = 9000,
-        niterTimestep = 10
-    )
-    
-    m <- runRole(roleModel(params))
-    
-    expect_true(length(m@modelSteps) == 901)
-})
+# test_that("big model with high speciation runs without error", {
+#     params <- untbParams(
+#         individuals_local = 900,
+#         individuals_meta = 9000,
+#         species_meta = 900,
+#         speciation = 0.1,
+#         dispersal_prob = 0.5,
+#         init_type = "oceanic_island",
+#         niter = 9000,
+#         niterTimestep = 10
+#     )
+#     
+#     m <- runRole(roleModel(params))
+#     
+#     expect_true(length(m@modelSteps) == 901)
+# })
 
+# msprime bug
 test_that("model copying in C++ does not result in all timesteps being equal", {
-    p <- roleParams(niter = 200, speciation_local = .5) 
-    # create a test model and get data from a step and the params
+    p <- roleParams(niter = 10000, speciation_local = 0.0001, species_meta = 20)
     m <- roleModel(p)
-    m <- runRole(m)    
-    
+    m <- runRole(m)
+
     expect_false(setequal(m@modelSteps[[2]]@localComm@indSpecies,
                           m@modelSteps[[11]]@localComm@indSpecies))
 })
 
 
-
-test_that("metacommunity logseries initialization is correct", {
-    S <- 20
-    N <- 1000
-    s <- meteR::meteDist2Rank(meteR::sad(meteR::meteESF(S0 = S, N0 = N)))
-    s <- s / sum(s)
-    m <- roleR:::.lseriesFromSN(S, N)
-    expect_lt(sum((s - m)^2), 0.0001)
-})

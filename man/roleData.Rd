@@ -17,7 +17,7 @@ roleData(localComm, metaComm, phylo)
 }
 \description{
 An S4 class to represent a roleModel state using `localComm`,
-`metaComm`, & `rolephylo` bojects.
+`metaComm`, & `rolephylo` ojects.
 }
 \section{Slots}{
 

@@ -60,8 +60,7 @@ setMethod('getSumStats',
               
               o <- lapply(x@modelSteps, bigFun)
               o <- do.call(rbind, o)
-             
-              o$iteration <- seq(from=0,by=x@params@niterTimestep,length.out = (x@params@niter / x@params@niterTimestep) + 1)
+              
               return(o)
           }
 )
@@ -164,6 +163,6 @@ getSumStatsMean <- function(x, funs){
 # used in the constructor of getSumStats
 .getDefaultSumStatsFuns <- function(){
     return(list(hill_abund=hillAbund, hill_gen=hillGenetic, hill_trait = hillTrait, hill_phy = hillPhylo,richness=richness
-                ))
+    ))
     
 }

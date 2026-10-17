@@ -1,36 +1,40 @@
-#' @title The local community of a `roleData` 
+#' @title The local community of a `roleData` object
 #' 
 #' @description An S4 class to specify the state of a local community
 #' @slot indSpecies a numeric vector of the species IDs for each individual
 #' @slot indTrait a numeric vector of the trait values for each individual
 #' @slot indSeqs a character vector of the gene sequences for each individual
+#' @slot spAbund a numeric vector of abundances for each species 
 #' @slot spGenDiv a numeric vector of the genetic diversities for each species
-#' @slot spTrait a numeric vector of the mean trait value of each species
-#' @slot spAbund a numeric vector of the abundance (number of individuals) of 
-#'     each species
+#' @slot spTajD a numeric vector of the Tajima D stat for each species
 #' @slot spAbundHarmMean numeric vector of the harmonic mean of species 
-#'     abundances
+#'    abundances
+#' @slot spAbundHarmMean numeric vector of the harmonic mean of species 
+#'    abundances
 #' @slot spLastOriginStep numeric vector holding time of most recent origin of 
-#'     each species in the local community
-#' @slot spExtinctionStep numeric vector of most recent extirpation step of each 
-#'     species in the local community
-#' @slot equilibProp numeric proportion of equilibrium achived 
+#'    each species in the local community
+#' @slot gens numeric scalar of (fractional) number of generations transpired
+#' @slot equilibProp numeric proportion of equilibrium achieved 
+#' 
 #' @rdname localComm
+#' 
 #' @import methods
+#' 
 #' @export
 
 setClass('localComm',
          slots = c(indSpecies = 'numeric',
-                   indTrait = 'numeric',
+                   indTrait = 'matrix', 
                    indSeqs = 'character',
-                   spGenDiv = 'numeric',
-                   spTrait = 'numeric',
                    spAbund = 'numeric',
+                   spGenDiv = 'numeric',
+                   spTajD = 'numeric',
                    spAbundHarmMean = 'numeric',
+                   spPropHarmMean = 'numeric',
                    spLastOriginStep = 'numeric',
-                   spExtinctionStep = 'numeric',
-                   equilibProp = 'numeric'
-         ))
+                   spLastOriginGen = 'numeric',
+                   gens = 'numeric',
+                   equilibProp = 'numeric'))
 
 
 # constructor 
@@ -38,34 +42,38 @@ setClass('localComm',
 #' @param indSpecies indSpecies
 #' @param indTrait indTrait
 #' @param indSeqs indSeqs
-#' @param spGenDiv spGenDiv
 #' @import methods
 #' @export
 
-localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) { 
+localComm <- function(indSpecies, indTrait, indSeqs) { 
     
-    # create the species indexed vectors from individual index vectors
-    spAbund <- as.vector(tabulate(indSpecies))
-    spTrait <- as.vector(tapply(indTrait, indSpecies, mean))
+    # create the species indexed vectors from individual index vectors 
+    # and initialize with NA for missing data where appropriate
     
-    # initialize other vectors that will be filled as the model runs
-    spAbundHarmMean <- as.numeric()
-    spLastOriginStep <- as.numeric()
-    spExtinctionStep <- as.numeric()
+    spAbundHarmMean <- spAbund <- as.vector(tabulate(indSpecies))
+    spPropHarmMean <- spAbundHarmMean / length(indSpecies)
+    
+    spLastOriginStep <- numeric(length(spAbundHarmMean))
+    spLastOriginGen <- numeric(length(spAbundHarmMean))
+    
+    spGenDiv <- spTajD <- as.numeric(rep(NA, length(spAbundHarmMean)))
     
     return(new('localComm',
                indSpecies = indSpecies,
                indTrait = indTrait,
                indSeqs = indSeqs,
-               spGenDiv = spGenDiv,
                spAbund = spAbund,
-               spTrait = spTrait,
+               spGenDiv = spGenDiv,
+               spTajD = spTajD,
                spAbundHarmMean = spAbundHarmMean,
+               spPropHarmMean = spPropHarmMean,
                spLastOriginStep = spLastOriginStep,
-               spExtinctionStep = spExtinctionStep))
+               spLastOriginGen = spLastOriginGen,
+               gens = 0, 
+               equilibProp = 0))
 }
 
-#' @title The metacommunity of a `roleData` 
+#' @title The metacommunity of a `roleData` object
 #' 
 #' @description An S4 class to specify the state of a metacommunity
 #'
@@ -80,7 +88,7 @@ localComm <- function(indSpecies, indTrait, indSeqs, spGenDiv) {
 
 setClass('metaComm',
          slots = c(spAbund = 'numeric',
-                   spTrait = 'numeric'))
+                   spTrait = 'matrix'))
 
 
 # constructor 

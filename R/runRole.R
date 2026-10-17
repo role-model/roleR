@@ -38,32 +38,19 @@ setGeneric('runRole',
 setMethod('runRole', 
           signature = 'roleModel', 
           definition = function(x) {
-              m <- x
-              
-              pvals <- getValuesFromParams(m@params, 1:m@params@niter)
-              
               # augment the data in the model based on the params
-              m <- .bufferModelData(m)
+              m <- bufferModelData(x)
               
               # returns the new modelSteps (a list of roleData)
-              m@modelSteps <- iterModelCpp(slot(m@modelSteps[[1]],"localComm"), 
-                                           slot(m@modelSteps[[1]],"metaComm"),
-                                           slot(m@modelSteps[[1]],"phylo"),
-                                           pvals,
-                                           print = FALSE)
-              
-              # trim data, removing the unused buffer
-              m <- .trimModelData(m)
-              
-              # increment species ids and edges to shift indexing from Cpp to R
-              for(d in 1:length(m@modelSteps)) {
-                  m@modelSteps[[d]]@localComm@indSpecies <- 
-                      m@modelSteps[[d]]@localComm@indSpecies + 1
-                  m@modelSteps[[d]]@phylo@e <- m@modelSteps[[d]]@phylo@e + 1
-              }
-              
+              m@modelSteps <- simRole(m@modelSteps[[1]], m@params)
+
+              # trim buffer from species-level vectors down to actual sMax
+              m <- trimModelData(m)
+
+              # browser()
+              print("done with forward time")
               # add popgen
-              # m <- sim_seqs(m)
+              m <- runmsprim(m)
               
               return(m)
           }
@@ -81,13 +68,14 @@ setMethod('runRole',
           definition = function(x, cores = 1) {
               oldInits <- x@inits
               
-              # run consituent models
+              # run constituent models
               if(cores == 1){
                   modList <- lapply(x@inits, runRole)
+                  simRole()
               } else {
-                  cl <- snow::makeCluster(cores, type="SOCK")
-                  modList <- snow::clusterApply(cl, x@inits, runRole)
-                  snow::stopCluster(cl)
+                  modList <- parallel::parLapplyLB(X = 1, fun = function(i) {
+                      i
+                  })
               }
               
               # convert list of models to list of experiments
@@ -103,84 +91,85 @@ setMethod('runRole',
           }
 )
 
+# trim model data
+# trim the buffer zeros from species-level vectors in each modelStep down to
+# the actual species count (sMax) recorded in the phylo@n of the final step
+# @param model roleModel object returned by simRole
+trimModelData <- function(model) {
+    nspp <- model@modelSteps[[length(model@modelSteps)]]@phylo@n
+
+    model@modelSteps <- lapply(model@modelSteps, function(step) {
+        step@localComm@spAbund <- step@localComm@spAbund[1:nspp]
+        step@localComm@spAbundHarmMean <- step@localComm@spAbundHarmMean[1:nspp]
+        step@localComm@spPropHarmMean <- step@localComm@spPropHarmMean[1:nspp]
+        step@localComm@spLastOriginStep <- step@localComm@spLastOriginStep[1:nspp]
+        step@localComm@spLastOriginGen <- step@localComm@spLastOriginGen[1:nspp]
+        step@localComm@spGenDiv <- step@localComm@spGenDiv[1:nspp]
+        step@localComm@spTajD <- step@localComm@spTajD[1:nspp]
+        step
+    })
+
+    return(model)
+}
+
+
 # buffer model data
-# augment the data of the not-yet-run model based on what is expected from the 
+# augment the data of the not-yet-run model based on what is expected from the
 # params called right before the model is run in Cpp
 # @param model model
 
-.bufferModelData <- function(model) {
-    p <- model@params 
+bufferModelData <- function(model) {
+    p <- model@params
     
-    # calculate expected number of new species using binom
-    expec_n_spec <- stats::qbinom(0.9, p@niter,
-                                  prob = mean(p@speciation_local(1:p@niter)))
+    # calculate absolute max number of new species (each iter is speciation)
+    expec_n_spec <- p@niter
     el_add <- (expec_n_spec * 2 - 1) + 1
     at_add <- expec_n_spec + 1
     
     # buffer phylo ----
     
     # edges get -1s
-    model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e, 
-                                           matrix(-1, nrow = el_add, ncol = 2)) 
+    model@modelSteps[[1]]@phylo@e <- rbind(model@modelSteps[[1]]@phylo@e,
+                                           matrix(-1, nrow = el_add, ncol = 2))
     
     # lengths get 0s
-    model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l, 
-                                       rep(0, el_add)) 
+    model@modelSteps[[1]]@phylo@l <- c(model@modelSteps[[1]]@phylo@l,
+                                       rep(0, el_add))
     
     # alives get FALSE
-    model@modelSteps[[1]]@phylo@alive <- c(model@modelSteps[[1]]@phylo@alive, 
-                                           rep(FALSE, at_add)) 
+    model@modelSteps[[1]]@phylo@alive <- c(model@modelSteps[[1]]@phylo@alive,
+                                           rep(FALSE, at_add))
     
     # tipNames get 'local_speciation_j'
-    model@modelSteps[[1]]@phylo@tipNames <- 
-        c(model@modelSteps[[1]]@phylo@tipNames, 
+    model@modelSteps[[1]]@phylo@tipNames <-
+        c(model@modelSteps[[1]]@phylo@tipNames,
           paste0('local_speciation_', 1:at_add))
     
-    # calc buffer size for local species vects 
+    # calc buffer size for local species vects
     local_add <- p@species_meta + expec_n_spec
+    local_add <- local_add - length(model@modelSteps[[1]]@localComm@spAbund)
+    
     
     # buffer local species vectors with 0s
-    model@modelSteps[[1]]@localComm@spAbund <- 
-        c(model@modelSteps[[1]]@localComm@spAbund, rep(0, local_add))
-    model@modelSteps[[1]]@localComm@spTrait <- 
-        c(model@modelSteps[[1]]@localComm@spTrait, rep(0, local_add))
-    model@modelSteps[[1]]@localComm@spAbundHarmMean <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
-    model@modelSteps[[1]]@localComm@spLastOriginStep <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
-    model@modelSteps[[1]]@localComm@spExtinctionStep <-  
-        rep(0, length(model@modelSteps[[1]]@localComm@spAbund) + local_add)
+    zeroAdd <- rep(0, local_add)
+    
+    model@modelSteps[[1]]@localComm@spLastOriginStep <-
+        c(model@modelSteps[[1]]@localComm@spLastOriginStep, zeroAdd)
+    
+    model@modelSteps[[1]]@localComm@spLastOriginGen <-
+        c(model@modelSteps[[1]]@localComm@spLastOriginGen, zeroAdd)
+    
+    model@modelSteps[[1]]@localComm@spAbund <-
+        c(model@modelSteps[[1]]@localComm@spAbund, zeroAdd)
+    
+    model@modelSteps[[1]]@localComm@spAbundHarmMean <-
+        c(model@modelSteps[[1]]@localComm@spAbundHarmMean, zeroAdd)
+    
+    model@modelSteps[[1]]@localComm@spPropHarmMean <-
+        c(model@modelSteps[[1]]@localComm@spPropHarmMean, zeroAdd)
     
     return(model)
 }
-
-
-###### should move this to rcpp ###########
-
-# helper to trim the data of unused indices after the model is run
-.trimModelData <- function(model) {
-    
-    for(i in 1:length(model@modelSteps)) {
-        # trim phylo
-        model@modelSteps[[i]]@phylo@e <- model@modelSteps[[i]]@phylo@e[model@modelSteps[[i]]@phylo@e[,1] != -1,]
-        model@modelSteps[[i]]@phylo@l <- model@modelSteps[[i]]@phylo@l[model@modelSteps[[i]]@phylo@l != 0] 
-        last_alive_index <- max(which(model@modelSteps[[i]]@phylo@alive == TRUE))
-        model@modelSteps[[i]]@phylo@alive <- model@modelSteps[[i]]@phylo@alive[1:last_alive_index]
-        model@modelSteps[[i]]@phylo@tipNames <- model@modelSteps[[i]]@phylo@tipNames[model@modelSteps[[i]]@phylo@tipNames != ''] # this MAY cause errors
-        
-        # trim local
-        # find place where augmented 0s started, which is the number of species to ever have existed 
-        # I think this is the last alive index??
-        model@modelSteps[[i]]@localComm@spAbund <- model@modelSteps[[i]]@localComm@spAbund[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spTrait <- model@modelSteps[[i]]@localComm@spTrait[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spAbundHarmMean  <- model@modelSteps[[i]]@localComm@spAbundHarmMean [1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spLastOriginStep <- model@modelSteps[[i]]@localComm@spLastOriginStep[1:last_alive_index]
-        model@modelSteps[[i]]@localComm@spExtinctionStep <- model@modelSteps[[i]]@localComm@spExtinctionStep[1:last_alive_index]
-    }
-    
-    return(model)
-}
-
 
 # getValuesFromParams
 # @description
@@ -210,3 +199,183 @@ getValuesFromParams <- function(p, i) {
     return(pvals)
 }
 
+# helper function that takes a roleModel object and preps the data therein 
+# for input int msprime, then runs msprime on those inputs, finally returns
+# the model object with updated pop gen info
+
+runmsprim <- function(m) {
+    
+    # number of temporal snapshots
+    ntshot <- length(m@modelSteps)
+    
+    finalPhylo <- m@modelSteps[[ntshot]]@phylo
+    
+    nspp <- finalPhylo@n
+    
+    # time by spp matrix with abundances in cells
+    tBySpp <- mkTBySpp(l = m@modelSteps, sname = "spAbund", 
+                       nspp = nspp)
+    
+    # matrix of same format but with harmonic mean abunds in cells
+    tByHmean <- mkTBySpp(l = m@modelSteps, sname = "spAbundHarmMean", 
+                         nspp = nspp)
+    
+    # matrix of same format but with divergence times in cells
+    tdiv <- mkTBySpp(l = m@modelSteps, sname = "spLastOriginGen", 
+                     nspp = nspp)
+    
+    # meta abunds
+    metaAbund <- round(m@modelSteps[[1]]@metaComm@spAbund * 
+                           m@info$individuals_meta[1])
+    
+    # number of original metacommunity species (may be < nspp after speciation)
+    nspp_meta <- m@params@species_meta
+
+    # build the ape phylo with numbered tip labels t1..tnspp
+    tre <- as(finalPhylo, "phylo")
+    tre$tip.label <- paste0("t", 1:nspp)
+
+    # for each locally speciated species (index > nspp_meta), find its parent —
+    # the species it budded from. In a budding model the parent always keeps a
+    # lower index than the bud, so the parent is the tip with the smallest index
+    # in the sibling subtree. We need recursive descent because the sibling can
+    # itself be an internal node when the parent has speciated again since k arose.
+    tips_in_subtree <- function(e, node, ntips) {
+        if (node <= ntips) return(node)
+        children <- e[e[, 1] == node, 2]
+        unlist(lapply(children, tips_in_subtree, e = e, ntips = ntips))
+    }
+
+    parent_of <- integer(nspp)
+    if (nspp > nspp_meta) {
+        e <- tre$edge
+        for (k in (nspp_meta + 1):nspp) {
+            # Climb the tree from k upward until the other-side subtree contains
+            # a tip with index < k.  The minimum such tip is k's biological parent.
+            # Simple `min(sib_tips)` at the direct parent fails when k has itself
+            # speciated: k's sibling in the final tree becomes k's child (higher
+            # index), not k's actual parent.
+            cur <- k
+            found <- FALSE
+            for (depth in seq_len(nspp * 2L)) {
+                pnode <- e[e[, 2] == cur, 1]
+                if (length(pnode) == 0L) break   # reached root (shouldn't happen)
+                other_children <- e[e[, 1] == pnode & e[, 2] != cur, 2]
+                other_tips <- unlist(lapply(other_children, tips_in_subtree,
+                                           e = e, ntips = nspp))
+                if (length(other_tips) > 0L && min(other_tips) < k) {
+                    parent_of[k] <- min(other_tips)
+                    found <- TRUE
+                    break
+                }
+                cur <- pnode
+            }
+        }
+    }
+
+    # prune the newick to only the original metacommunity species so that
+    # from_species_tree does not create splits that deactivate meta populations
+    # before their local-colonisation split time
+    if (nspp > nspp_meta) {
+        tre_meta <- ape::keep.tip(tre, paste0("t", 1:nspp_meta))
+    } else {
+        tre_meta <- tre
+    }
+    nwk <- ape::write.tree(tre_meta, digits = 18)
+
+    # time in generations of each snapshot
+    gens <- m@info$generations
+
+    # harmonic mean of local community size
+    Jharm <- m@params@individuals_local(1:m@params@niter)
+    Jharm <- length(Jharm) / sum(1 / Jharm)
+
+    # python ----
+
+    sim_role <- get_sim_role()
+
+    res <- sim_role(Jm = m@params@individuals_meta,
+                    curtime = max(gens),
+                    nwk = nwk,
+                    meta_abund = metaAbund,
+                    local_sad = tBySpp,
+                    local_hm = tByHmean,
+                    J_harm = Jharm,
+                    gens = gens,
+                    tdiv = tdiv,
+                    alpha = m@params@alpha(1),
+                    m = m@params@dispersal_prob(1),
+                    sequence_length = m@params@num_basepairs,
+                    mu = m@params@mutation_rate,
+                    parent_of = parent_of)
+
+    # msprime output as list of R data.frames
+    # res[[1]] is data.frame of sequences per individual
+    # res[[2]] is data.frame of pop gen sum stats per spp
+    res <- reticulate::py_to_r(res)
+
+    # split by time, because need to match time and modelSteps
+    indDat <- split(res[[1]], res[[1]]$time)
+    sppDat <- split(res[[2]], res[[2]]$time)
+
+    for(i in 1:ntshot) {
+        thisGen <- m@info$generations[i]
+
+        theseIndDat <- indDat[[as.character(thisGen)]]
+        theseSppDat <- sppDat[[as.character(thisGen)]]
+
+        # species IDs from roleModel object
+        theseID <- m@modelSteps[[i]]@localComm@indSpecies
+
+        # add sorted sequence data to model output
+        m@modelSteps[[i]]@localComm@indSeqs <- mergeSpp(theseIndDat, theseID)
+
+        # assign pi and Tajima's D by numeric species ID into pre-allocated
+        # NA vectors; this correctly handles species absent at a snapshot and
+        # avoids lexicographic sort issues for species IDs >= 10
+        spIds <- as.integer(theseSppDat$sp_id)
+
+        spGenDiv <- rep(NA_real_, nspp)
+        spGenDiv[spIds] <- theseSppDat$pi
+        m@modelSteps[[i]]@localComm@spGenDiv <- spGenDiv
+
+        spTajD <- rep(NA_real_, nspp)
+        spTajD[spIds] <- theseSppDat$tajimas_D
+        m@modelSteps[[i]]@localComm@spTajD <- spTajD
+    }
+    
+    return(m)
+}
+
+
+# function to make time by spp matrix from list of roleData snapshots by
+# specifying which slot we want to use to populate the cells
+# returns a data.frame with spp IDs as colnames
+mkTBySpp <- function(l, sname, nspp) {
+    tbs <- lapply(l, function(d) {
+        slot(d@localComm, sname)
+    })
+    tbs <- do.call(rbind, tbs)
+    
+    tbs <- as.data.frame(tbs)
+    names(tbs) <- as.character(1:nspp)
+    
+    return(tbs)
+}
+
+
+# function to match spp IDs and merge data when there are duplicate IDs
+mergeSpp <- function(pyDat, sppID) {
+    # browser()
+    # vectors to count the occurrences of each ID
+    sppIDCounter <- ave(seq_along(sppID), sppID, FUN = seq_along)
+    pyCounter <- ave(seq_len(nrow(pyDat)), pyDat$sp_id, FUN = seq_along)
+    
+    # unique keys for matching purposes
+    sppIDKey <- paste(sppID, sppIDCounter, sep = "_")
+    pyKey <- paste(pyDat$sp_id, pyCounter, sep = "_")
+    
+    ii <- match(sppIDKey, pyKey)
+    
+    return(pyDat$seq_alignment[ii])
+}
