@@ -1,0 +1,253 @@
+---
+title: "Simulation-based inference with roleR"
+vignette: >
+  %\VignetteIndexEntry{My Vignette}
+  %\VignetteEngine{quarto::html}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+## Introducing simulation-based inference
+
+
+## Simulating data
+
+We have to have *roleR* loaded
+
+```{r}
+#| label: setup
+
+library(roleR)
+
+```
+
+If this is a fresh install of *roleR* we need to setup *msprime* as well with `installMsprime()`.
+
+Now we can sample parameter values a range of possible values (i.e. priors). Note that some parameter values might be fixed due to logical constraints on the data (e.g. number of basepairs or total species in the metacommunity).
+
+```{r}
+#| label: priors
+
+n_prior_samp <- 10
+
+param_samples <- data.frame(
+    individuals_local = 1000, 
+    individuals_meta = 1000000, 
+    species_meta = sample(20:200, n_prior_samp), 
+    speciation_local = 0, 
+    speciation_meta = 4, 
+    extinction_meta = 3.8, 
+    dispersal_prob = runif(n_prior_samp, 0.001, 0.1), 
+    env_optim = 0, 
+    trait_sigma = runif(n_prior_samp, 0.001, 10), 
+    env_sigma = runif(n_prior_samp, 0.001, 10), 
+    comp_sigma = runif(n_prior_samp, 0.001, 10), 
+    neut_delta = runif(n_prior_samp), 
+    env_comp_delta = runif(n_prior_samp), 
+    mutation_rate = 1e-07, 
+    equilib_escape = 1, 
+    alpha = 2e+03, 
+    num_basepairs = 350, 
+    init_type = "oceanic_island",
+    niter = 10000,
+    niterTimestep = 10000
+)
+```
+
+a function to generate these params (like for feeding into roleExperiment) should take, for each param, a single value, a range (in which case assumed uniform between end points), or a function defining a random generator; also a number of samples to draw
+
+
+Now we can loop over parameter value combinations
+
+```{r}
+#| label: experiment-lite
+
+
+library(future.apply)
+library(future)
+library(reticulate)
+
+# find the Python that roleR should use, without initializing Python
+.getRolePython <- function(envname = "r-roleR") {
+    # Python already running in this process: keep using it
+    if(py_available()) {
+        return(py_config()$python)
+    }
+
+    # the user pointed reticulate at something explicitly
+    envPy <- Sys.getenv("RETICULATE_PYTHON", unset = "")
+    if(nzchar(envPy)) {
+        return(envPy)
+    }
+
+    # the conda env created by installMsprime()
+    envs <- tryCatch(conda_list()$name, error = function(e) character(0))
+    if(envname %in% envs) {
+        return(conda_python(envname))
+    }
+
+    return(NULL)
+}
+
+
+# point reticulate at `pyPath`; only possible before Python is initialized,
+# so it does nothing in a process that already has Python running
+.setRolePython <- function(pyPath) {
+    if(is.null(pyPath) || py_available()) {
+        return(invisible(NULL))
+    }
+
+    use_python(pyPath, required = TRUE)
+    invisible(NULL)
+}
+
+#' Run roleR models over multiple parameter combinations
+#'
+#' @param parSamps data.frame with one column per `roleParams()` argument and
+#'     one row per parameter combination.
+#' @param funs named list of summary stat functions passed to `getSumStats`.
+#' @param cores optional number of workers. If `NULL` (default) the current
+#'     `future::plan()` is used, which is sequential unless the user has set
+#'     another plan.
+#'
+#' @return a data.frame of summary stats with one row per snapshot per
+#'     parameter combination, joined to the parameter values.
+#'
+#' @details Parallelization uses the future framework. To run in parallel call
+#'     `future::plan(future::multisession)` (or any other plan) before calling
+#'     this function, or supply `cores`.
+#'
+#' @importFrom future.apply future_mapply
+#' @importFrom future plan multisession
+#' @importFrom reticulate py_available py_config use_python conda_list conda_python
+#' @export
+
+
+runMultiRole <- function(parSamps,
+                         funs = roleR:::.getDefaultSumStatsFuns(),
+                         cores = NULL) {
+    if(!is.data.frame(parSamps)) {
+        stop("`parSamps` must be a data.frame", call. = FALSE)
+    }
+
+    # only change the plan if asked, and put the user's plan back afterward
+    if(!is.null(cores)) {
+        oldPlan <- plan(multisession, workers = cores)
+        on.exit(plan(oldPlan), add = TRUE)
+    }
+
+    parList <- lapply(seq_len(nrow(parSamps)), function(i) {
+        as.list(parSamps[i, ])
+    })
+
+    # resolve the interpreter once here so every worker uses the same one
+    pyPath <- .getRolePython()
+
+    res <- future_mapply(runOneMod,
+                         args = parList,
+                         id = seq_along(parList),
+                         MoreArgs = list(funs = funs, pyPath = pyPath),
+                         SIMPLIFY = FALSE,
+                         future.seed = TRUE)
+
+    out <- do.call(rbind, res)
+    out <- merge(cbind(param_id = seq_len(nrow(parSamps)), parSamps), out,
+                 by = "param_id")
+
+    return(out)
+}
+
+
+# internal worker, defined at top level so it doesn't capture the calling
+# function's environment (and everything in it) when sent to workers
+runOneMod <- function(args, id, funs, pyPath) {
+    # workers are fresh R sessions, so point reticulate at the interpreter
+    # before Python is first used
+    .setRolePython(pyPath)
+
+    p <- do.call(roleParams, args)
+    m <- roleModel(p) |> 
+        runRole()
+
+    sumStats <- getSumStats(m, funs = funs)
+    sumStats$param_id <- id
+
+    return(sumStats)
+}
+
+
+foo <- runMultiRole(param_samples, cores = 6)
+
+```
+
+## Quick start
+
+```{r}
+
+# set-up parameters
+p <- roleParams(
+    individuals_local = 1000,
+    individuals_meta = 1000000,
+    species_meta = 20,
+    speciation_local = 1e-05,
+    speciation_meta = 4,
+    extinction_meta = 3.8,
+    trait_sigma = 2,
+    env_sigma = 1,
+    comp_sigma = 1,
+    dispersal_prob = 0.05,
+    mutation_rate = 1e-07,
+    neut_delta = 1,
+    env_comp_delta = 0,
+    equilib_escape = 1,
+    alpha = 2e+03,
+    num_basepairs = 300,
+    init_type = "oceanic_island",
+    niter = 1000000,
+    niterTimestep = 500000
+)
+
+# initialize the model
+m <- roleModel(p)
+
+# run the model
+r <- runRole(m)
+
+r@info
+
+boo <- getLocalComm(r)
+cbind(boo@spGenDiv, 
+      boo@spTajD, 
+      boo@spAbund, 
+      boo@spAbundHarmMean)
+
+plot(boo@spAbund, boo@spTajD)
+plot(boo@spAbund, boo@spGenDiv)
+
+
+
+t0 <- getPhylo(r, 1) |> as("phylo")
+tt <- getPhylo(r) |> as("phylo")
+
+plot(t0); axis(1)
+plot(tt); axis(1)
+
+(ape::node.depth.edgelength(t0) |> max()) - 
+    (ape::node.depth.edgelength(tt) |> max())
+
+
+
+
+# get results
+getSumStats(m, list(rich = richness, hill = hillAbund))
+```
+
+## Setting parameters
+
+## Initializing a roleModel
+
+## Running a roleModel
+
+## RoLE Experiments
+
+## Calculating summary statistics
