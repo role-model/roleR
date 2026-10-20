@@ -37,7 +37,7 @@ p <- roleParams(
     individuals_local = 1000,
     individuals_meta = 1000000,
     species_meta = 20,
-    speciation_local = 1e-06,
+    speciation_local = 1e-05,
     speciation_meta = 4,
     extinction_meta = 3.8,
     trait_sigma = 2,
@@ -87,7 +87,7 @@ plot(tt); axis(1)
 
 
 # get results
-getSumStats(m, list(rich = richness, hill = hillAbund))
+getSumStats(r)
 ```
 
 ## Setting parameters
