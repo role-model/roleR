@@ -26,7 +26,7 @@
 #' @export
 
 setGeneric('runRole', 
-           def = function(x, cores=1) standardGeneric('runRole'), 
+           def = function(x, ...) standardGeneric('runRole'), 
            signature = 'x')
 
 
@@ -47,8 +47,6 @@ setMethod('runRole',
               # trim buffer from species-level vectors down to actual sMax
               m <- trimModelData(m)
 
-              # browser()
-              print("done with forward time")
               # add popgen
               m <- runmsprim(m)
               
@@ -56,40 +54,6 @@ setMethod('runRole',
           }
 )
 
-
-#' runRole on roleExperiment
-#' @name runRole
-#' @aliases runRole,roleExperiment-method
-#' @docType methods
-#' @rdname runRole
-
-setMethod('runRole', 
-          signature = 'roleExperiment', 
-          definition = function(x, cores = 1) {
-              oldInits <- x@inits
-              
-              # run constituent models
-              if(cores == 1){
-                  modList <- lapply(x@inits, runRole)
-                  simRole()
-              } else {
-                  modList <- parallel::parLapplyLB(X = 1, fun = function(i) {
-                      i
-                  })
-              }
-              
-              # convert list of models to list of experiments
-              expList <- lapply(modList, as, Class = 'roleExperiment')
-              
-              # combine list
-              x <- Reduce(rbind2, expList)
-              
-              # add back the original inits
-              x@inits <- oldInits
-              
-              return(x)
-          }
-)
 
 # trim model data
 # trim the buffer zeros from species-level vectors in each modelStep down to
@@ -335,11 +299,11 @@ runmsprim <- function(m) {
         # avoids lexicographic sort issues for species IDs >= 10
         spIds <- as.integer(theseSppDat$sp_id)
 
-        spGenDiv <- rep(NA_real_, nspp)
+        spGenDiv <- rep(NA, nspp)
         spGenDiv[spIds] <- theseSppDat$pi
         m@modelSteps[[i]]@localComm@spGenDiv <- spGenDiv
 
-        spTajD <- rep(NA_real_, nspp)
+        spTajD <- rep(NA, nspp)
         spTajD[spIds] <- theseSppDat$tajimas_D
         m@modelSteps[[i]]@localComm@spTajD <- spTajD
     }
@@ -366,7 +330,6 @@ mkTBySpp <- function(l, sname, nspp) {
 
 # function to match spp IDs and merge data when there are duplicate IDs
 mergeSpp <- function(pyDat, sppID) {
-    # browser()
     # vectors to count the occurrences of each ID
     sppIDCounter <- ave(seq_along(sppID), sppID, FUN = seq_along)
     pyCounter <- ave(seq_len(nrow(pyDat)), pyDat$sp_id, FUN = seq_along)
@@ -378,4 +341,105 @@ mergeSpp <- function(pyDat, sppID) {
     ii <- match(sppIDKey, pyKey)
     
     return(pyDat$seq_alignment[ii])
+}
+
+
+
+
+#' runRole on roleExperiment
+#' @name runRole
+#' @aliases runRole,roleExperiment-method
+#' @docType methods
+#' @rdname runRole
+#' @import methods
+#' @importFrom future.apply future_mapply
+#' @importFrom future plan multisession
+#' @importFrom reticulate py_available py_config use_python conda_list conda_python
+
+setMethod("runRole", 
+          signature = "roleExperiment", 
+          definition = function(x, cores = NULL) {
+              stats <- runMultiRole(x@inits, funs = x@funs, cores = cores)
+              x@stats <- stats
+              
+              return(x)
+          }
+)
+
+
+# helper to actual run (in parallel) multiple `roleModel`s
+runMultiRole <- function(modList,
+                         funs = NULL,
+                         cores = NULL) {
+    if(is.null(funs)) funs <- .getDefaultSumStatsFuns()
+    
+    # only change the plan if asked, and put the user's plan back afterward
+    if(!is.null(cores)) {
+        oldPlan <- plan(multisession, workers = cores)
+        on.exit(plan(oldPlan), add = TRUE)
+    }
+    
+    # resolve the interpreter once here so every worker uses the same one
+    pyPath <- .getRolePython()
+    
+    res <- future_mapply(runOneMod,
+                         inits = modList,
+                         id = seq_along(modList),
+                         MoreArgs = list(funs = funs, pyPath = pyPath),
+                         SIMPLIFY = FALSE,
+                         future.seed = TRUE)
+    
+    out <- do.call(rbind, res)
+    return(out)
+}
+
+
+# internal worker, defined at top level so it doesn't capture the calling
+# function's environment (and everything in it) when sent to workers
+runOneMod <- function(inits, id, funs, pyPath) {
+    # workers are fresh R sessions, so point reticulate at the interpreter
+    # before Python is first used
+    .setRolePython(pyPath)
+    
+    m <- runRole(inits)
+    
+    sumStats <- getSumStats(m, funs = funs)
+    sumStats$model_id <- id
+    sumStats$timestep <- m@info$timestep
+    
+    return(sumStats)
+}
+
+# find the Python that roleR should use, without initializing Python
+.getRolePython <- function(envname = "r-roleR") {
+    # Python already running in this process: keep using it
+    if(py_available()) {
+        return(py_config()$python)
+    }
+    
+    # the user pointed reticulate at something explicitly
+    envPy <- Sys.getenv("RETICULATE_PYTHON", unset = "")
+    if(nzchar(envPy)) {
+        return(envPy)
+    }
+    
+    # the conda env created by installMsprime()
+    envs <- tryCatch(conda_list()$name, error = function(e) character(0))
+    if(envname %in% envs) {
+        return(conda_python(envname))
+    }
+    
+    return(NULL)
+}
+
+
+# point reticulate at `pyPath`; only possible before Python is initialized,
+# so it does nothing in a process that already has Python running
+.setRolePython <- function(pyPath) {
+    if(is.null(pyPath) || py_available()) {
+        return(invisible(NULL))
+    }
+    
+    use_python(pyPath, required = TRUE)
+    invisible(NULL)
 }
