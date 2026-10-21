@@ -7,11 +7,11 @@
 \alias{runRole,roleExperiment-method}
 \title{Run a `roleModel` or `roleExperiment`}
 \usage{
-runRole(x, cores = 1)
+runRole(x, ...)
 
 \S4method{runRole}{roleModel}(x)
 
-\S4method{runRole}{roleExperiment}(x, cores = 1)
+\S4method{runRole}{roleExperiment}(x, cores = NULL)
 }
 \arguments{
 \item{x}{`roleModel` or `roleExperiment` object to run}

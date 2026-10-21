@@ -4,16 +4,23 @@
 \alias{roleExperiment}
 \title{Create a RoLE experiment}
 \usage{
-roleExperiment(allParams)
+roleExperiment(allParams, funs = NULL, inits = NULL)
 }
 \arguments{
 \item{allParams}{the list of model params to use for each model; can also be
 `rolePriors` object}
+
+\item{funs}{named list of summary stat functions}
+
+\item{inits}{optional list of initialized `roleModel` objects used as 
+initial conditions}
 }
 \value{
 a ready-to-run `roleExperiment`
 }
 \description{
-Takes a list of parameter objects to initialize models for each
-    parameter set.  The collection of models is seen as an experiment
+Takes a list of parameter objects to build models for each
+    parameter set. The collection of models is seen as an experiment. Raw
+    `roleModel` objects will not be returned, rather summaries (indicated by
+    `funs`) will be returned
 }

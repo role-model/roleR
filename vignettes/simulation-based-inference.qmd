@@ -52,6 +52,11 @@ param_samples <- data.frame(
     niter = 10000,
     niterTimestep = 10000
 )
+
+param_samples <- lapply(1:nrow(param_samples), function(i) {
+    as.list(param_samples[i, ]) |> 
+        do.call(roleParams, args = _)
+})
 ```
 
 a function to generate these params (like for feeding into roleExperiment) should take, for each param, a single value, a range (in which case assumed uniform between end points), or a function defining a random generator; also a number of samples to draw
@@ -62,6 +67,10 @@ Now we can loop over parameter value combinations
 ```{r}
 #| label: experiment-lite
 
+
+e <- roleExperiment(param_samples)
+erun <- runRole(e)
+erun@stats
 
 library(future.apply)
 library(future)

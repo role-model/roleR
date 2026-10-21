@@ -3,20 +3,25 @@
 \docType{class}
 \name{roleExperiment-class}
 \alias{roleExperiment-class}
-\title{roleExperiment - one or more models bundled collectively}
+\title{roleExperiment - summaries of one or more models bundled collectively}
 \description{
 An S4 class to represent a self-enclosed modeling experiment
 }
 \section{Slots}{
 
 \describe{
-\item{\code{modelRuns}}{a list of `roleData`objects}
-
-\item{\code{allParams}}{a list of `roleParams` to use for each model}
+\item{\code{allParams}}{a list of `roleParams` objects used for each model}
 
 \item{\code{info}}{a data.frame with model parameter information for each saved 
 snapshot for all the models of the experiment}
 
-\item{\code{inits}}{an optional list of initialized `roleModel` objects}
+\item{\code{stats}}{a data.frame with summary statistics for each saved snapshot
+for all the models of the experiment}
+
+\item{\code{funs}}{a named list of summary stat functions}
+
+\item{\code{inits}}{a list of initialized `roleModel` objects used as
+initial conditions (by default, calculated internally, but can be 
+passed as an optional argument)}
 }}
 

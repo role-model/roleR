@@ -52,7 +52,7 @@ p <- roleParams(
     num_basepairs = 300,
     init_type = "oceanic_island",
     niter = 1000000,
-    niterTimestep = 500000
+    niterTimestep = 50000
 )
 
 # initialize the model
