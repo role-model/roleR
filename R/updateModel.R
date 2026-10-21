@@ -102,11 +102,14 @@ updateRolePhylo <- function(model, value, slot = NULL) {
 
 # check to make sure model not run
 assertPreRun <- function(model) {
-    n <- length(model@modelSteps)
-    if (n != 1)
+    # a fresh model has all of its steps pre-allocated but only the first one
+    # filled; a run model has later steps filled in
+    steps <- model@modelSteps
+    isRun <- length(steps) > 1 && !is.null(steps[[2]])
+    if (isRun)
         stop(
             "update functions only work on initialized (pre-run) roleModel objects; ",
-            "this model has ", n, " model steps",
+            "this model has already been run",
             call. = FALSE
         )
     invisible(NULL)
