@@ -9,6 +9,11 @@ role_py_env <- new.env(parent = emptyenv())
 # required package is missing.
 get_sim_role <- function() {
     if (!exists("sim_role", envir = role_py_env, inherits = FALSE)) {
+        # use the Python found by roleR (e.g. the environment made by
+        # installMsprime()) unless Python was already set up or the user chose
+        # one; must happen before Python is first used
+        .setRolePython(.getRolePython())
+        
         required <- c("msprime", "tskit", "newick", "numpy", "pandas")
         missing  <- required[!vapply(required, reticulate::py_module_available,
                                      logical(1))]
@@ -32,7 +37,8 @@ get_sim_role <- function() {
     # Python is not initialised here — that happens lazily on first use.
     # We only register the reticulate delay-load configuration so that
     # reticulate knows which environment to prefer when it does start.
-    # Users can override this by calling reticulate::use_condaenv() before
-    # runRole().
+    # Users can override the default (the environment made by
+    # installMsprime()) by setting RETICULATE_PYTHON or calling
+    # reticulate::use_condaenv() before runRole().
     options(roleR.python_initialized = FALSE)
 }

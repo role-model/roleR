@@ -7,7 +7,9 @@
 #'   or re-installing roleR
 #'
 #' @param envname Name of the conda or virtual environment to install into.
-#'   Defaults to \code{"r-roleR"}.
+#'   Defaults to \code{"r-roleR"}. roleR finds an environment with this default
+#'   name by itself; if you use another name you need to tell reticulate to use
+#'   it (e.g., with \code{reticulate::use_condaenv()}) before running models.
 #' @param method Installation method passed to
 #'   \code{\link[reticulate]{py_install}}: \code{"conda"} (default) or
 #'   \code{"virtualenv"}.
@@ -48,11 +50,19 @@ installMsprime <- function(envname = "r-roleR", method = "conda",
     message("Installing Python dependencies into environment '", envname, "'...")
     reticulate::py_install(pkgs, envname = envname, method = method, ...)
 
-    message(
-        "Done. Restart R, then activate the environment with:\n",
-        "  reticulate::use_condaenv(\"", envname, "\")\n",
-        "before calling runRole()."
-    )
+    if (envname == "r-roleR") {
+        message("Done. Restart R. roleR will find the environment ",
+                "automatically.")
+    } else {
+        # roleR only looks for the default environment name by itself
+        useFun <- ifelse(method == "conda", "use_condaenv", "use_virtualenv")
+        message(
+            "Done. Restart R. Because the environment is not named ",
+            "'r-roleR', activate it with:\n",
+            "  reticulate::", useFun, "(\"", envname, "\")\n",
+            "before calling runRole()."
+        )
+    }
     
     invisible(NULL)
 }
