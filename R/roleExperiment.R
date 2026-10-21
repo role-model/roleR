@@ -4,10 +4,10 @@
 #' 
 #' 
 #' @slot allParams a list of `roleParams` objects used for each model
-#' @slot info a data.frame with model parameter information for each saved 
-#'     snapshot for all the models of the experiment 
-#' @slot stats a data.frame with summary statistics for each saved snapshot
-#'     for all the models of the experiment
+#' @slot results a data.frame with one row per saved snapshot for all the 
+#'     models of the experiment. The first columns are `model_id` and the model
+#'     information from the `info` slot of each initial `roleModel`; once the
+#'     experiment has been run, the summary statistics are added as columns
 #' @slot funs a named list of summary stat functions
 #' @slot inits a list of initialized `roleModel` objects used as
 #'     initial conditions (by default, calculated internally, but can be 
@@ -20,8 +20,7 @@
 #' @export
 
 setClass('roleExperiment',
-         slots = c(info = 'data.frame',
-                   stats = "data.frame",
+         slots = c(results = 'data.frame',
                    allParams = 'list', 
                    funs = "list",
                    inits = 'list'))
@@ -38,9 +37,6 @@ setClass('roleExperiment',
 #' @param funs named list of summary stat functions
 #' @param inits optional list of initialized `roleModel` objects used as 
 #'     initial conditions
-# @param cores optional number of workers. If `NULL` (default) the current
-#     `future::plan()` is used, which is sequential unless the user has set
-#     another plan.
 #' @return a ready-to-run `roleExperiment`
 #' 
 #' @rdname roleExperiment
@@ -54,6 +50,8 @@ roleExperiment <- function(allParams, funs = NULL,
         allParams <- list() # just a stub for now
     }
     
+    if(length(allParams) == 0) stop("`allParams` must not be empty")
+    
     if(is.null(funs)) funs <- .getDefaultSumStatsFuns()
     
     # a list of `roleModel` objects
@@ -61,25 +59,21 @@ roleExperiment <- function(allParams, funs = NULL,
         inits <- lapply(allParams, roleModel)
     } else {
         # make sure params are correct for user-provided `roleModel` objects
-        for(i in 1:length(allParams)) {
+        for(i in seq_along(allParams)) {
             inits[[i]]@params <- allParams[[i]]
         }
     }
     
     # extract `info` slot from all `roleModel` objects
-    allInfo <- lapply(1:length(inits), function(i) {
+    allResults <- lapply(seq_along(inits), function(i) {
         d <- cbind(model_id = i, slot(inits[[i]], name = "info"))
         d
     }) |> 
         do.call(rbind, args = _)
     
-    # place holder for summ stats
-    allStats <- data.frame() 
-    
     return(new("roleExperiment", 
                allParams =  allParams, 
-               info = allInfo,
-               stats = allStats,
+               results = allResults,
                funs = funs,
                inits = inits))
 }
@@ -128,14 +122,13 @@ setMethod("[",
               }
               
               # vector of unique model run IDs before selecting
-              origModID <- unique(x@info$model_id)
+              origModID <- unique(x@results$model_id)
               
-              # update metadata and stats
-              x@info <- x@info[i, j, ..., drop = FALSE]
-              x@stas <- x@stas[i, , ..., drop = FALSE]
+              # update results
+              x@results <- x@results[i, j, ..., drop = FALSE]
               
               # check to see if any unique models have been dropped
-              theseDropped <- !(origModID %in% x@info$model_id)
+              theseDropped <- !(origModID %in% x@results$model_id)
               
               # if so, drop them
               if(any(theseDropped)) {
@@ -143,9 +136,8 @@ setMethod("[",
                   x@allParams <- x@allParams[i]
                   x@inits <- x@inits[i]
                   
-                  # re-number IDs in metadata to remove any missing
-                  x@info$model_id <- order(x@info$model_id)
-                  x@stats$model_id <- order(x@stats$model_id)
+                  # re-number IDs in `results` to remove any missing
+                  x@results$model_id <- order(x@results$model_id)
               }
               
               return(x)
@@ -153,7 +145,7 @@ setMethod("[",
 
 
 
-#' Extract columns from `info` data.frame
+#' Extract columns from `results` data.frame
 #' @param x a `roleExperiment` object
 #' @param name column name to extract
 #' 
@@ -163,10 +155,10 @@ setMethod("[",
 #' @rdname roleExperiment-methods
 #' 
 setMethod("$", "roleExperiment", function(x, name) {
-    if(name %in% names(x@info)) {
-        return(x@info[, name])
+    if(name %in% names(x@results)) {
+        return(x@results[, name])
     } else {
-        stop('no $ method for object without metadata')
+        stop('no column named ', name, ' in results')
     }
 })
 
@@ -174,9 +166,12 @@ setMethod("$", "roleExperiment", function(x, name) {
 # show method for `roleExperiment`
 setMethod('show', signature = signature(object = 'roleExperiment'),
           definition = function(object) {
-              nmod <- length(unique(object@info$model_id))
+              nmod <- length(unique(object@results$model_id))
               
-              is_run <- nrow(object@stats) > 0 # see if model has been run
+              # the experiment has been run if `results` has columns beyond
+              # `model_id` and the model information
+              is_run <- ncol(object@results) > 
+                  1 + ncol(object@inits[[1]]@info)
               
               if(is_run){
                   run_str <- "completed (run)"
@@ -204,14 +199,13 @@ setMethod('rbind2', signature = c('roleExperiment', 'roleExperiment'),
               thisEx <- y
               
               # keep track of growing model_id max index
-              j <- max(out@info$model_id)
+              j <- max(out@results$model_id)
               
               # augment model_id
-              thisEx@info$model_id <- thisEx@info$model_id + j
+              thisEx@results$model_id <- thisEx@results$model_id + j
               
               # combine with `out`
-              out@info <- rbind(out@info, thisEx@info)
-              out@stats <- rbind(out@stats, thisEx@stats)
+              out@results <- rbind(out@results, thisEx@results)
               out@allParams <- c(out@allParams, thisEx@allParams)
               out@inits <- c(out@inits, thisEx@inits)
               
