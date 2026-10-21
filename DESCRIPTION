@@ -22,7 +22,6 @@ Imports:
     extraDistr,
     methods,
     reticulate,
-    parallel,
     stats, 
     future, 
     future.apply
