@@ -9,7 +9,7 @@
 #' @details If `modID` is not supplied and `x` is a `roleExperiment`, then a 
 #'     list of `roleData` objects for each model run is returned.
 #' 
-#' @include roleModel.R roleExperiment.R
+#' @include roleModel.R
 #' @rdname getFinalState
 #' @export
 
@@ -37,33 +37,4 @@ setMethod('getFinalState',
 )
 
 
-#' Get final state of roleExperiment
-#' @name getFinalState
-#' @aliases getFinalState,roleExperiment-method
-#' @docType methods
-#' @rdname getFinalState
-setMethod('getFinalState', 
-          signature(x ='roleExperiment'), 
-          definition = function(x, modID) {
-              # if IDs are given, subset based on those
-              if(!missing(modID)) {
-                  x <- x[x@experimentMeta$mod_id %in% modID, ]
-              } else {
-                  modID <- unique(x@experimentMeta$mod_id)
-              }
-              
-              # calculate index of final time step for each model
-              iFinal <- sapply(modID, function(i) {
-                  j <- x@experimentMeta$iterations[x@experimentMeta$mod_id == i]
-                  jMax <- max(j)
-                  
-                  k <- x@experimentMeta$iterations == jMax & 
-                      x@experimentMeta$mod_id == i
-                  
-                  return(which(k))
-              })
-              
-              return(x[iFinal, ])
-          }
-)
 

@@ -66,38 +66,6 @@ setMethod('getSumStats',
 )
 
 
-# method for roleExperiment
-#' @rdname getSumStats
-#' @export
-
-setMethod('getSumStats', 
-          signature = 'roleExperiment', 
-          definition = function(x, funs, moreArgs) {
-              
-              ss <- data.frame()
-              for(r in 1:length(x@modelRuns)){
-                  s <- getSumStats(x@modelRuns[[r]],funs)
-                  s$run_num <- r
-                  ss <- rbind(ss,s)
-              }
-              return(ss)
-          }
-)
-
-#' Get SumStats mean
-#'
-#' @param x x
-#' @param funs funs
-#'
-#' @return something
-getSumStatsMean <- function(x, funs){
-    ss <- list()
-    for(r in 1:length(x@modelRuns)){
-        s <- getSumStats(x@modelRuns[[r]],funs)
-        s$run_num <- r
-        ss <- append(ss,list(s))
-    }
-}
 
 # helper function to make a new synthetic function from a list of functions 
 .funApply <- function(funs, moreArgs) {
