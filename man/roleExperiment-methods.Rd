@@ -28,5 +28,5 @@
 \description{
 Extract parts of `roleExperiment` object
 
-Extract columns from `info` data.frame
+Extract columns from `results` data.frame
 }

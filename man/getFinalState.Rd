@@ -4,14 +4,11 @@
 \name{getFinalState}
 \alias{getFinalState}
 \alias{getFinalState,roleModel-method}
-\alias{getFinalState,roleExperiment-method}
 \title{Get the final state of a model run.}
 \usage{
 getFinalState(x, modID, ...)
 
 \S4method{getFinalState}{roleModel}(x)
-
-\S4method{getFinalState}{roleExperiment}(x, modID)
 }
 \arguments{
 \item{x}{The `roleExperiment` or `roleModel` object to retrieve the final state from.}

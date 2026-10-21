@@ -4,7 +4,6 @@
 \alias{getSumStats}
 \alias{getSumStats,roleData-method}
 \alias{getSumStats,roleModel-method}
-\alias{getSumStats,roleExperiment-method}
 \title{Get summary statistics for RoLE objects.}
 \usage{
 getSumStats(x, funs = .getDefaultSumStatsFuns(), moreArgs, ...)
@@ -12,8 +11,6 @@ getSumStats(x, funs = .getDefaultSumStatsFuns(), moreArgs, ...)
 \S4method{getSumStats}{roleData}(x, funs, moreArgs)
 
 \S4method{getSumStats}{roleModel}(x, funs, moreArgs)
-
-\S4method{getSumStats}{roleExperiment}(x, funs, moreArgs)
 }
 \arguments{
 \item{x}{The object to calculate summary statistics on.}

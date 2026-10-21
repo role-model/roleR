@@ -8,7 +8,9 @@ installMsprime(envname = "r-roleR", method = "conda", overwrite = FALSE, ...)
 }
 \arguments{
 \item{envname}{Name of the conda or virtual environment to install into.
-Defaults to \code{"r-roleR"}.}
+Defaults to \code{"r-roleR"}. roleR finds an environment with this default
+name by itself; if you use another name you need to tell reticulate to use
+it (e.g., with \code{reticulate::use_condaenv()}) before running models.}
 
 \item{method}{Installation method passed to
 \code{\link[reticulate]{py_install}}: \code{"conda"} (default) or

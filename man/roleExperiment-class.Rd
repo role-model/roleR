@@ -12,11 +12,10 @@ An S4 class to represent a self-enclosed modeling experiment
 \describe{
 \item{\code{allParams}}{a list of `roleParams` objects used for each model}
 
-\item{\code{info}}{a data.frame with model parameter information for each saved 
-snapshot for all the models of the experiment}
-
-\item{\code{stats}}{a data.frame with summary statistics for each saved snapshot
-for all the models of the experiment}
+\item{\code{results}}{a data.frame with one row per saved snapshot for all the 
+models of the experiment. The first columns are `model_id` and the model
+information from the `info` slot of each initial `roleModel`; once the
+experiment has been run, the summary statistics are added as columns}
 
 \item{\code{funs}}{a named list of summary stat functions}
 
