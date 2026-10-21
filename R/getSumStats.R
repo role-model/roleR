@@ -162,7 +162,13 @@ getSumStatsMean <- function(x, funs){
 # helper function that returns the default list of summary stats and names
 # used in the constructor of getSumStats
 .getDefaultSumStatsFuns <- function(){
-    return(list(hill_abund=hillAbund, hill_gen=hillGenetic, hill_trait = hillTrait, hill_phy = hillPhylo,richness=richness
-    ))
+    return(
+        list(hill_abund = hillAbund, 
+             hill_gen = hillGenetic, 
+             hill_trait = hillTrait, 
+             hill_phy = hillPhylo,
+             richness = richness
+        )
+    )
     
 }
