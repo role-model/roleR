@@ -289,17 +289,26 @@ runmsprim <- function(m) {
     indDat <- split(res[[1]], res[[1]]$time)
     sppDat <- split(res[[2]], res[[2]]$time)
 
+    # sparse genotype matrix triplets (one row per nonzero entry), by time
+    nSites <- res[[3]]$n_sites
+    genoDat <- split(res[[3]]$G, res[[3]]$G$time)
+
     for(i in 1:ntshot) {
         thisGen <- m@info$generations[i]
 
         theseIndDat <- indDat[[as.character(thisGen)]]
         theseSppDat <- sppDat[[as.character(thisGen)]]
+        theseGenoDat <- genoDat[[as.character(thisGen)]]
 
         # species IDs from roleModel object
         theseID <- m@modelSteps[[i]]@localComm@indSpecies
 
         # add sorted sequence data to model output
         m@modelSteps[[i]]@localComm@indSeqs <- mergeSpp(theseIndDat, theseID)
+
+        # add sparse genotype matrix with columns sorted like `indSpecies`
+        m@modelSteps[[i]]@localComm@genoMat <- mkGenoMat(theseGenoDat, nSites,
+                                                         theseIndDat, theseID)
 
         # assign pi and Tajima's D by numeric species ID into pre-allocated
         # NA vectors; this correctly handles species absent at a snapshot and
@@ -335,8 +344,9 @@ mkTBySpp <- function(l, sname, nspp) {
 }
 
 
-# function to match spp IDs and merge data when there are duplicate IDs
-mergeSpp <- function(pyDat, sppID) {
+# function to match spp IDs when there are duplicate IDs
+# returns the row of `pyDat` for each element of `sppID`
+mergeIdx <- function(pyDat, sppID) {
     # vectors to count the occurrences of each ID
     sppIDCounter <- ave(seq_along(sppID), sppID, FUN = seq_along)
     pyCounter <- ave(seq_len(nrow(pyDat)), pyDat$sp_id, FUN = seq_along)
@@ -345,9 +355,42 @@ mergeSpp <- function(pyDat, sppID) {
     sppIDKey <- paste(sppID, sppIDCounter, sep = "_")
     pyKey <- paste(pyDat$sp_id, pyCounter, sep = "_")
     
-    ii <- match(sppIDKey, pyKey)
+    return(match(sppIDKey, pyKey))
+}
+
+
+# function to match spp IDs and merge data when there are duplicate IDs
+mergeSpp <- function(pyDat, sppID) {
+    ii <- mergeIdx(pyDat, sppID)
     
     return(pyDat$seq_alignment[ii])
+}
+
+
+# function to make the sparse genotype matrix (sites x individuals) for one 
+# time step from the triplets of nonzero entries returned by python; columns
+# are sorted to match `sppID` (i.e. `indSpecies`)
+# `geno` is NULL when there are no nonzero entries at that time
+mkGenoMat <- function(geno, nSites, pyDat, sppID) {
+    nInd <- nrow(pyDat)
+    
+    # no nonzero entries: every individual has the ancestral allele at every
+    # site, so return an empty sparse matrix (column order is irrelevant)
+    if(is.null(geno)) {
+        return(new("dgCMatrix", 
+                   Dim = c(as.integer(nSites), as.integer(nInd)), 
+                   p = integer(nInd + 1L)))
+    }
+    
+    # python indices are 0-based
+    G <- sparseMatrix(i = geno$site + 1L, 
+                      j = geno$col + 1L, 
+                      x = as.numeric(geno$allele), 
+                      dims = c(nSites, nInd))
+    
+    ii <- mergeIdx(pyDat, sppID)
+    
+    return(G[, ii, drop = FALSE])
 }
 
 
@@ -362,6 +405,7 @@ mergeSpp <- function(pyDat, sppID) {
 #' @importFrom future.apply future_mapply
 #' @importFrom future plan multisession
 #' @importFrom reticulate py_available py_config use_python conda_list conda_python
+#' @importFrom Matrix sparseMatrix
 
 setMethod("runRole", 
           signature = "roleExperiment", 

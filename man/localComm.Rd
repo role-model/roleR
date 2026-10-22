@@ -27,6 +27,13 @@ An S4 class to specify the state of a local community
 
 \item{\code{indSeqs}}{a character vector of the gene sequences for each individual}
 
+\item{\code{genoMat}}{a sparse matrix (`dgCMatrix`) of the genotypes of all 
+individuals across all species: rows are sites in the simulated 
+sequence, columns are individuals in the same order as `indSpecies`. 
+Entries are allele indices where 0 is the ancestral state of the site, 
+nonzero entries are derived alleles. Rows are the same sites at 
+every saved time step. Initialize as empty until a model has been run.}
+
 \item{\code{spAbund}}{a numeric vector of abundances for each species}
 
 \item{\code{spGenDiv}}{a numeric vector of the genetic diversities for each species}

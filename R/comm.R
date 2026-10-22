@@ -4,6 +4,12 @@
 #' @slot indSpecies a numeric vector of the species IDs for each individual
 #' @slot indTrait a numeric vector of the trait values for each individual
 #' @slot indSeqs a character vector of the gene sequences for each individual
+#' @slot genoMat a sparse matrix (`dgCMatrix`) of the genotypes of all 
+#'    individuals across all species: rows are sites in the simulated 
+#'    sequence, columns are individuals in the same order as `indSpecies`. 
+#'    Entries are allele indices where 0 is the ancestral state of the site, 
+#'    nonzero entries are derived alleles. Rows are the same sites at 
+#'    every saved time step. Initialize as empty until a model has been run.
 #' @slot spAbund a numeric vector of abundances for each species 
 #' @slot spGenDiv a numeric vector of the genetic diversities for each species
 #' @slot spTajD a numeric vector of the Tajima D stat for each species
@@ -19,6 +25,7 @@
 #' @rdname localComm
 #' 
 #' @import methods
+#' @importClassesFrom Matrix dgCMatrix
 #' 
 #' @export
 
@@ -26,6 +33,7 @@ setClass('localComm',
          slots = c(indSpecies = 'numeric',
                    indTrait = 'matrix', 
                    indSeqs = 'character',
+                   genoMat = 'dgCMatrix',
                    spAbund = 'numeric',
                    spGenDiv = 'numeric',
                    spTajD = 'numeric',

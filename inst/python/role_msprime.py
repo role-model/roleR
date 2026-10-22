@@ -73,7 +73,11 @@ def sim_role(Jm,
         seed: Random seed for reproducibility
         
     Returns:
-        Pandas DataFrame containing diversity statistics and genotypes
+        Tuple of (df_ind, df_spp, geno). `df_ind` has the sequences per
+        individual, `df_spp` the pop gen stats per species and time, and
+        `geno` is a dict with `G` (DataFrame of the nonzero entries of the
+        sites x individuals genotype matrix for each time: time, site, col,
+        allele; 0-based) and `n_sites` (number of rows of that matrix)
     """
     
     # convert matrix-like objects with species abundances info to list of dicts
@@ -461,6 +465,25 @@ def sim_role(Jm,
         reference_sequence = tskit.random_nucleotides(ts.sequence_length)
     ))
 
+    # sparse genotype matrix G (sites x individuals) for each saved time step,
+    # returned as triplets of its nonzero entries. Allele 0 is the ancestral
+    # state of a site, so any nonzero entry is a derived allele. `col` is the
+    # 0-based position of the individual among the rows of `df_ind` that share
+    # its time (same order that R sees after splitting by time). Rows are
+    # sites of the tree sequence, so row i is the same site in every time step.
+    n_sites = int(mts.num_sites)
+    geno_parts = []
+    for t, sub in df_ind.groupby("time", sort = False):
+        gmat = mts.genotype_matrix(samples = sub["ids"].tolist(),
+                                   isolated_as_missing = False)
+        site_ix, col_ix = np.nonzero(gmat)
+        geno_parts.append(pd.DataFrame({
+            "time": float(t),
+            "site": site_ix,
+            "col": col_ix,
+            "allele": gmat[site_ix, col_ix]}))
+    df_geno = pd.concat(geno_parts, ignore_index = True)
+
     # aggregate df so rows are species and column of ids is a column of lists
     df_spp = df_ind.groupby(["time", "sp_id"])['ids'].apply(list).reset_index()
 
@@ -475,6 +498,6 @@ def sim_role(Jm,
     df_spp = df_spp[["time", "sp_id", "pi", "tajimas_D"]]
 
 
-    return df_ind, df_spp
+    return df_ind, df_spp, {"G": df_geno, "n_sites": n_sites}
 
 
