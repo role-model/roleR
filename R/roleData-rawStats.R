@@ -11,8 +11,7 @@
 #'     length. This is distinct from other summary statistic functions which will
 #'     always return a fixed length value.  When using raw summary statistic
 #'     functions in `getSumStats` they will be returned in a list-column.
-#'     rawAbundance gets the unordered abundance of species, 
-#'     while rawSpAbundance gets the ordered abundance of species which is a much longer vector
+#'     rawAbundance gets the abundance of each species.
 #' 
 #' @rdname raw-sumStats
 #' @export
@@ -34,29 +33,6 @@ setMethod('rawAbundance',
           signature = 'roleData', 
           definition = function(x) {
               list(tabulate(x@localComm@indSpecies))
-          }
-)
-
-#' abundance
-#' @rdname rawSpAbundance
-#' @param x x
-#' @param ... ignored
-#' @export
-setGeneric('rawSpAbundance', 
-           def = function(x, ...) standardGeneric('rawSpAbundance'), 
-           signature = 'x')
-
-
-
-#' abundance on roleData
-#' @name rawSpAbundance
-#' @aliases rawSpAbundance,roleData-method
-#' @docType methods
-#' @rdname rawSpAbundance
-setMethod('rawSpAbundance', 
-          signature = 'roleData', 
-          definition = function(x) {
-              list(tabulate(x@localComm@spAbund))
           }
 )
 

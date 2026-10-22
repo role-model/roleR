@@ -7,7 +7,7 @@
 #'     named list of functions. If unspecified, defaults to including several standard stats. 
 #'     Included diversity index functions in roleR are: `hillAbund`, 
 #'     `hillGenetic`,`hillPhylo` & `richness`. Included raw stats functions are `rawAbundance`,
-#'     `rawSpAbundance`,`rawSppId`,`rawTraits`,`rawGenDiv`,`rawSeqs`,
+#'     `rawSppId`,`rawTraits`,`rawGenDiv`,`rawSeqs`,
 #'     `rawBranchLengths` & `rawApePhylo`.
 #'     
 #' @param moreArgs An optional named list of additional arguments to pass to the
