@@ -145,12 +145,10 @@ if 0 there is full competition and no filtering.}
 
 \item{\code{num_basepairs}}{Number of basepairs to use in genetic simulations. Genetic simulations are currently single-locus.}
 
-\item{\code{init_type}}{The biological model used to initialize; a single character string that can be either "oceanic_island", "bridge_island", or "bare_island."
+\item{\code{init_type}}{The biological model used to initialize; a single character string that can be either "oceanic_island" or "bridge_island."
 The bridge island model has the initial individuals in the local community arriving through a land bridge, while the oceanic has no bridge and is populated by a single dispersal event.
 Thus, for oceanic island models, all individuals are of a SINGLE species sampled proportional to meta community species abundances, 
-while in bridge island models, individuals are sampled of MANY species proportional to their abundances.
-The bare island model is related to the oceanic island model, but instead of starting with "individuals_local" individuals of the sole sampled species, only 1 individual 
-of that species appears and the rest of the space is filled with placeholder "rocks" representing unfilled space.}
+while in bridge island models, individuals are sampled of MANY species proportional to their abundances.}
 
 \item{\code{niter}}{An integer specifying the number of time steps for the model to run.}
 

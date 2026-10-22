@@ -70,7 +70,7 @@ Now we can loop over parameter value combinations
 
 e <- roleExperiment(param_samples)
 erun <- runRole(e)
-erun@stats
+erun@results
 
 library(future.apply)
 library(future)

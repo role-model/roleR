@@ -116,7 +116,7 @@ Experiments are intended to encapsulate one or more hypotheses through compariso
 ## Extracting Data From Models
 
 Get a summary stats over time for a single model, each row being a different saved iteration state.
-Available raw stats are rawAbundance, rawSpAbundance, rawTraits, rawGenDiv, rawBranchLengths, and rawApePhylo.
+Available raw stats are rawAbundance, rawTraits, rawGenDiv, rawBranchLengths, and rawApePhylo.
 Available transformed stats are hillAbund, hillGenetic, hillTrait, hillPhylo, and richness.
 
 ```{r series, cache = TRUE}
