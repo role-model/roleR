@@ -50,6 +50,7 @@ Collate:
     'installMsprime.R'
     'roleData-divStats.R'
     'roleData-rawStats.R'
+    'roleData-tajimaStats.R'
     'roleExperiment-methods.R'
     'roleExperiment.R'
     'roleModel-methods.R'
