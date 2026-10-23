@@ -35,24 +35,24 @@ installMsprime()
 # set-up parameters
 p <- roleParams(
     individuals_local = 1000,
-    individuals_meta = 1000000,
-    species_meta = 20,
+    individuals_meta = 100000,
+    species_meta = 200,
     speciation_local = 1e-05,
-    speciation_meta = 4,
-    extinction_meta = 3.8,
+    speciation_meta = 0.100,
+    extinction_meta = 0.090,
     trait_sigma = 2,
     env_sigma = 1,
     comp_sigma = 1,
     dispersal_prob = 0.05,
-    mutation_rate = 1e-07,
+    mutation_rate = 1e-09,
     neut_delta = 1,
     env_comp_delta = 0,
     equilib_escape = 1,
-    alpha = 2e+03,
+    alpha = 5e+03,
     num_basepairs = 300,
     init_type = "oceanic_island",
     niter = 1000000,
-    niterTimestep = 50000
+    niterTimestep = 500000
 )
 
 # initialize the model
@@ -60,19 +60,50 @@ m <- roleModel(p)
 
 # run the model
 r <- runRole(m)
-
 r@info
 
 boo <- getLocalComm(r)
-cbind(boo@spGenDiv, 
-      boo@spTajD, 
-      boo@spAbund, 
-      boo@spAbundHarmMean)
 
-plot(boo@spAbund, boo@spTajD)
-plot(boo@spAbund, boo@spGenDiv)
+ii <- order(boo@indSpecies)
+
+par(mfrow = c(1, 2), mar = c(1, 1, 0, 0))
+plot(boo@indSpecies[ii], seq(0, 1, length.out = length(boo@indSpecies)))
+image(as(boo@genoMat, "matrix")[, ii], axes = FALSE)
+
+boo@spGenDiv[!is.na(boo@spGenDiv)]
+mean(as.matrix(boo@genoMat))
 
 
+
+
+# par(mfrow = c(1, 2), mar = rep(0, 4))
+
+pdf("~/Desktop/foo.pdf", width = 20, height = 80)
+roleTre <- strsplit(boo@indSeqs, "") |> 
+    setNames(paste0("sp_", boo@indSpecies)) |> 
+    as.DNAbin() |>
+    dist.dna(model = "JC69") |> 
+# foo <- vegan::metaMDS(roleTre, k = 2, autotransform = FALSE)
+# plot(foo, type = "t")
+    njs() #|> 
+    # unroot()
+plot(roleTre)
+# plot(roleTre, type = "unrooted")
+tiplabels(col = as.factor(roleTre$tip.label), pch = 16)
+dev.off()
+
+x <- boo@spGenDiv
+plot(sort(x[x > 0], TRUE))
+
+tre <- getPhylo(r) |> 
+    as("phylo")
+
+
+drop.tip(tre, which(!(tre$tip.label %in% paste0("t", boo@indSpecies)))) |> 
+    unroot() |> 
+    plot(type = "unrooted")
+
+boo@genoMat
 
 t0 <- getPhylo(r, 1) |> as("phylo")
 tt <- getPhylo(r) |> as("phylo")
