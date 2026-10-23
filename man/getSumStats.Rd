@@ -20,7 +20,7 @@ named list with a single function or many functions, but must be a
 named list of functions. If unspecified, defaults to including several standard stats. 
 Included diversity index functions in roleR are: `hillAbund`, 
 `hillGenetic`,`hillPhylo` & `richness`. Included raw stats functions are `rawAbundance`,
-`rawSppId`,`rawTraits`,`rawGenDiv`,`rawSeqs`,
+`rawSppId`,`rawTraits`,`rawGenDiv`,
 `rawBranchLengths` & `rawApePhylo`.}
 
 \item{moreArgs}{An optional named list of additional arguments to pass to the

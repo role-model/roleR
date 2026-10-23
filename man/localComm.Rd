@@ -6,14 +6,12 @@
 \alias{localComm}
 \title{The local community of a `roleData` object}
 \usage{
-localComm(indSpecies, indTrait, indSeqs)
+localComm(indSpecies, indTrait)
 }
 \arguments{
 \item{indSpecies}{indSpecies}
 
 \item{indTrait}{indTrait}
-
-\item{indSeqs}{indSeqs}
 }
 \description{
 An S4 class to specify the state of a local community
@@ -24,8 +22,6 @@ An S4 class to specify the state of a local community
 \item{\code{indSpecies}}{a numeric vector of the species IDs for each individual}
 
 \item{\code{indTrait}}{a numeric vector of the trait values for each individual}
-
-\item{\code{indSeqs}}{a character vector of the gene sequences for each individual}
 
 \item{\code{genoMat}}{a sparse matrix (`dgCMatrix`) of the genotypes of all 
 individuals across all species: rows are sites in the simulated 

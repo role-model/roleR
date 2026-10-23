@@ -79,7 +79,7 @@ mean(as.matrix(boo@genoMat))
 # par(mfrow = c(1, 2), mar = rep(0, 4))
 
 pdf("~/Desktop/foo.pdf", width = 20, height = 80)
-roleTre <- strsplit(boo@indSeqs, "") |> 
+roleTre <- strsplit(rawSeqs(r), "") |> 
     setNames(paste0("sp_", boo@indSpecies)) |> 
     as.DNAbin() |>
     dist.dna(model = "JC69") |> 

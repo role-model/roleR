@@ -303,9 +303,6 @@ runmsprim <- function(m) {
         # species IDs from roleModel object
         theseID <- m@modelSteps[[i]]@localComm@indSpecies
 
-        # add sorted sequence data to model output
-        m@modelSteps[[i]]@localComm@indSeqs <- mergeSpp(theseIndDat, theseID)
-
         # add sparse genotype matrix with columns sorted like `indSpecies`
         m@modelSteps[[i]]@localComm@genoMat <- mkGenoMat(theseGenoDat, nSites,
                                                          theseIndDat, theseID)
@@ -356,14 +353,6 @@ mergeIdx <- function(pyDat, sppID) {
     pyKey <- paste(pyDat$sp_id, pyCounter, sep = "_")
     
     return(match(sppIDKey, pyKey))
-}
-
-
-# function to match spp IDs and merge data when there are duplicate IDs
-mergeSpp <- function(pyDat, sppID) {
-    ii <- mergeIdx(pyDat, sppID)
-    
-    return(pyDat$seq_alignment[ii])
 }
 
 

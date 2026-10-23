@@ -117,7 +117,7 @@ assertPreRun <- function(model) {
 
 # localComm slot-level validator
 validateLocalCommSlot <- function(slot, value, sm, J) {
-    ind_slots <- c("indSpecies", "indTrait", "indSeqs")
+    ind_slots <- c("indSpecies", "indTrait")
     spp_slots <- c("spAbund", "spAbundHarmMean", "spPropHarmMean",
                    "spLastOriginStep", "spLastOriginGen", "spGenDiv", "spTajD")
     all_slots <- c(ind_slots, spp_slots)
@@ -140,11 +140,6 @@ validateLocalCommSlot <- function(slot, value, sm, J) {
             stop("indTrait must be a matrix with nrow = individuals_local (", J,
                  "), got nrow = ", if (is.matrix(value)) nrow(value) else "non-matrix",
                  call. = FALSE)
-
-    } else if (slot == "indSeqs") {
-        if (!is.character(value) || length(value) != J)
-            stop("indSeqs must be a character vector of length individuals_local (",
-                 J, "), got length ", length(value), call. = FALSE)
 
     } else if (slot %in% spp_slots) {
         if (length(value) != sm)

@@ -104,28 +104,6 @@ setMethod('rawGenDiv',
 
 
 
-# gen seqs
-#' @rdname raw-sumStats
-#' @export
-
-setGeneric('rawSeqs', 
-           def = function(x, ...) standardGeneric('rawSeqs'), 
-           signature = 'x')
-
-
-#' raw seqs on roleData
-#' @name rawSeqs
-#' @aliases rawSeqs,roleData-method
-#' @docType methods
-#' @rdname raw-sumStats
-setMethod('rawSeqs', 
-          signature = 'roleData', 
-          definition = function(x) {
-              list(x@localComm@indSeqs)
-          }
-)
-
-
 # branch lengths
 #' @rdname raw-sumStats
 #' @export

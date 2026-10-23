@@ -690,7 +690,6 @@ S4 s4FromRcpp(List x) {
     locs.slot("indSpecies") = rIndexIndSpp + 1;
     
     locs.slot("indTrait") = locList["indTrait"];
-    locs.slot("indSeqs") = "A"; // place-holder
     locs.slot("spGenDiv") = 1; // place-holder
     locs.slot("spTajD") = 1; // place-holder
     locs.slot("spAbund") = locList["spAbund"];

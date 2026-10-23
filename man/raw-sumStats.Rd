@@ -10,8 +10,6 @@
 \alias{rawTraits,roleData-method}
 \alias{rawGenDiv}
 \alias{rawGenDiv,roleData-method}
-\alias{rawSeqs}
-\alias{rawSeqs,roleData-method}
 \alias{rawBranchLengths}
 \alias{rawBranchLengths,roleData-method}
 \alias{rawApePhylo}
@@ -33,10 +31,6 @@ rawTraits(x, ...)
 rawGenDiv(x, ...)
 
 \S4method{rawGenDiv}{roleData}(x)
-
-rawSeqs(x, ...)
-
-\S4method{rawSeqs}{roleData}(x)
 
 rawBranchLengths(x, ...)
 

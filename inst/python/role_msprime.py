@@ -92,9 +92,9 @@ def sim_role(Jm,
         seed: Random seed for reproducibility
         
     Returns:
-        Tuple of (df_ind, df_spp, geno). `df_ind` has the sequences per
-        individual, `df_spp` the pop gen stats per species and time, and
-        `geno` is a dict with `G` (DataFrame of the nonzero entries of the
+        Tuple of (df_ind, df_spp, geno). `df_ind` has the time and species ID
+        of each individual (sequences are not simulated), `df_spp` the pop gen
+        stats per species and time, and `geno` is a dict with `G` (DataFrame of the nonzero entries of the
         sites x individuals genotype matrix for each time: time, site, col,
         allele; 0-based) and `n_sites` (number of rows of that matrix)
     """
@@ -478,12 +478,6 @@ def sim_role(Jm,
     # get just species names from "name" column
     df_ind["sp_id"] = df_ind["name"].str.split('_').str[-1]
 
-    # get simulated sequences (this hangs a suprising while)
-    df_ind["seq_alignment"] = list(mts.alignments(
-        samples = df_ind["ids"].tolist(),
-        reference_sequence = tskit.random_nucleotides(ts.sequence_length)
-    ))
-
     # sparse genotype matrix G (sites x individuals) for each saved time step,
     # returned as triplets of its nonzero entries. Allele 0 is the ancestral
     # state of a site, so any nonzero entry is a derived allele. `col` is the
@@ -510,8 +504,9 @@ def sim_role(Jm,
     df_spp["pi"] = mts.diversity(df_spp["ids"].tolist())
     df_spp["tajimas_D"] = mts.Tajimas_D(df_spp["ids"].tolist())
 
-    # all we need from `df_ind` is time, sp_id, and seqs
-    df_ind = df_ind[["time", "sp_id", "seq_alignment"]]
+    # all we need from `df_ind` is time and sp_id (sequences are not
+    # simulated; they can be built from the genotype matrix in R)
+    df_ind = df_ind[["time", "sp_id"]]
 
     # all we need from `df_ind` is time, sp_id, pi, and taj
     df_spp = df_spp[["time", "sp_id", "pi", "tajimas_D"]]

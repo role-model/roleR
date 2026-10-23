@@ -3,7 +3,6 @@
 #' @description An S4 class to specify the state of a local community
 #' @slot indSpecies a numeric vector of the species IDs for each individual
 #' @slot indTrait a numeric vector of the trait values for each individual
-#' @slot indSeqs a character vector of the gene sequences for each individual
 #' @slot genoMat a sparse matrix (`dgCMatrix`) of the genotypes of all 
 #'    individuals across all species: rows are sites in the simulated 
 #'    sequence, columns are individuals in the same order as `indSpecies`. 
@@ -32,7 +31,6 @@
 setClass('localComm',
          slots = c(indSpecies = 'numeric',
                    indTrait = 'matrix', 
-                   indSeqs = 'character',
                    genoMat = 'dgCMatrix',
                    spAbund = 'numeric',
                    spGenDiv = 'numeric',
@@ -49,11 +47,10 @@ setClass('localComm',
 #' @rdname localComm
 #' @param indSpecies indSpecies
 #' @param indTrait indTrait
-#' @param indSeqs indSeqs
 #' @import methods
 #' @export
 
-localComm <- function(indSpecies, indTrait, indSeqs) { 
+localComm <- function(indSpecies, indTrait) { 
     
     # create the species indexed vectors from individual index vectors 
     # and initialize with NA for missing data where appropriate
@@ -69,7 +66,6 @@ localComm <- function(indSpecies, indTrait, indSeqs) {
     return(new('localComm',
                indSpecies = indSpecies,
                indTrait = indTrait,
-               indSeqs = indSeqs,
                spAbund = spAbund,
                spGenDiv = spGenDiv,
                spTajD = spTajD,
