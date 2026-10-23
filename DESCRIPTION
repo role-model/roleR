@@ -46,6 +46,7 @@ Collate:
     'roleData.R'
     'getSumStats.R'
     'getters.R'
+    'getRawSeqs.R'
     'installMsprime.R'
     'roleData-divStats.R'
     'roleData-rawStats.R'
