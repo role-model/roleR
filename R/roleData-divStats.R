@@ -129,6 +129,10 @@ setMethod('hillTrait',
     p <- n / sum(n)
     dij <- as.matrix(stats::dist(traits))
     Q <- as.vector(p %*% dij %*% p)
+    
+    # all traits equal (or only one species): no trait diversity
+    if(Q == 0) return(rep(0, length(q)))
+    
     a <- outer(p, p, '*') / Q
     
     Hk <- sapply(q, function(qk) {
