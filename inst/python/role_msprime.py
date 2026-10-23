@@ -19,21 +19,40 @@ def _force_ultrametric(tree):
         raise ValueError(f"Not a valid newick tree: '{tree}'")
     root = parsed[0]
 
-    # Set node depths (distances from root).
-    stack = [(root, 0)]
-    max_depth = 0
-    while len(stack) > 0:
-        node, depth = stack.pop()
-        if depth > max_depth:
-            max_depth = depth
-        node.depth = depth
-        for child in node.descendants:
-            stack.append((child, depth + child.length))
+    def _set_depths():
+        # distance of each node from the root, summed root-to-tip (the same
+        # order msprime uses); returns the maximum depth
+        stack = [(root, 0.0)]
+        max_depth = 0.0
+        while len(stack) > 0:
+            node, depth = stack.pop()
+            if depth > max_depth:
+                max_depth = depth
+            node.depth = depth
+            for child in node.descendants:
+                stack.append((child, depth + child.length))
+        return max_depth
+
+    # msprime checks that leaves are at time 0 with an absolute tolerance of
+    # 1e-8, applied AFTER multiplying by 1e6 / generation_time (we use
+    # time_units = "myr"). A 1-ulp floating point error in a depth of ~64-128
+    # (~1.4e-14) therefore becomes ~1.4e-8 and trips the check. To avoid this
+    # we snap every branch length to a multiple of 2**-k: sums of such numbers
+    # are exact in floating point (while depth < 2**(53 - k)), so the depths
+    # msprime computes are bit-identical across leaves after the correction.
+    max_depth = _set_depths()
+    k = int(min(40, 50 - np.ceil(np.log2(max_depth + 1.0))))
+    scale = 2.0 ** k
+    for node in root.walk():
+        if node is not root:
+            node.length = round(node.length * scale) / scale
+
+    max_depth = _set_depths()
     for node in root.walk():
         if node.is_leaf:
             ## Add offset to node.length to force all nodes to fall at time 0
             ## The offset is the difference between the depth of this node
-            ## and the max_depth of the deepest leaf node.
+            ## and the max_depth of the deepest leaf node (exact on the grid).
             node.length = node.length + (max_depth - node.depth)
     return root.newick
 
