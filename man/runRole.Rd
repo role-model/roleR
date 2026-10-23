@@ -36,6 +36,12 @@ Prior to invoking `runRole`, the `role*` input object must be
     summary stat functions stored in the experiment's `funs`; the summary 
     stats are added as columns of the `results` slot. The models themselves
     are not kept.
+    
+    The `run_status` column of `results` is `"success"` for models that ran. 
+    If a model fails, the experiment still finishes: the rows of the failed
+    model have `NA` for all summary stats and the error message in 
+    `run_status`, and `runRole` gives a warning with the number of models
+    that failed.
 }
 \examples{
 # create and run a model
