@@ -17,6 +17,12 @@
 #'     summary stat functions stored in the experiment's `funs`; the summary 
 #'     stats are added as columns of the `results` slot. The models themselves
 #'     are not kept.
+#'     
+#'     The `run_status` column of `results` is `"success"` for models that ran. 
+#'     If a model fails, the experiment still finishes: the rows of the failed
+#'     model have `NA` for all summary stats and the error message in 
+#'     `run_status`, and `runRole` gives a warning with the number of models
+#'     that failed.
 #' 
 #' @examples 
 #' # create and run a model
@@ -407,6 +413,19 @@ setMethod("runRole",
                                      drop = FALSE]
               x@results <- cbind(x@results, stats)
               
+              # let the user know if any models failed
+              failedID <- unique(x@results$model_id[
+                  x@results$run_status != "success"
+              ])
+              if(length(failedID) > 0) {
+                  warning(length(failedID), " out of ", length(x@inits), 
+                          " models failed, they are indicated in the `results` ",
+                          "slot of the returned object by having rows with all ",
+                          "NAs except for the `run_status` column which will ",
+                          "contain the error message", 
+                          call. = FALSE)
+              }
+              
               return(x)
           }
 )
@@ -433,7 +452,27 @@ runMultiRole <- function(modList,
                          SIMPLIFY = FALSE,
                          future.seed = TRUE)
     
+    # failed models only have a `run_status` column because the names of the 
+    # stats are not known until a model succeeds; fill in the rest with `NA`
+    ok <- sapply(res, function(r) all(r$run_status == "success"))
+    if(any(ok)) {
+        template <- res[[which(ok)[1]]]
+        
+        res <- lapply(res, function(r) {
+            for(nm in setdiff(names(template), names(r))) {
+                if(is.list(template[[nm]])) {
+                    r[[nm]] <- rep(list(NA), nrow(r))
+                } else {
+                    r[[nm]] <- NA
+                }
+            }
+            
+            return(r[, names(template), drop = FALSE])
+        })
+    }
+    
     out <- do.call(rbind, res)
+    rownames(out) <- NULL
     return(out)
 }
 
@@ -441,13 +480,22 @@ runMultiRole <- function(modList,
 # internal worker, defined at top level so it doesn't capture the calling
 # function's environment (and everything in it) when sent to workers
 runOneMod <- function(init, funs, pyPath) {
-    # workers are fresh R sessions, so point reticulate at the interpreter
-    # before Python is first used
-    .setRolePython(pyPath)
-    
-    m <- runRole(init)
-    
-    return(getSumStats(m, funs = funs))
+    tryCatch({
+        # workers are fresh R sessions, so point reticulate at the interpreter
+        # before Python is first used
+        .setRolePython(pyPath)
+        
+        m <- runRole(init)
+        
+        sumStats <- getSumStats(m, funs = funs)
+        sumStats$run_status <- "success"
+        
+        return(sumStats)
+    }, error = function(e) {
+        # one row per saved snapshot, which is known from the unrun model
+        return(data.frame(run_status = rep(conditionMessage(e), 
+                                           nrow(init@info))))
+    })
 }
 
 # find the Python that roleR should use, without initializing Python
