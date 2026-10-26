@@ -28,29 +28,29 @@ Now we can sample parameter values a range of possible values (i.e. priors). Not
 ```{r}
 #| label: priors
 
-n_prior_samp <- 10
+n_prior_samp <- 2
 
 param_samples <- data.frame(
     individuals_local = 1000, 
     individuals_meta = 100000, 
-    species_meta = 200, 
+    species_meta = 300, 
     speciation_local = 0, 
     speciation_meta = 0.100,
     extinction_meta = 0.090, 
-    dispersal_prob = runif(n_prior_samp, 0.0001, 0.01), 
+    dispersal_prob = runif(n_prior_samp, 0.001, 0.1), 
     env_optim = 0, 
-    trait_sigma = runif(n_prior_samp, 0.001, 10), 
+    trait_sigma = runif(n_prior_samp, 0.001, 0.1), 
     env_sigma = runif(n_prior_samp, 0.1, 10), 
     comp_sigma = runif(n_prior_samp, 0.001, 10), 
     neut_delta = runif(n_prior_samp), 
     env_comp_delta = runif(n_prior_samp), 
     mutation_rate = 1e-09, 
     equilib_escape = 1, 
-    alpha = 5e+03, 
+    alpha = 1e+04, 
     num_basepairs = 350, 
     init_type = "oceanic_island",
-    niter = 500000,
-    niterTimestep = 500000
+    niter = 50000,
+    niterTimestep = 50000
 )
 
 param_samples <- lapply(1:nrow(param_samples), function(i) {
@@ -66,86 +66,136 @@ Now we can loop over parameter value combinations
 
 ```{r}
 #| label: experiment
+#| eval: false
 
-x <- proc.time()
-e <- roleExperiment(param_samples)
-erun <- runRole(e, cores = 6)
-proc.time() - x
-
-erun@results
-
-
-
-```
-
-## Quick start
-
-```{r}
-
-# set-up parameters
-p <- roleParams(
-    individuals_local = 1000,
-    individuals_meta = 1000000,
-    species_meta = 20,
-    speciation_local = 1e-05,
-    speciation_meta = 4,
-    extinction_meta = 3.8,
-    trait_sigma = 2,
-    env_sigma = 1,
-    comp_sigma = 1,
-    dispersal_prob = 0.05,
-    mutation_rate = 1e-07,
-    neut_delta = 1,
-    env_comp_delta = 0,
-    equilib_escape = 1,
-    alpha = 2e+03,
-    num_basepairs = 300,
-    init_type = "oceanic_island",
-    niter = 1000000,
-    niterTimestep = 500000
+funList <- list(
+    hill_abund = hillAbund, 
+    hill_gen = hillGenetic,
+    hill_trait = hillTrait,
+    richness = richness,
+    mean_taj_D = meanTajD, 
+    hill_taj_D = hillTajD, 
+    cor_abund_pi = corAbundPi,
+    cor_taj_D_abund = corTajDAbund,
+    cor_taj_D_pi = corTajDPi
 )
 
-# initialize the model
-m <- roleModel(p)
 
-# run the model
-r <- runRole(m)
-
-r@info
-
-boo <- getLocalComm(r)
-cbind(boo@spGenDiv, 
-      boo@spTajD, 
-      boo@spAbund, 
-      boo@spAbundHarmMean)
-
-plot(boo@spAbund, boo@spTajD)
-plot(boo@spAbund, boo@spGenDiv)
+# this is actually run elsewhere
+e <- roleExperiment(param_samples, funs = funList)
+erun <- runRole(e, cores = 2)
 
 
-
-t0 <- getPhylo(r, 1) |> as("phylo")
-tt <- getPhylo(r) |> as("phylo")
-
-plot(t0); axis(1)
-plot(tt); axis(1)
-
-(ape::node.depth.edgelength(t0) |> max()) - 
-    (ape::node.depth.edgelength(tt) |> max())
-
-
-
-
-# get results
-getSumStats(m, list(rich = richness, hill = hillAbund))
 ```
 
-## Setting parameters
+```{r}
+#| label: random-work
+#| eval: false
 
-## Initializing a roleModel
+# just messing with things to get them figured out
 
-## Running a roleModel
+x <- proc.time()
+r <- roleModel(param_samples[[i]]) |> 
+    runRole()
+proc.time() - x
+i <- i + 1
 
-## RoLE Experiments
+boo <- getLocalComm(r)
+a <- boo@spAbund
 
-## Calculating summary statistics
+plot(sort(a[a > 0], TRUE), log = "y")
+
+plot(boo@spAbund, boo@spGenDiv)
+plot(boo@spAbund, boo@spTajD)
+plot(boo@spTajD, boo@spGenDiv)
+
+trt <- tapply(boo@indTrait, boo@indSpecies, mean)
+plot(trt, a[as.numeric(names(trt))])
+
+plot(sort(boo@indTrait, TRUE))
+
+```
+
+
+After running the RoLE experiment on a server, we can read-in the results
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+erun <- readRDS("../scratch/sbi_run/erun.rds")
+
+res <- filter(erun@results, 
+              generations > 0)
+
+
+ggplot(res, aes(hill_abund_1, hill_gen_1)) +
+    geom_hex() +
+    scale_fill_viridis_c()
+
+ggplot(res, aes(hill_abund_1, hill_taj_D_1)) +
+    geom_hex() +
+    scale_fill_viridis_c()
+
+vars <- c("abund", "pi", "taj_D")
+pat <- paste(vars, collapse = "|")
+
+select(res, starts_with("cor_")) |> 
+    pivot_longer(everything(), 
+                 names_to = c("var1", "var2"),
+                 names_pattern = paste0("cor_(", pat, ")_(", pat, ")"),
+                 values_to = "corr") |> 
+    as_tibble() |> 
+    mutate(i = match(var1, vars),
+           j = match(var2, vars),
+           var1 = factor(vars[pmin(i, j)], levels = vars[-length(vars)]),
+           var2 = factor(vars[pmax(i, j)], levels = vars[-1])) |> 
+    ggplot(aes(corr)) +
+    geom_histogram() +
+    facet_grid(rows = vars(var2), cols = vars(var1))
+
+ggplot(res, aes(dispersal_prob, hill_taj_D_1)) +
+    geom_hex() +
+    scale_fill_viridis_c()
+
+ggplot(res, aes(dispersal_prob, hill_gen_1)) +
+    geom_hex() +
+    scale_fill_viridis_c()
+
+
+ggplot(res, aes(trait_sigma, hill_gen_1)) +
+    geom_hex() +
+    scale_fill_viridis_c()
+
+
+ggplot(res, aes(env_comp_delta, hill_trait_1)) +
+    geom_hex() +
+    scale_fill_viridis_c()
+
+ggplot(res, aes(env_comp_delta, hill_gen_1)) +
+    geom_hex() +
+    scale_fill_viridis_c()
+
+ggplot(res, aes(env_comp_delta, cor_abund_pi)) +
+    geom_hex() +
+    scale_fill_viridis_c()
+
+
+res_complete <- filter(res, 
+                       if_all(hill_abund_1:cor_taj_D_pi, is.finite))
+
+pca <- select(res_complete, hill_abund_1:cor_taj_D_pi) |> 
+    prcomp(center = TRUE)
+
+pca_param <- select(res_complete, !(hill_abund_1:cor_taj_D_pi)) |> 
+    cbind(pca$x)
+
+ggplot(pca_param, aes(PC1, env_comp_delta)) +
+    geom_point()
+```
+
+
+
+
+
