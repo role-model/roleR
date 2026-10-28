@@ -28,7 +28,7 @@ Now we can sample parameter values a range of possible values (i.e. priors). Not
 ```{r}
 #| label: priors
 
-n_prior_samp <- 2
+n_prior_samp <- 60
 
 param_samples <- data.frame(
     individuals_local = 1000, 
@@ -42,8 +42,8 @@ param_samples <- data.frame(
     trait_sigma = runif(n_prior_samp, 0.001, 0.1), 
     env_sigma = runif(n_prior_samp, 0.1, 10), 
     comp_sigma = runif(n_prior_samp, 0.001, 10), 
-    neut_delta = runif(n_prior_samp), 
-    env_comp_delta = runif(n_prior_samp), 
+    neut_delta = 0.25, #runif(n_prior_samp), 
+    env_comp_delta = 1, #runif(n_prior_samp), 
     mutation_rate = 1e-09, 
     equilib_escape = 1, 
     alpha = 1e+04, 
@@ -83,8 +83,10 @@ funList <- list(
 
 # this is actually run elsewhere
 e <- roleExperiment(param_samples, funs = funList)
-erun <- runRole(e, cores = 2)
+erun <- runRole(e, cores = 6)
 
+res <- erun@results |> 
+    filter(generations > 0)
 
 ```
 
@@ -94,13 +96,49 @@ erun <- runRole(e, cores = 2)
 
 # just messing with things to get them figured out
 
-x <- proc.time()
-r <- roleModel(param_samples[[i]]) |> 
+p <- roleParams(
+    individuals_local = 1000, 
+    individuals_meta = 1e+05,
+    species_meta = 200,
+    speciation_local = 0,
+    speciation_meta = 0.1,
+    extinction_meta = 0.09,
+    dispersal_prob = 0.03,
+    env_optim = 0,
+    trait_sigma = 0.001,
+    env_sigma = 2,
+    comp_sigma = 10,
+    neut_delta = 0.15,
+    env_comp_delta = 1,
+    mutation_rate = 1e-09,
+    equilib_escape = 1,
+    alpha = 1e+04,
+    num_basepairs = 350,
+    init_type = "oceanic_island",
+    niter = 50000,
+    niterTimestep = 50000
+)
+
+
+r <- roleModel(p) |> 
     runRole()
-proc.time() - x
-i <- i + 1
+
 
 boo <- getLocalComm(r)
+
+env_sml <- getSumStats(r)
+
+plot(sort(boo@indTrait))
+
+data.frame(spp = as.character(boo@indSpecies), trt = boo@indTrait) |> 
+    ggplot(aes(spp, trt, color = spp)) +
+    geom_point(alpha = 0.1) +
+    scale_color_viridis_d(guide = NULL)
+
+data.frame(trt = boo@indTrait) |> 
+    ggplot(aes(trt)) +
+    geom_histogram()
+
 a <- boo@spAbund
 
 plot(sort(a[a > 0], TRUE), log = "y")
@@ -169,9 +207,13 @@ ggplot(res, aes(trait_sigma, hill_gen_1)) +
     scale_fill_viridis_c()
 
 
-ggplot(res, aes(env_comp_delta, hill_trait_1)) +
+ggplot(res, aes(comp_sigma, hill_trait_1)) +
     geom_hex() +
     scale_fill_viridis_c()
+
+filter(res, env_comp_delta == 1) |> 
+    ggplot(aes(env_sigma, hill_gen_2)) +
+    geom_hex() 
 
 ggplot(res, aes(env_comp_delta, hill_gen_1)) +
     geom_hex() +
@@ -191,11 +233,935 @@ pca <- select(res_complete, hill_abund_1:cor_taj_D_pi) |>
 pca_param <- select(res_complete, !(hill_abund_1:cor_taj_D_pi)) |> 
     cbind(pca$x)
 
-ggplot(pca_param, aes(PC1, env_comp_delta)) +
-    geom_point()
+ggplot(pca_param, aes(PC1, PC2, color = dispersal_prob)) +
+    geom_point() +
+    scale_color_viridis_c()
+```
+
+Other results have run on koa, so check that out
+
+```{r}
+
+res16 <- readRDS("../scratch/koa/res/role_koa_out_16/results_all.rds")
+res300 <- readRDS("../scratch/koa/res/role_koa_out_300/results_all.rds")
+res5760 <- list.files("../scratch/koa/res/role_koa_out_5760", 
+                      pattern = "chunk_", 
+                      full.names = TRUE) |> 
+    lapply(readRDS) |> 
+    do.call(rbind, args = _)
+
+res <- rbind(res16, res300, res5760) |> 
+    filter(generations > 0)
+
+```
+
+
+Yet more results to check out
+
+```{r}
+res_neut_comp <- readRDS("../scratch/koa/res/role_koa_out_2560/results_all.rds") |> 
+    filter(generations > 0) |> 
+    mutate(model = case_when(neut_delta == 1 ~ "neutral", 
+                             neut_delta != 1 & env_comp_delta == 1 ~ "env", 
+                             neut_delta != 1 & env_comp_delta == 0 ~ "comp")) |> 
+    filter(model != "env")
+
+res_env <- readRDS("../scratch/koa/res/role_koa_out_800/results_all.rds") |> 
+    mutate(model = "env") |> 
+    filter(generations > 0)
+
+res_dis_mod <- rbind(res_neut_comp, res_env)
+
+
+filter(res_dis_mod, model == "env") |> 
+    ggplot(aes(env_sigma, hill_taj_D_1)) +
+    geom_hex()
+
+
+
+```
+
+
+## SBI
+
+We already have the pairs we need for simulation-based inference: each row of `erun@results` holds the parameters $\theta$ that were drawn from the prior and the summary statistics $x$ that came out of the corresponding RoLE simulation. We'll use the Python package [*sbi*](https://sbi.readthedocs.io) to do neural posterior estimation (NPE): train a neural density estimator $q_\phi(\theta \mid x)$ on those $(\theta, x)$ pairs and then evaluate it at any $x$ we like, including (eventually) the summary statistics of real data. Because the training pairs were simulated once up front, nothing here needs to call RoLE again, and the trained posterior is "amortized" so it can be reused for any number of observed datasets. A similar workflow, applied to an earlier RoLE-adjacent simulator, is in the [likelihood-free-inference](https://github.com/role-model/likelihood-free-inference) repo.
+
+### Setup
+
+*sbi* (and its dependency *torch*) must be installed in the Python environment that *reticulate* uses, which for *roleR* is the `r-roleR` environment created by `installMsprime()`. If they aren't there yet, add them once and restart R (a recent *sbi* is needed: older versions call `NPE` by the name `SNPE`).
+
+```{r}
+#| label: sbi-install
+#| eval: false
+
+# run once
+py_install(c("sbi", "torch", "matplotlib", "pandas"), 
+           envname = "msprime_env", method = "conda", pip = TRUE)
+
+```
+
+The Python chunks below only run if *sbi* can be found, so this vignette still builds without it.
+
+```{r}
+#| label: sbi-check
+
+library(reticulate)
+
+run_sbi <- py_module_available("sbi") && py_module_available("torch")
+```
+
+### Preparing the training data
+
+Only some parameters vary across the simulations (the rest are fixed, see the priors above), so those are the parameters we try to infer. The summary statistics are every column from `hill_abund_1` through `cor_taj_D_pi`. Some statistics are undefined for some simulations, e.g. correlations when fewer than three species remain, so we keep only simulations with all-finite statistics. This is safe for NPE: the exclusion depends only on $x$, and NPE learns $p(\theta \mid x)$, so dropping some regions of $x$ doesn't bias the posterior at the $x$ values that remain. (*sbi* would drop non-finite $x$ for us anyway, but it's useful to see how many there are.)
+
+```{r}
+#| label: sbi-prep
+
+param_names <- c("dispersal_prob", "trait_sigma", "env_sigma", 
+                 "comp_sigma", "neut_delta", "env_comp_delta")
+
+stat_names <- res |> 
+    select(hill_abund_1:cor_taj_D_pi) |> 
+    names()
+
+res_sbi <- res |> 
+    filter(if_all(all_of(stat_names), is.finite))
+
+theta_df <- select(res_sbi, all_of(param_names))
+x_df <- select(res_sbi, all_of(stat_names))
+
+c(simulations = nrow(res), usable = nrow(res_sbi))
+```
+
+Now over to Python. The `r.` prefix gives access to R objects. The prior bounds must be **identical** to those used to generate the simulations (see the `runif()` calls that built `param_samples_df`), because NPE assumes the training $\theta$ were drawn from the prior we hand to *sbi*.
+
+Hill numbers and richness are positive and right-skewed, so we put them on the log scale. Beyond that, *sbi*'s default networks z-score the inputs for us.
+
+```{python}
+#| label: sbi-data
+#| eval: !expr run_sbi
+
+import numpy as np
+import pandas as pd
+import torch
+import matplotlib.pyplot as plt
+from sbi.inference import NPE
+from sbi.utils import BoxUniform
+from sbi.analysis import pairplot, plot_summary, sbc_rank_plot
+from sbi.diagnostics import run_sbc
+
+_ = torch.manual_seed(2026)
+
+theta_df = r.theta_df
+x_df = r.x_df.copy()
+
+log_cols = [c for c in x_df.columns if c.startswith("hill_") or c == "richness"]
+x_df[log_cols] = np.log(x_df[log_cols])
+
+# must match the priors used to simulate
+prior_bounds = {
+    "dispersal_prob": (0.001, 0.1),
+    "trait_sigma": (0.001, 0.1),
+    "env_sigma": (0.001, 1),
+    "comp_sigma": (0.001, 10),
+    "neut_delta": (0, 1),
+    "env_comp_delta": (0, 1),
+}
+
+param_names = list(theta_df.columns)
+lower = torch.tensor([prior_bounds[p][0] for p in param_names], dtype=torch.float32)
+upper = torch.tensor([prior_bounds[p][1] for p in param_names], dtype=torch.float32)
+prior = BoxUniform(low=lower, high=upper)
+
+theta = torch.tensor(theta_df.to_numpy(), dtype=torch.float32)
+x = torch.tensor(x_df.to_numpy(), dtype=torch.float32)
+
+# hold out some simulations to test the trained posterior on
+perm = torch.randperm(len(theta))
+n_test = min(500, len(theta) // 10)
+test_idx, train_idx = perm[:n_test], perm[n_test:]
+
+print(f"theta: {tuple(theta.shape)}, x: {tuple(x.shape)}")
+print(f"training on {len(train_idx)}, holding out {len(test_idx)}")
+```
+
+### Training the posterior
+
+We use a neural spline flow (`"nsf"`) as the density estimator, trained with early stopping on a 10% validation split. Training is on CPU by default and can take a few minutes for ~10,000 simulations.
+
+```{python}
+#| label: sbi-train
+#| eval: !expr run_sbi
+
+inference = NPE(prior=prior, density_estimator="nsf")
+inference = inference.append_simulations(theta[train_idx], x[train_idx])
+density_estimator = inference.train(stop_after_epochs=30)
+posterior = inference.build_posterior()
+```
+
+The training and validation loss should flatten out, with the validation loss not much worse than the training loss; a widening gap suggests overfitting, in which case more simulations (or a smaller network) will help.
+
+```{python}
+#| label: sbi-loss
+#| eval: !expr run_sbi
+
+_ = plot_summary(inference, 
+                 tags=["training_loss", "validation_loss"], 
+                 figsize=(10, 2))
+plt.show()
+```
+
+### Inferring parameters from one "observed" dataset
+
+To see what the posterior looks like we treat one held-out simulation as if it were our observed data, so we know the true parameter values. The pair plot shows the joint posterior with the true values marked (`points`). Diagonal panels are marginal posteriors and off-diagonal panels show pairwise dependencies, which in an eco-evolutionary model with many interacting processes are often informative in their own right.
+
+```{python}
+#| label: sbi-posterior
+#| eval: !expr run_sbi
+
+theta_obs, x_obs = theta[test_idx[0]], x[test_idx[0]]
+
+samples = posterior.sample((10000,), x=x_obs)
+
+limits = [[lo, hi] for lo, hi in zip(lower.tolist(), upper.tolist())]
+
+_ = pairplot(samples, 
+             points=theta_obs[None, :], 
+             limits=limits, 
+             labels=param_names, 
+             figsize=(9, 9))
+plt.show()
+```
+
+```{python}
+#| label: sbi-posterior-table
+#| eval: !expr run_sbi
+
+q = np.quantile(samples.numpy(), [0.025, 0.5, 0.975], axis=0)
+
+pd.DataFrame({
+    "truth": theta_obs.numpy(), 
+    "q025": q[0], 
+    "median": q[1], 
+    "q975": q[2]
+}, index=param_names).round(3)
+```
+
+### How well does it work in general?
+
+One dataset can be lucky or unlucky, so we check performance across all the held-out simulations. Because the posterior is amortized, each posterior costs a fraction of a second.
+
+First, parameter recovery: posterior mean against true value for each held-out simulation, and how much each parameter's posterior shrinks relative to the prior. The latter tells us which parameters these summary statistics actually carry information about. A parameter with shrinkage near zero is effectively unidentifiable from this set of statistics, which is a finding about the summary statistics (or the model), not a failure of the method.
+
+```{python}
+#| label: sbi-recovery
+#| eval: !expr run_sbi
+
+n_par = len(param_names)
+post_mean = np.zeros((n_test, n_par))
+post_sd = np.zeros((n_test, n_par))
+
+for k, j in enumerate(test_idx):
+    s = posterior.sample((1000,), x=x[j], show_progress_bars=False)
+    post_mean[k] = s.mean(dim=0).numpy()
+    post_sd[k] = s.std(dim=0).numpy()
+
+theta_test = theta[test_idx].numpy()
+prior_sd = ((upper - lower) / np.sqrt(12)).numpy()
+
+fig, axes = plt.subplots(2, 3, figsize=(10, 6))
+for p, ax in enumerate(axes.flat):
+    ax.scatter(theta_test[:, p], post_mean[:, p], s=6, alpha=0.5)
+    lims = [lower[p].item(), upper[p].item()]
+    ax.plot(lims, lims, color="black", lw=1)
+    ax.set_title(param_names[p])
+    ax.set_xlabel("true")
+    ax.set_ylabel("posterior mean")
+fig.tight_layout()
+plt.show()
+```
+
+```{python}
+#| label: sbi-shrinkage
+#| eval: !expr run_sbi
+
+pd.DataFrame({
+    "cor_true_vs_post_mean": [np.corrcoef(theta_test[:, p], post_mean[:, p])[0, 1] 
+                              for p in range(n_par)],
+    "shrinkage": 1 - post_sd.mean(axis=0) / prior_sd
+}, index=param_names).round(2)
+```
+
+Second, simulation-based calibration (SBC). If the posterior is well calibrated, the rank of the true parameter among its own posterior samples is uniformly distributed across simulations. Histograms that are U-shaped mean the posterior is overconfident, humps mean it is underconfident, and skew means bias. Panels are in the same order as `param_names`. Uniform ranks are necessary but not sufficient for a good posterior; the point is to catch gross failures.
+
+```{python}
+#| label: sbi-sbc
+#| eval: !expr run_sbi
+
+num_posterior_samples = 1000
+
+ranks, dap_samples = run_sbc(theta[test_idx], 
+                             x[test_idx], 
+                             posterior, 
+                             num_posterior_samples=num_posterior_samples)
+
+_ = sbc_rank_plot(ranks, 
+                  num_posterior_samples, 
+                  plot_type="hist", 
+                  num_bins=20)
+plt.show()
+```
+
+### Using real data
+
+To infer parameters from empirical data, compute the same summary statistics, in the same order, with the same `funList` used for the simulations. Then apply the same transformation (log of the Hill numbers and richness) before sampling:
+
+```python
+# x_empirical: the summary statistics of the real data, as a 1-D array 
+# in the same column order as x_df, with the same log transform applied
+x_emp = torch.tensor(x_empirical, dtype=torch.float32)
+samples_emp = posterior.sample((10000,), x=x_emp)
+```
+
+Before trusting the result, check that the observed statistics fall within the cloud of simulated statistics (e.g. with `pairplot(x[train_idx], points=x_emp[None, :])`). If the real data are far outside what RoLE produced under this prior, the posterior is extrapolating and the prior ranges or the model need revisiting.
+
+
+## SBI with MNPE
+
+So far every parameter was continuous. Here we ask a different question: given the summary statistics, which **model** produced them, and what are the parameter values within that model? We treat the model type as one more (categorical) parameter and use mixed neural posterior estimation (MNPE, `MNPE` in *sbi*). MNPE factorizes the posterior into a categorical part $q(m \mid x)$ and a continuous part $q(\theta_{cont} \mid m, x)$ (a flow conditioned on the model), so a single trained network gives us the posterior probability of each model *and* the within-model parameter posteriors. Compared with training a separate classifier, we get both from one joint posterior.
+
+### The discrete-model simulations
+
+`res_dis_mod` comes from the run in `scratch/koa/run_role_koa.R`, where the model types were set by fixing `neut_delta` and `env_comp_delta` (see `mutate()` above): 
+
+- `neutral`: `neut_delta = 1`, which ignores the environmental and competition parameters
+- `env`: `neut_delta < 1` and `env_comp_delta = 1`, environmental filtering only
+- `comp`: `neut_delta < 1` and `env_comp_delta = 0`, competition only
+
+The continuous parameters that vary are `dispersal_prob`, `env_sigma` and `comp_sigma` (`trait_sigma` is fixed in these simulations). Note that `env_sigma` has no effect in the `neutral` and `comp` models and `comp_sigma` has none in the `neutral` and `env` models. That's fine for MNPE: those parameters were still drawn from their priors, so the posterior for them will simply return the prior wherever they don't matter. The priors differ from those in the first SBI section, so they are redefined below.
+
+```{r}
+#| label: mnpe-prep
+
+param_names_mod <- c("dispersal_prob", "env_sigma", "comp_sigma")
+
+stat_names <- res_dis_mod |> 
+    select(hill_abund_1:cor_taj_D_pi) |> 
+    names()
+
+res_mod_sbi <- res_dis_mod |> 
+    filter(!is.na(model), 
+           if_all(all_of(stat_names), is.finite))
+
+theta_mod_df <- select(res_mod_sbi, all_of(param_names_mod))
+x_mod_df <- select(res_mod_sbi, all_of(stat_names))
+model_vec <- res_mod_sbi$model
+
+c(simulations = nrow(res_dis_mod), usable = nrow(res_mod_sbi))
+table(model_vec)
+```
+
+### Preparing the data
+
+MNPE has two requirements on $\theta$ that we need to respect:
+
+1. the continuous columns come first and the discrete columns come last
+2. discrete values are coded as integers $0, 1, \ldots, K-1$
+
+So $\theta$ becomes `[dispersal_prob, env_sigma, comp_sigma, model]` with `model` coded 0 = neutral, 1 = env, 2 = comp. The prior is a product of a uniform box for the continuous parameters (bounds as in `run_role_koa.R`) and a categorical prior for the model, with probabilities equal to the fraction of each model among the simulations.
+
+```{python}
+#| label: mnpe-data
+#| eval: !expr run_sbi
+
+import numpy as np
+import pandas as pd
+import torch
+import matplotlib.pyplot as plt
+from torch.distributions import Categorical
+from sbi.inference import MNPE
+from sbi.utils import BoxUniform, MultipleIndependent
+from sbi.analysis import pairplot, plot_summary
+
+_ = torch.manual_seed(2027)
+
+model_names = ["neutral", "env", "comp"]
+
+theta_cont_df = r.theta_mod_df
+x_m_df = r.x_mod_df.copy()
+
+log_cols = [c for c in x_m_df.columns if c.startswith("hill_") or c == "richness"]
+x_m_df[log_cols] = np.log(x_m_df[log_cols])
+
+model_idx = pd.Categorical(list(r.model_vec), categories=model_names).codes
+assert (model_idx >= 0).all(), "unexpected model label"
+
+# must match the priors used to simulate (scratch/koa/run_role_koa.R)
+prior_bounds_m = {
+    "dispersal_prob": (0.001, 0.1),
+    "env_sigma": (2, 10),
+    "comp_sigma": (2, 10),
+}
+
+param_names_m = list(theta_cont_df.columns)
+lower_m = torch.tensor([prior_bounds_m[p][0] for p in param_names_m], dtype=torch.float32)
+upper_m = torch.tensor([prior_bounds_m[p][1] for p in param_names_m], dtype=torch.float32)
+
+model_probs = torch.tensor(np.bincount(model_idx, minlength=3) / len(model_idx), 
+                           dtype=torch.float32)
+
+prior_m = MultipleIndependent([
+    BoxUniform(low=lower_m, high=upper_m), 
+    Categorical(probs=model_probs)
+])
+
+# continuous columns first, discrete (model) last
+theta_m = torch.cat([
+    torch.tensor(theta_cont_df.to_numpy(), dtype=torch.float32), 
+    torch.tensor(model_idx, dtype=torch.float32)[:, None]
+], dim=1)
+x_m = torch.tensor(x_m_df.to_numpy(), dtype=torch.float32)
+
+# hold out some simulations to test the trained posterior on
+perm = torch.randperm(len(theta_m))
+n_test_m = min(300, len(theta_m) // 10)
+test_idx_m, train_idx_m = perm[:n_test_m], perm[n_test_m:]
+
+print(f"theta: {tuple(theta_m.shape)}, x: {tuple(x_m.shape)}")
+print(f"training on {len(train_idx_m)}, holding out {len(test_idx_m)}")
+```
+
+### Training
+
+The only change from NPE is the class: `MNPE` instead of `NPE`. It builds the mixed density estimator itself. We have a few thousand simulations here, far fewer than in the continuous-only runs, so expect a noisier posterior; more simulations of each model are the most effective way to improve it.
+
+```{python}
+#| label: mnpe-train
+#| eval: !expr run_sbi
+
+inference_m = MNPE(prior=prior_m)
+inference_m = inference_m.append_simulations(theta_m[train_idx_m], x_m[train_idx_m])
+density_estimator_m = inference_m.train(stop_after_epochs=30)
+posterior_m = inference_m.build_posterior()
+```
+
+```{python}
+#| label: mnpe-loss
+#| eval: !expr run_sbi
+
+_ = plot_summary(inference_m, 
+                 tags=["training_loss", "validation_loss"], 
+                 figsize=(10, 2))
+plt.show()
+```
+
+### Posterior for one "observed" dataset
+
+Samples from the posterior have five columns; the last is the model. The posterior probability of each model is simply the fraction of samples assigned to it, and the parameter columns are draws from the within-model posteriors (mixed over models, weighted by their probabilities). In the pair plot the last panel's marginal is the posterior over the model code (0 = neutral, 1 = env, 2 = comp).
+
+```{python}
+#| label: mnpe-posterior
+#| eval: !expr run_sbi
+
+theta_obs_m, x_obs_m = theta_m[test_idx_m[0]], x_m[test_idx_m[0]]
+
+samples_m = posterior_m.sample((10000,), x=x_obs_m)
+
+p_model = np.bincount(samples_m[:, -1].long().numpy(), minlength=3) / samples_m.shape[0]
+
+print("true model:", model_names[int(theta_obs_m[-1])])
+print(pd.Series(p_model, index=model_names).round(3))
+```
+
+```{python}
+#| label: mnpe-pairplot
+#| eval: !expr run_sbi
+
+limits_m = [[lo, hi] for lo, hi in zip(lower_m.tolist(), upper_m.tolist())] + [[-0.5, 2.5]]
+
+_ = pairplot(samples_m, 
+             points=theta_obs_m[None, :], 
+             limits=limits_m, 
+             labels=param_names_m + ["model"], 
+             figsize=(9, 9))
+plt.show()
+```
+
+### How well does it work in general?
+
+Across the held-out simulations we ask two things. First, does the posterior put its mass on the right model? Below, the rows are the true model, the columns the average posterior probability given to each model, and a good posterior has large values on the diagonal. Off-diagonal mass says which models the summary statistics can't tell apart, e.g. if `neutral` and `comp` are confused, the statistics don't carry the signal that separates them, which is a finding about the statistics, not just about the method. The overall accuracy uses the most probable model for each simulation.
+
+```{python}
+#| label: mnpe-eval
+#| eval: !expr run_sbi
+
+n_post = 1000
+n_par = len(param_names_m)
+
+model_prob = np.zeros((n_test_m, 3))
+cont_mean = np.zeros((n_test_m, n_par))
+
+for k, j in enumerate(test_idx_m):
+    s = posterior_m.sample((n_post,), x=x_m[j], show_progress_bars=False)
+    model_prob[k] = np.bincount(s[:, -1].long().numpy(), minlength=3) / n_post
+    cont_mean[k] = s[:, :-1].mean(dim=0).numpy()
+
+true_model = theta_m[test_idx_m, -1].long().numpy()
+theta_test_m = theta_m[test_idx_m, :-1].numpy()
+
+confusion = pd.DataFrame(
+    [model_prob[true_model == i].mean(axis=0) for i in range(3)], 
+    index=[f"true: {m}" for m in model_names], 
+    columns=[f"p({m})" for m in model_names]
+).round(2)
+
+print(f"accuracy (most probable model): {(model_prob.argmax(axis=1) == true_model).mean():.2f}")
+confusion
+```
+
+Second, within-model parameter recovery: posterior mean against true value, coloured by the true model. We expect recovery where a parameter matters for the model, and no relationship where it doesn't (`env_sigma` for `neutral` and `comp`, `comp_sigma` for `neutral` and `env`).
+
+```{python}
+#| label: mnpe-recovery
+#| eval: !expr run_sbi
+
+fig, axes = plt.subplots(1, 3, figsize=(13, 4.5))
+for p, ax in enumerate(axes.flat):
+    for i, m in enumerate(model_names):
+        sel = true_model == i
+        ax.scatter(theta_test_m[sel, p], cont_mean[sel, p], s=8, alpha=0.6, label=m)
+    lims = [lower_m[p].item(), upper_m[p].item()]
+    ax.plot(lims, lims, color="black", lw=1)
+    ax.set_title(param_names_m[p])
+    ax.set_xlabel("true")
+    ax.set_ylabel("posterior mean")
+axes[0].legend()
+fig.tight_layout()
+plt.show()
+```
+
+Note that the parameter posterior means above average over the model uncertainty. If the model is uncertain, the mean mixes parameter values from different models. To get the within-model posterior, keep only the samples whose last column equals the model of interest, e.g. `s[s[:, -1] == 1, :-1]` for `env`. *sbi*'s simulation-based calibration (`run_sbc`) is designed for continuous parameters, so we don't use it for the model column here.
+
+
+## SBI with a classifier and per-model NPE
+
+MNPE needs a newer *sbi* than the plain `NPE` used above, so here we get at the same question in two stages using only `NPE`:
+
+1. **Which model?** Train a classifier (from *scikit-learn*) to predict the model type (`neutral`, `env`, `comp`) from the summary statistics. Because the simulations contain about equal numbers of each model, the classifier's predicted probabilities estimate the posterior probability of each model given $x$.
+2. **Which parameters?** For each model, train a separate NPE on only the simulations of that model, and only the parameters that matter for that model.
+
+Given an observed $x$, stage 1 tells us how plausible each model is and stage 2 gives the parameter posterior within each model. If we want a single posterior for parameters that all models share, we can average the within-model posteriors weighted by the model probabilities.
+
+### Setup
+
+This section uses the same simulations (`res_dis_mod`) as the previous one, and needs *scikit-learn* in the same Python environment as *sbi*. 
+
+```{r}
+#| label: clf-install
+#| eval: false
+
+# run once, then restart R
+py_install("scikit-learn", pip = TRUE)
+```
+
+```{r}
+#| label: clf-check
+
+run_clf <- run_sbi && py_module_available("sklearn")
+```
+
+```{r}
+#| label: clf-prep
+
+param_names_clf <- c("dispersal_prob", "env_sigma", "comp_sigma")
+
+stat_names_clf <- res_dis_mod |> 
+    select(hill_abund_1:cor_taj_D_pi) |> 
+    names()
+
+mutate(res_dis_mod, 
+       complete = as.numeric(if_all(all_of(stat_names_clf), is.finite))) |> 
+    filter(model == "env") |> 
+    ggplot(aes(env_sigma, complete)) +
+    geom_hex() +
+    geom_smooth(method = "glm", method.args = list(family = binomial))
+
+res_clf <- res_dis_mod |> 
+    filter(!is.na(model), 
+           if_all(all_of(stat_names_clf), is.finite))
+
+theta_clf_df <- select(res_clf, all_of(param_names_clf))
+x_clf_df <- select(res_clf, all_of(stat_names_clf))
+model_clf <- res_clf$model
+
+table(model_clf)
+```
+
+Not every parameter is relevant to every model: the environmental and competition widths are ignored by the neutral model, `env_sigma` only matters for the `env` model and `comp_sigma` only for the `comp` model. We therefore estimate only the relevant parameters for each model (this assumes `dispersal_prob` matters for all three, edit `model_params` below if that's not right; `trait_sigma` is fixed in these simulations so it isn't estimated). The prior bounds are those of `scratch/koa/run_role_koa.R`.
+
+```{python}
+#| label: clf-data
+#| eval: !expr run_clf
+
+import numpy as np
+import pandas as pd
+import torch
+import matplotlib.pyplot as plt
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.metrics import accuracy_score, log_loss
+from sbi.inference import NPE
+from sbi.utils import BoxUniform
+from sbi.analysis import pairplot, sbc_rank_plot
+from sbi.diagnostics import run_sbc
+
+_ = torch.manual_seed(2028)
+rng = np.random.default_rng(2028)
+
+model_names = ["neutral", "env", "comp"]
+
+# parameters that matter for each model
+model_params = {
+    "neutral": ["dispersal_prob"], 
+    "env": ["dispersal_prob", "env_sigma"], 
+    "comp": ["dispersal_prob", "comp_sigma"]
+}
+
+# must match the priors used to simulate
+prior_bounds_c = {
+    "dispersal_prob": (0.001, 0.1),
+    "env_sigma": (0.001, 1),
+    "comp_sigma": (2, 10),
+}
+
+theta_df_c = r.theta_clf_df
+x_df_c = r.x_clf_df.copy()
+model_c = np.array(list(r.model_clf))
+
+log_cols = [c for c in x_df_c.columns if c.startswith("hill_") or c == "richness"]
+x_df_c[log_cols] = np.log(x_df_c[log_cols])
+X = x_df_c.to_numpy()
+
+# hold out simulations to test on
+perm = rng.permutation(len(X))
+n_test_c = min(500, len(X) // 5)
+test_idx, train_idx = perm[:n_test_c], perm[n_test_c:]
+
+print(f"training on {len(train_idx)}, holding out {len(test_idx)}")
+```
+
+### Stage 1: classify the model
+
+A gradient-boosted tree classifier is a good default for tabular summary statistics: it needs no scaling and handles skewed features. We judge it on the held-out simulations with accuracy, log loss (which penalizes confident mistakes; lower is better, and a classifier that guesses 1/3 each time scores about 1.10) and the mean predicted probability given to each model, by true model.
+
+```{python}
+#| label: clf-fit
+#| eval: !expr run_clf
+
+clf = HistGradientBoostingClassifier(max_iter=300, 
+                                     early_stopping=True, 
+                                     random_state=1)
+clf.fit(X[train_idx], model_c[train_idx])
+
+# sklearn orders columns alphabetically (clf.classes_); reorder to model_names
+proba_raw = clf.predict_proba(X[test_idx])
+order = [list(clf.classes_).index(m) for m in model_names]
+p_test = proba_raw[:, order]
+
+pred = np.array(model_names)[p_test.argmax(axis=1)]
+true_test = model_c[test_idx]
+
+print(f"accuracy: {accuracy_score(true_test, pred):.2f}")
+print(f"log loss: {log_loss(true_test, proba_raw, labels=clf.classes_):.2f}")
+
+pd.DataFrame(
+    [p_test[true_test == m].mean(axis=0) for m in model_names], 
+    index=[f"true: {m}" for m in model_names], 
+    columns=[f"p({m})" for m in model_names]
+).round(2)
+```
+
+Large values on the diagonal mean the summary statistics distinguish the models. Off-diagonal mass shows which models are confused: this is a property of the summary statistics, so if two models are hard to tell apart, the fix is more informative statistics (or more simulations), not a different classifier.
+
+### Stage 2: one NPE per model
+
+Each model gets its own NPE, trained on only the training simulations of that model and with a prior over only that model's parameters. Each model has roughly a third of the simulations, so these are small training sets, and the posteriors will be wide. This is the main thing more simulations would improve.
+
+```{python}
+#| label: clf-npe
+#| eval: !expr run_clf
+
+def make_prior(cols):
+    lo = torch.tensor([prior_bounds_c[c][0] for c in cols], dtype=torch.float32)
+    hi = torch.tensor([prior_bounds_c[c][1] for c in cols], dtype=torch.float32)
+    return BoxUniform(low=lo, high=hi)
+
+posteriors = {}
+
+for m in model_names:
+    cols = model_params[m]
+    sel = train_idx[model_c[train_idx] == m]
+    
+    th = torch.tensor(theta_df_c[cols].to_numpy()[sel], dtype=torch.float32)
+    xx = torch.tensor(X[sel], dtype=torch.float32)
+    
+    print(f"{m}: training NPE on {len(sel)} simulations")
+    inf = NPE(prior=make_prior(cols), density_estimator="nsf")
+    inf = inf.append_simulations(th, xx)
+    _ = inf.train(stop_after_epochs=30)
+    posteriors[m] = inf.build_posterior()
+
+```
+
+### Putting the stages together
+
+For an observed $x$, the classifier gives the model probabilities and each model's NPE gives its parameter posterior. `infer()` returns both. `model_average()` then mixes the posteriors of the parameter that every model shares (`dispersal_prob`), drawing from each model's posterior in proportion to its probability.
+
+```{python}
+#| label: clf-infer
+#| eval: !expr run_clf
+
+def infer(x_obs, n=10000):
+    """model probabilities and within-model posterior samples for one x"""
+    p = clf.predict_proba(x_obs[None, :])[0][order]
+    x_t = torch.tensor(x_obs, dtype=torch.float32)
+    samples = {m: posteriors[m].sample((n,), x=x_t, show_progress_bars=False) 
+               for m in model_names}
+    return p, samples
+
+def model_average(p, samples, cols=("dispersal_prob",), n=10000):
+    """posterior for parameters shared by all models, averaged over models"""
+    if isinstance(cols, str):
+        cols = (cols,)
+    counts = rng.multinomial(n, p)
+    out = []
+    for m, k in zip(model_names, counts):
+        idx = [model_params[m].index(c) for c in cols]
+        out.append(samples[m][:k][:, idx].numpy())
+    return np.concatenate(out)
+
+
+```
+
+### Posterior for one "observed" dataset
+
+As before we treat a held-out simulation as the observed data, so the truth is known. We show the classifier's model probabilities, then the parameter posterior of the true model with the true values marked.
+
+```{python}
+#| label: clf-example
+#| eval: !expr run_clf
+
+j = test_idx[0]
+true_m = model_c[j]
+p_obs, samples_obs = infer(X[j])
+
+print("true model:", true_m)
+print(pd.Series(p_obs, index=model_names).round(3))
+```
+
+```{python}
+#| label: clf-pairplot
+#| eval: !expr run_clf
+
+cols = model_params[true_m]
+theta_true = torch.tensor(theta_df_c[cols].to_numpy()[j], dtype=torch.float32)
+limits = [list(prior_bounds_c[c]) for c in cols]
+
+if len(cols) == 1:
+    # one parameter (neutral model): a histogram instead of a pair plot
+    fig, ax = plt.subplots(figsize=(5, 3))
+    ax.hist(samples_obs[true_m][:, 0].numpy(), bins=40, density=True)
+    ax.axvline(theta_true.item(), color="black")
+    ax.set_xlabel(cols[0])
+else:
+    _ = pairplot(samples_obs[true_m], 
+                 points=theta_true[None, :], 
+                 limits=limits, 
+                 labels=cols, 
+                 figsize=(6, 6))
+plt.show()
+```
+
+The model-averaged posterior for `dispersal_prob`, which every model has, folds the model uncertainty into the parameter estimate. The line is the true value.
+
+```{python}
+#| label: clf-average
+#| eval: !expr run_clf
+
+avg = model_average(p_obs, samples_obs)
+
+fig, ax = plt.subplots(figsize=(5, 3))
+ax.hist(avg[:, 0], bins=40, density=True)
+ax.axvline(theta_df_c["dispersal_prob"].to_numpy()[j], color="black")
+ax.set_xlabel("dispersal_prob")
+plt.show()
+```
+
+### How well does it work in general?
+
+Parameter recovery within each model, on held-out simulations of that model (rows are models, columns the parameters that matter for them). Each point is the posterior mean against the true value.
+
+```{python}
+#| label: clf-recovery
+#| eval: !expr run_clf
+
+fig, axes = plt.subplots(3, 2, figsize=(7, 9))
+
+for i, m in enumerate(model_names):
+    cols = model_params[m]
+    sel = test_idx[model_c[test_idx] == m]
+    truth = theta_df_c[cols].to_numpy()[sel]
+    
+    post_mean = np.zeros((len(sel), len(cols)))
+    for k, jj in enumerate(sel):
+        s = posteriors[m].sample((500,), x=torch.tensor(X[jj], dtype=torch.float32), 
+                                 show_progress_bars=False)
+        post_mean[k] = s.mean(dim=0).numpy()
+    
+    for c in range(2):
+        ax = axes[i, c]
+        if c >= len(cols):
+            ax.axis("off")
+            continue
+        lims = list(prior_bounds_c[cols[c]])
+        ax.scatter(truth[:, c], post_mean[:, c], s=8, alpha=0.6)
+        ax.plot(lims, lims, color="black", lw=1)
+        ax.set_title(f"{m}: {cols[c]}")
+        ax.set_xlabel("true")
+        ax.set_ylabel("posterior mean")
+
+fig.tight_layout()
+plt.show()
+```
+
+Zooming in on `dispersal_prob`, the one parameter that every model shares, with all three models on the same axes:
+
+```{python}
+#| label: clf-dispersal
+#| eval: !expr run_clf
+
+fig, ax = plt.subplots(figsize=(5, 5))
+
+for m in model_names:
+    k = model_params[m].index("dispersal_prob")
+    sel = test_idx[model_c[test_idx] == m]
+    truth = theta_df_c["dispersal_prob"].to_numpy()[sel]
+    post_mean = np.array([
+        posteriors[m].sample((500,), x=torch.tensor(X[jj], dtype=torch.float32), 
+                             show_progress_bars=False)[:, k].mean().item() 
+        for jj in sel
+    ])
+    ax.scatter(truth, post_mean, s=10, alpha=0.6, label=m)
+
+lims = list(prior_bounds_c["dispersal_prob"])
+ax.plot(lims, lims, color="black", lw=1)
+ax.set_xlabel("true dispersal_prob")
+ax.set_ylabel("posterior mean dispersal_prob")
+ax.legend()
+plt.show()
+```
+
+Now the same plot for the **model-averaged** posterior mean, which folds in the classifier's uncertainty about the model. The posterior mean of a mixture is the probability-weighted average of the within-model posterior means. A model in which a parameter plays no role has no posterior for it, so there the posterior is just the prior and we use the prior mean (the middle of the prior range). Points are coloured by the *true* model: where the classifier is confident and right, the points follow the line for models in which the parameter matters, and sit at the middle of the prior range when it doesn't (`env_sigma` for `neutral` and `comp`, `comp_sigma` for `neutral` and `env`).
+
+```{python}
+#| label: clf-averaged
+#| eval: !expr run_clf
+
+plot_params = ["dispersal_prob", "env_sigma", "comp_sigma"]
+
+# within-model posterior means for every held-out simulation
+means = {}
+for m in model_names:
+    means[m] = np.array([
+        posteriors[m].sample((500,), x=torch.tensor(X[jj], dtype=torch.float32), 
+                             show_progress_bars=False).mean(dim=0).numpy() 
+        for jj in test_idx
+    ])
+
+fig, axes = plt.subplots(1, 3, figsize=(13, 4.5))
+
+for ax, par in zip(axes, plot_params):
+    lo, hi = prior_bounds_c[par]
+    
+    # model-averaged posterior mean, using the classifier's model probabilities
+    avg = np.zeros(len(test_idx))
+    for i, m in enumerate(model_names):
+        if par in model_params[m]:
+            avg += p_test[:, i] * means[m][:, model_params[m].index(par)]
+        else:
+            avg += p_test[:, i] * (lo + hi) / 2
+    
+    truth = theta_df_c[par].to_numpy()[test_idx]
+    for m in model_names:
+        sel = true_test == m
+        ax.scatter(truth[sel], avg[sel], s=8, alpha=0.6, label=m)
+    
+    ax.plot([lo, hi], [lo, hi], color="black", lw=1)
+    ax.set_title(par)
+    ax.set_xlabel("true")
+    ax.set_ylabel("model-averaged posterior mean")
+
+axes[0].legend(title="true model")
+fig.tight_layout()
+plt.show()
+```
+
+Calibration of each model's posterior with simulation-based calibration (SBC). Since these posteriors are over continuous parameters, SBC applies directly: if a posterior is well calibrated, the rank of the true value among its posterior samples is uniform. Each held-out set is only ~100-200 simulations, so expect noisy histograms; look for strong U-shapes (overconfident) or humps (underconfident), and the panels follow the order of `model_params[m]`.
+
+```{python}
+#| label: clf-sbc
+#| eval: !expr run_clf
+
+for m in model_names:
+    cols = model_params[m]
+    sel = test_idx[model_c[test_idx] == m]
+    th = torch.tensor(theta_df_c[cols].to_numpy()[sel], dtype=torch.float32)
+    xx = torch.tensor(X[sel], dtype=torch.float32)
+    
+    ranks, _ = run_sbc(th, xx, posteriors[m], num_posterior_samples=500)
+    fig, ax = sbc_rank_plot(ranks, 500, plot_type="hist", num_bins=10)
+    fig.suptitle(m)
+    plt.show()
+```
+
+### Handing off to R
+
+```{python}
+# within-model posterior means for every held-out simulation, under every model
+# (if you already ran `clf-averaged`, `means` already exists and this can be skipped)
+means = {}
+for m in model_names:
+    means[m] = np.array([
+        posteriors[m].sample((500,), x=torch.tensor(X[jj], dtype=torch.float32), 
+                             show_progress_bars=False).mean(dim=0).numpy() 
+        for jj in test_idx
+    ])
+
+# 1. within-model: each model's posterior, on simulations from that model
+rows = []
+for m in model_names:
+    sel = true_test == m
+    for k, par in enumerate(model_params[m]):
+        rows.append(pd.DataFrame({
+            "model": m, 
+            "param": par, 
+            "truth": theta_df_c[par].to_numpy()[test_idx][sel], 
+            "post_mean": means[m][sel, k]
+        }))
+recovery_df = pd.concat(rows, ignore_index=True)
+
 ```
 
 
 
+Now can get in R
+
+```{r}
+recovery_df <- py$recovery_df
+
+ggplot(recovery_df, aes(truth, post_mean)) +
+    geom_point(alpha = 0.6) +
+    geom_abline() +
+    facet_wrap(vars(param), scales = "free")
 
 
+```
